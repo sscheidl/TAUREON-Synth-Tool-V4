@@ -3,9 +3,9 @@
 **Stage:** 2
 **Baseline revision:** `fb543a5689d5e5e9ef0903cf42c4f1e3d13879bf` on `main`
 **Completion revision:** `9bcbf0d825627461a285529c18484e5eae77eb7d` on `main` / `origin/main`
-**P1 closure revision:** dedicated closure commit containing this updated report
-**Status:** HOLD remediation complete / targeted re-review and Project Manager/User gate disposition pending
-**Result recommendation:** PASS after P1 closure
+**P1 closure revision:** `3e9c2783e9598a52d6d560cf0d7854222f99dce7` on `main` / `origin/main`
+**Status:** PASS / CLOSED by User gate after P1 closure
+**Result recommendation:** PASS after P1 closure (accepted)
 
 ## Completed work
 
@@ -211,11 +211,10 @@ loss, byte uncertainty, additional P0/P1, or Stop/Ask condition arose during clo
 
 ## Gate recommendation
 
-**PASS after P1 closure.** All 21 Stage 2 acceptance criteria are met, all final applicable tests pass, and no
-unresolved P0/P1 remains. Targeted re-review and Project Manager/User gate disposition may close Stage 2.
-Stage 3 remained unstarted throughout remediation and must remain so until a separate authorization.
+**PASS after P1 closure — accepted by User.** All 21 Stage 2 acceptance criteria are met, all final applicable
+tests pass, and no unresolved P0/P1 remains. Stage 2 is closed. Stage 3 remained unstarted throughout the P1
+remediation and was authorized only after the closure commit was pushed.
 
 ## Next action if approved
 
-Project Manager/User records the Stage 2 gate disposition and separately prepares/approves Stage 3. Do not
-begin Stage 3 from this report alone.
+Stage 3 may proceed only under its separately supplied and User-approved brief. Do not begin Stage 4.
