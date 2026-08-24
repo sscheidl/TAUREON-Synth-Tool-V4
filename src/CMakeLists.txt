@@ -9,6 +9,8 @@ add_library(taureon_midi_core STATIC
     core/sysex/SysExStreamParser.cpp
     core/sysex/SyxFile.cpp
     core/transfer/TransferEngine.cpp
+    profiles/ProfileLoader.cpp
+    profiles/ProfileRegistry.cpp
     transports/fake/FakeMidiTransport.cpp)
 
 target_include_directories(taureon_midi_core PUBLIC "${PROJECT_SOURCE_DIR}/src")

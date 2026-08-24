@@ -47,10 +47,13 @@ inline HandleGrowthAnalysis analyze_handle_growth(
     if (start != 0) {
         result.reference_maximum =
             *std::max_element(samples.begin(), samples.begin() + start);
+        result.new_steady_high = result.steady_maximum > result.reference_maximum;
     } else {
         result.reference_maximum = *std::max_element(leading.begin(), leading.end());
+        // Without a distinct warm-up segment there is no independent historical envelope.
+        // Report the peak criterion as not applicable instead of comparing the series to itself.
+        result.new_steady_high = false;
     }
-    result.new_steady_high = result.steady_maximum > result.reference_maximum;
 
     if (steady.size() > 1) {
         const long double mean_x = static_cast<long double>(steady.size() - 1) / 2.0L;

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "profile_id": "generic",
+  "profile_version": "1.0.0",
+  "generic": true,
+  "manufacturer": null,
+  "model": null,
+  "variant": null,
+  "display_name": "Generic MIDI Device",
+  "aliases": [],
+  "support": {
+    "detect": false,
+    "read": false,
+    "inspect": false,
+    "extract": false,
+    "modify": false,
+    "serialize": false,
+    "transfer": false,
+    "validated_restore": false
+  },
+  "metadata": {
+    "channels": [],
+    "cc": [],
+    "rpn": [],
+    "nrpn": [],
+    "bank_organization": null
+  },
+  "defaults": {
+    "midi_channel": null,
+    "sysex_inter_message_delay_ms": null
+  },
+  "warnings": [
+    "No device-specific interpretation or validated restore is available."
+  ],
+  "recognition": {
+    "native_identity": null,
+    "universal_identity": null,
+    "sysex_fingerprints": []
+  },
+  "provenance": {
+    "source": "TAUREON V4 Stage 4 generic fallback definition",
+    "owner": "TAUREON V4 project",
+    "license": "Project-internal source",
+    "redistribution": "Not decided",
+    "acquisition": "Created cleanly in this repository"
+  },
+  "protocol_module_id": null
+}

@@ -1,7 +1,7 @@
 # Stage 4 Brief – Device/Profile Isolation Proof
 
 **Stage:** 4
-**Status:** READY – start only after the Stage 3 closure commit is pushed and the worktree is clean
+**Status:** IMPLEMENTATION COMPLETE / HOLD FOR MANDATORY ARCHITECTURE REVIEW – User-authorized 2026-08-24; real-device target amended to Novation Summit
 **Implementation lead:** Codex
 **Coordination:** ChatGPT Classic / Project Manager
 **Mandatory review:** Claude Code architecture review (Opus, high)
@@ -21,7 +21,11 @@ Stage 4 establishes:
 - capability/support-level metadata that never overclaims safe operations;
 - evidence that unknown devices remain fully usable through the generic Stage 3 path.
 
-The preferred real proof target is **Kawai K5000S**, because it is relevant to the Product Owner and exposes the required separation clearly. Stage 4 does not implement K5000 bank-file editing, checksum reverse engineering, or validated restore.
+The original preferred proof target was Kawai K5000S. After the required fixture Stop/Ask, the User changed the
+single real-device target to **Novation Summit** and approved the byte-exact `Crazy Sine.syx` single-patch dump
+for private, internal read-only tests. This amendment changes only the bounded data profile and fixture; all
+architecture, capability, matching, provenance and no-restore constraints remain unchanged. Stage 4 does not
+implement Summit patch/bank editing, checksum work, transfer protocols, or validated restore.
 
 ## 2. Preconditions
 
@@ -145,9 +149,9 @@ Requirements:
 
 Stage 4 may produce a suggestion result. It does not implement the Stage 5 selection GUI.
 
-### 4.5 One real Kawai K5000S data profile
+### 4.5 One real Novation Summit data profile
 
-Create exactly one bounded real profile for the Kawai K5000S, limited to facts supported by approved sources/fixtures.
+Create exactly one bounded real profile for the Novation Summit, limited to facts supported by approved sources/fixtures.
 
 Permitted examples, only when evidenced:
 
@@ -170,7 +174,7 @@ Do not infer a higher support level from a lower one. In particular, parsing or 
 
 ### 4.6 One strong real-device fixture path
 
-Use one provenance-approved K5000S fixture path to prove known-device behavior. Prefer a byte-exact, read-only identity or SysEx sample with a documented origin and hash.
+Use one provenance-approved Summit fixture path to prove known-device behavior. Prefer a byte-exact, read-only identity or SysEx sample with a documented origin and hash.
 
 Requirements:
 
@@ -187,7 +191,7 @@ If no qualifying fixture/source exists, Stop/Ask. Do not copy an unreviewed lega
 
 A small interface/registration hook may be defined only if required to prove that future compiled protocols can live above the generic engine.
 
-Do not implement a K5000 protocol state machine unless data-only implementation becomes demonstrably impossible and the User approves the scope change. A compiled hook does not justify handshakes, checksum logic, codecs, restore flows, or device I/O in this stage.
+Do not implement a Summit protocol state machine unless data-only implementation becomes demonstrably impossible and the User approves the scope change. A compiled hook does not justify handshakes, checksum logic, codecs, restore flows, or device I/O in this stage.
 
 ## 5. Mandatory Stage 3 carry-forward
 
@@ -225,8 +229,8 @@ Stage 4 changes must not regress the existing local WMS/WinMM lifecycle suites.
 - physical MIDI hardware validation or automated sends to a synth;
 - driver, registry, service, API-mode or global system changes;
 - a universal profile database or multiple real device profiles;
-- K5000 KA1/KAA/IMG parsing, editing, conversion or librarian operations;
-- K5000 checksum reverse engineering or checksum regeneration;
+- Summit patch/bank parsing, editing, conversion or librarian operations;
+- Summit checksum reverse engineering or checksum regeneration;
 - device-specific handshake, request/dump state machine or validated restore;
 - automatic background identity requests;
 - profile download/update service;
@@ -240,7 +244,7 @@ Stage 4 changes must not regress the existing local WMS/WinMM lifecycle suites.
 - versioned profile schema and validation implementation;
 - Generic profile;
 - deterministic profile registry and match/binding result model;
-- exactly one bounded Kawai K5000S data profile;
+- exactly one bounded Novation Summit data profile;
 - one provenance-approved real-device fixture path plus metadata/hash;
 - pure unit/integration tests and CI registration;
 - any evidence-required ADR;
@@ -252,7 +256,7 @@ Stage 4 changes must not regress the existing local WMS/WinMM lifecycle suites.
 
 ### Schema and registry
 
-- valid Generic and K5000S profiles load;
+- valid Generic and Summit profiles load;
 - unsupported schema version fails visibly;
 - required-field, type, range and contradictory-capability errors fail;
 - duplicate IDs/conflicting versions are deterministic errors;
@@ -265,15 +269,15 @@ Stage 4 changes must not regress the existing local WMS/WinMM lifecycle suites.
 - known fixture produces the documented match/suggestion evidence;
 - unknown fixture/data yields NoMatch/GenericFallback without guessing;
 - two equally plausible profiles yield Ambiguous, never first-match selection;
-- a generic DIN-interface name alone never identifies the K5000S;
+- a generic DIN-interface name alone never identifies the Summit;
 - backend or route changes do not silently rebind the profile;
 - profile matching does not mutate MIDI 1.0 bytes or UMP words;
-- no K5000/model/manufacturer branch exists in WMS, WinMM, `IMidiTransport`, SysEx parser or transfer engine.
+- no Summit/model/manufacturer branch exists in WMS, WinMM, `IMidiTransport`, SysEx parser or transfer engine.
 
 ### Capability safety
 
 - support levels are explicit and monotonic claims are not inferred;
-- K5000S profile does not advertise unsupported Modify/Serialize/Validated Restore capabilities;
+- Summit profile does not advertise unsupported Modify/Serialize/Validated Restore capabilities;
 - data-only pacing/warnings are applied above transport;
 - Generic behavior remains byte-identical with no profile selected;
 - malformed/incomplete/tainted known-device data remains malformed/incomplete/tainted and cannot be saved or encoded as verified complete.
@@ -317,7 +321,7 @@ HOLD if:
 
 Apply `QUALITY_POLICY.md`. Stop and escalate especially when:
 
-- no provenance-approved K5000S fixture/source is available;
+- no provenance-approved Summit fixture/source is available;
 - implementing the real profile would require unknown checksum or reverse engineering;
 - an existing legacy profile/file would need to be copied without per-item provenance;
 - endpoint/profile ambiguity could target the wrong physical device;
@@ -350,7 +354,7 @@ Claude Code receives only:
 - Stage 3 report plus targeted re-review outcome;
 - changed ADRs and architecture/provenance/risk documents;
 - profile schema/registry/matching source;
-- Generic and K5000S profile data;
+- Generic and Summit profile data;
 - fixture provenance/hash and relevant tests;
 - Stage 4 diff and exact build/test evidence.
 

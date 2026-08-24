@@ -1,0 +1,20 @@
+{
+  "fixture": "novation_summit_crazy_sine.syx",
+  "original_archive": "D:/Backup/Backup_System/Music Production/Audio Hardware/Novation Summit/Presets/Single Presets.zip",
+  "original_archive_entry": "Single Presets/Crazy Sine.syx",
+  "source_device": "User-owned Novation Summit",
+  "acquisition": "User-provided local backup of a complete single-patch SysEx dump",
+  "permission": "Private TAUREON repository; internal read-only tests only",
+  "redistribution": "Forbidden",
+  "sha256": "9FAECB1B98BC1926369528263B7CF7E9C9BFC7291A822F5E3BC38280D5BB7409",
+  "size": 527,
+  "framing": "One complete F0...F7 frame; F0 at offset 0 and F7 at offset 526",
+  "restrictions": [
+    "No publication",
+    "No conversion or repair",
+    "No checksum implementation",
+    "No automatic or manual transmission to hardware as part of Stage 4"
+  ],
+  "approved_by": "User / Product Owner",
+  "approved_on": "2026-08-24"
+}

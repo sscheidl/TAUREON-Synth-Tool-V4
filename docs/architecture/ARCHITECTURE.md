@@ -1,6 +1,6 @@
 # TAUREON V4 – Architecture
 
-**Status:** Active architecture baseline; updated with Stage 2 implementation
+**Status:** Active architecture baseline; updated with Stage 4 profile isolation proof
 **Architecture review lead:** Claude Code  
 **Maintained by:** Project Manager after accepted decisions
 
@@ -265,6 +265,19 @@ Suitable for:
 - safe warnings.
 
 Preferred format: versioned JSON or equivalent simple data.
+
+Stage 4 implements this boundary as the Qt-independent `profiles` module. Schema v1 is strict and documented in
+[`PROFILE_SCHEMA_V1.md`](PROFILE_SCHEMA_V1.md). The registry validates before registration, stores profiles by
+stable ID, enumerates deterministically, rejects duplicate/conflicting IDs, and exposes `Explicit`,
+`ConfidentSuggestion`, `Ambiguous`, `NoMatch`, `Invalid`, and `GenericFallback` results with evidence. Saved
+explicit binding, device-native identity, Universal Identity, exact SysEx fingerprint, manual selection and
+Generic fallback are distinct inputs; a route or port display name is deliberately ignored as device evidence.
+
+The repository contains one neutral Generic profile and exactly one bounded real profile, Novation Summit. The
+Summit profile uses the User-approved read-only single-patch fixture's exact observed SysEx prefix only and claims
+`Detect`; it does not claim Read, Inspect, Extract, Modify, Serialize, Transfer or Validated Restore. Matching
+accepts only verified-complete, untainted `SysExFrame` data and never mutates bytes or UMP words. No compiled
+protocol hook was required.
 
 ### Compiled protocol modules
 

@@ -24,7 +24,10 @@ Gate: PASS WITH NON-BLOCKING FOLLOW-UPS (targeted Claude Code re-review; no P0/P
 Implementation lead: Codex
 
 Stage 4 – Device/profile isolation proof
-Status: PLANNED / NOT AUTHORIZED
+Status: IMPLEMENTATION COMPLETE / HOLD FOR MANDATORY ARCHITECTURE REVIEW
+Gate: HOLD pending Claude Code Opus/high review; software evidence is a PASS candidate
+Implementation lead: Codex
+Target: Generic profile plus exactly one Novation Summit data profile
 ```
 
 ## Project location
@@ -118,7 +121,9 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-No Stage-3 blocker or unresolved P0/P1 remains. The historical review P1 ordered-loss gap and both P2 findings
+No known Stage-4 implementation P0/P1 exists. Stage 4 remains on administrative HOLD until the mandatory
+Claude Code Opus/high architecture review accepts the integrated profile/fixture/taint path. No Stage-3 blocker
+or unresolved P0/P1 remains. The historical review P1 ordered-loss gap and both P2 findings
 were corrected without an architecture deviation and accepted by targeted Claude Code re-review. The authorized
 WMS investigation recorded complete 100- and 500-cycle handle series and confirmed reversible whole-process
 runtime plateaus rather than cumulative ownership growth. The retained harnesses now test directional sustained
@@ -138,13 +143,14 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
   recorded in [`STAGE_2_REPORT.md`](../stages/STAGE_2_REPORT.md).
 - **Stage 3 PASS / CLOSED:** Claude Code returned PASS WITH NON-BLOCKING FOLLOW-UPS with no P0/P1 findings;
   the two reviewer follow-ups are mandatory Stage-4-brief inputs and R-003 remains mitigated, not closed.
-- **Stage-4 brief input FU-1 (P2):** refine WinMM overflow-episode signaling so marker coalescing cannot
-  under-report loss across later frame boundaries while the worker remains blocked; require a deterministic
-  blocked-worker, sustained-overflow, multiple-frame regression.
-- **Stage-4 brief input FU-2 (P3):** define handle-growth analysis as not applicable without a separate warm-up
-  segment, or force `new_steady_high=false` for `start == 0`; require a short-series regression.
-- **Stage 4:** Prepare/review its brief with the two Stage-3 follow-ups, then begin only after a separate User
-  authorization.
+- **Stage-4 FU-1 implemented:** WinMM overflow markers coalesce only across consecutive dropped callbacks;
+  non-droppable long-header events break the run so later drops receive a new ordered marker. The blocked-worker,
+  sustained-overflow regression proves two affected frames are tainted and a later clean frame is not.
+- **Stage-4 FU-2 implemented:** `new_steady_high=false` when `start == 0`, because no independent warm-up
+  envelope exists; the short rising-series regression remains non-applicable rather than self-referential.
+- **Stage 4 active:** strict profile schema/loader, deterministic registry/matching, Generic fallback, one bounded
+  Summit profile, and the User-approved read-only fixture are implemented pending final validation and mandatory
+  Claude Code architecture review.
 - **Stage 5:** Repeat apartment/lifetime/close-active/shutdown validation in the actual `QApplication` host
   and measure actual active state at close.
 
@@ -158,8 +164,8 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Record the two non-blocking Claude Code follow-ups in the future Stage-4 brief and submit that brief for
-Project Manager/User review. Do not begin Stage 4 without separate authorization.
+Complete Stage-4 clean/local validation and `STAGE_4_REPORT.md`, then submit only the bounded Stage-4 handoff to
+the mandatory Claude Code Opus/high architecture review. Do not begin Stage 5.
 
 ## Hardware validation
 

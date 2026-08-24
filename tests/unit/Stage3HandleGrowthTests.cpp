@@ -47,6 +47,15 @@ void handle_growth_tests() {
     std::vector<std::uint32_t> late_transient(100, 200);
     late_transient[75] = 202;
     TAUREON_REQUIRE(!analyze_handle_growth(late_transient, 50).sustained_growth);
+
+    // A short diagnostic series has no separate warm-up reference. The new-peak signal is
+    // explicitly not applicable even when the short series itself rises monotonically.
+    const std::vector<std::uint32_t> short_series{200, 201, 202, 203, 204,
+                                                  205, 206, 207, 208, 209};
+    const auto short_analysis = analyze_handle_growth(short_series, 0);
+    TAUREON_REQUIRE(short_analysis.steady_slope > 0.0L);
+    TAUREON_REQUIRE(!short_analysis.new_steady_high);
+    TAUREON_REQUIRE(!short_analysis.sustained_growth);
 }
 
 } // namespace

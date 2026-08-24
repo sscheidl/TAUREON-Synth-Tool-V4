@@ -488,7 +488,7 @@ void ordered_transport_loss_reaches_sysex_capture() {
     TAUREON_REQUIRE(losses[3].reason == MidiDataLossReason::native_long_error);
 }
 
-void queue_overflow_is_ordered_and_taints_only_the_active_frame() {
+void sustained_queue_overflow_taints_each_affected_frame() {
     auto api = std::make_shared<RealtimeApi>();
     WinmmTransport transport(api);
     const auto endpoints = transport.enumerate();
@@ -512,26 +512,35 @@ void queue_overflow_is_ordered_and_taints_only_the_active_frame() {
     for (std::size_t index = 0; index < 1100; ++index) {
         api->emit_short(0x000000F8u, static_cast<DWORD>(index));
     }
+
+    // Long-header returns are non-droppable. Each later run of dropped callbacks must place a
+    // fresh ordered loss marker before the next frame instead of globally coalescing the entire
+    // blocked-worker interval into the first marker.
+    api->emit_long({0xF7});
+    api->emit_short(0x000000F8u, 2001);
+    api->emit_long({0xF0, 0x12, 0xF7});
     api->release_blocked_short_send();
     blocked_sender.join();
     TAUREON_REQUIRE(send_succeeded);
-    TAUREON_REQUIRE(recorder.wait_for_losses(1));
-
-    api->emit_long({0xF7});
-    TAUREON_REQUIRE(recorder.wait_for_frames(1));
+    TAUREON_REQUIRE(recorder.wait_for_losses(2));
+    TAUREON_REQUIRE(recorder.wait_for_frames(2));
     auto frames = recorder.frames();
     TAUREON_REQUIRE(frames[0].status == taureon::sysex::SysExFrameStatus::malformed);
     TAUREON_REQUIRE(frames[0].affected_by_data_loss);
+    TAUREON_REQUIRE(frames[1].status == taureon::sysex::SysExFrameStatus::malformed);
+    TAUREON_REQUIRE(frames[1].affected_by_data_loss);
     const auto losses = recorder.losses();
-    TAUREON_REQUIRE(losses.size() == 1);
-    TAUREON_REQUIRE(losses[0].reason == MidiDataLossReason::queue_overflow);
-    TAUREON_REQUIRE(losses[0].affects_sysex);
+    TAUREON_REQUIRE(losses.size() == 2);
+    TAUREON_REQUIRE(std::all_of(losses.begin(), losses.end(), [](const auto& loss) {
+        return loss.reason == MidiDataLossReason::queue_overflow && loss.affects_sysex;
+    }));
 
-    api->emit_long({0xF0, 0x12, 0xF7});
-    TAUREON_REQUIRE(recorder.wait_for_frames(2));
+    // Once the overflow episode has drained, a new independent frame remains clean.
+    api->emit_long({0xF0, 0x13, 0xF7});
+    TAUREON_REQUIRE(recorder.wait_for_frames(3));
     frames = recorder.frames();
-    TAUREON_REQUIRE(frames[1].status == taureon::sysex::SysExFrameStatus::complete);
-    TAUREON_REQUIRE(!frames[1].affected_by_data_loss);
+    TAUREON_REQUIRE(frames[2].status == taureon::sysex::SysExFrameStatus::complete);
+    TAUREON_REQUIRE(!frames[2].affected_by_data_loss);
     TAUREON_REQUIRE(transport.close());
 }
 
@@ -541,6 +550,6 @@ int main() {
     return taureon::test::run([] {
         realtime_send_receive_and_owned_completion();
         ordered_transport_loss_reaches_sysex_capture();
-        queue_overflow_is_ordered_and_taints_only_the_active_frame();
+        sustained_queue_overflow_taints_each_affected_frame();
     });
 }

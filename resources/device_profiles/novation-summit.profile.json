@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "profile_id": "novation.summit",
+  "profile_version": "1.0.0",
+  "generic": false,
+  "manufacturer": "Novation",
+  "model": "Summit",
+  "variant": null,
+  "display_name": "Novation Summit",
+  "aliases": ["Summit"],
+  "support": {
+    "detect": true,
+    "read": false,
+    "inspect": false,
+    "extract": false,
+    "modify": false,
+    "serialize": false,
+    "transfer": false,
+    "validated_restore": false
+  },
+  "metadata": {
+    "channels": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+    "cc": [],
+    "rpn": [],
+    "nrpn": [],
+    "bank_organization": null
+  },
+  "defaults": {
+    "midi_channel": null,
+    "sysex_inter_message_delay_ms": null
+  },
+  "warnings": [
+    "Stage 4 recognition does not authorize editing, serialization, transfer, or restore.",
+    "A MIDI port name alone never identifies a Summit behind a DIN interface."
+  ],
+  "recognition": {
+    "native_identity": null,
+    "universal_identity": null,
+    "sysex_fingerprints": [
+      {
+        "id": "summit-single-patch-header",
+        "offset": 0,
+        "bytes": [240, 0, 32, 41, 1, 17, 1, 51]
+      }
+    ]
+  },
+  "provenance": {
+    "source": "User-approved byte-exact Crazy Sine.syx capture from the User's Novation Summit",
+    "owner": "TAUREON User / Product Owner",
+    "license": "Private repository internal read-only test use only",
+    "redistribution": "Forbidden",
+    "acquisition": "User-provided local backup; approved 2026-08-24"
+  },
+  "protocol_module_id": null
+}

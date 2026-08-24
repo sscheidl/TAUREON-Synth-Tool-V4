@@ -175,12 +175,15 @@ struct WinmmTransport::Impl {
             const bool non_droppable = header_completion || message == MIM_ERROR;
             if (!non_droppable && self->callbacks.size() >= callback_capacity) {
                 ++self->dropped_callbacks;
-                const bool loss_already_queued = std::any_of(
-                    self->callbacks.begin(), self->callbacks.end(), [](const CallbackEvent& event) {
-                        return event.kind == CallbackEvent::Kind::data_loss &&
-                               event.loss.reason == MidiDataLossReason::queue_overflow;
-                    });
-                if (!loss_already_queued) {
+                // Coalesce only consecutive drops. A non-droppable callback (notably a returned
+                // long-input header) ends the run, so any later drop receives a new ordered marker
+                // before subsequent frame data. Global coalescing could otherwise under-report a
+                // sustained overflow across multiple SysEx frame boundaries.
+                const bool consecutive_overflow_marker =
+                    !self->callbacks.empty() &&
+                    self->callbacks.back().kind == CallbackEvent::Kind::data_loss &&
+                    self->callbacks.back().loss.reason == MidiDataLossReason::queue_overflow;
+                if (!consecutive_overflow_marker) {
                     self->insert_callback_locked(
                         {sequence, CallbackEvent::Kind::data_loss, 0, 0, 0, true,
                          {MidiBackend::winmm, MidiDataLossReason::queue_overflow, true,
