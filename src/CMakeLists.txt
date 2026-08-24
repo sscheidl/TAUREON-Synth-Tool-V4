@@ -1,4 +1,6 @@
 add_library(taureon_midi_core STATIC
+    app/ConnectionController.cpp
+    app/MonitorEventQueue.cpp
     core/midi/MidiMessage.cpp
     core/midi/MidiTypes.cpp
     core/midi/RoutePersistence.cpp
@@ -27,7 +29,11 @@ find_package(Qt6 6.10 REQUIRED COMPONENTS Widgets)
 add_executable(taureon_app
     app/taureon_app_main.cpp
     gui/MainWindow.cpp
-    gui/MainWindow.hpp)
+    gui/MainWindow.hpp
+    gui/MonitorEventBridge.cpp
+    gui/MonitorEventBridge.hpp
+    gui/MidiMonitorModel.cpp
+    gui/MidiMonitorModel.hpp)
 target_link_libraries(taureon_app PRIVATE taureon_midi_core Qt6::Widgets)
 target_compile_features(taureon_app PRIVATE cxx_std_20)
 if(MSVC)

@@ -1,4 +1,6 @@
 #include "gui/MainWindow.hpp"
+#include "gui/MidiMonitorModel.hpp"
+#include "gui/MonitorEventBridge.hpp"
 
 #include <QComboBox>
 #include <QFrame>
@@ -10,6 +12,7 @@
 #include <QStatusBar>
 #include <QStringList>
 #include <QToolBar>
+#include <QTableView>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -62,9 +65,22 @@ QWidget* make_workspace_page(const QString& name) {
     return page;
 }
 
+QWidget* make_monitor_page(MidiMonitorModel& model) {
+    auto* page = new QWidget;
+    auto* layout = new QVBoxLayout(page);
+    auto* table = new QTableView(page);
+    table->setObjectName("midiMonitorTable");
+    table->setModel(&model);
+    table->setAlternatingRowColors(true);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSortingEnabled(false);
+    layout->addWidget(table);
+    return page;
+}
+
 } // namespace
 
-MainWindow::MainWindow() {
+MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue) {
     setObjectName("taureonMainWindow");
     setWindowTitle("TAUREON Synth Tool V4");
     resize(1280, 800);
@@ -106,7 +122,12 @@ MainWindow::MainWindow() {
     workspace_heading_->setObjectName("workspaceHeading");
     workspace_stack_ = new QStackedWidget(content);
     workspace_stack_->setObjectName("workspaceStack");
-    for (const auto& name : kWorkspaceNames) workspace_stack_->addWidget(make_workspace_page(name));
+    monitor_model_ = new MidiMonitorModel(10'000, this);
+    monitor_bridge_ = new MonitorEventBridge(monitor_queue, *monitor_model_, this);
+    workspace_stack_->addWidget(make_monitor_page(*monitor_model_));
+    for (std::size_t index = 1; index < kWorkspaceNames.size(); ++index) {
+        workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(index)));
+    }
     content_layout->addWidget(workspace_heading_);
     content_layout->addWidget(workspace_stack_);
 
@@ -121,6 +142,8 @@ MainWindow::MainWindow() {
 
     statusBar()->showMessage("Disconnected — no MIDI route is selected.");
 }
+
+MainWindow::~MainWindow() { monitor_bridge_->shutdown(); }
 
 bool MainWindow::has_expected_shell() const noexcept {
     return navigation_ != nullptr && workspace_stack_ != nullptr && workspace_heading_ != nullptr &&

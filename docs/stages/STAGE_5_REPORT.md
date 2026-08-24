@@ -68,3 +68,26 @@ git diff --check
 ```
 
 Result: configure and Debug build pass; `stage5_gui_smoke` passes (1/1); `git diff --check` passes.
+
+## Slice 2 — exact connection control and bounded monitor boundary
+
+`ConnectionController` is Qt-independent and depends only on `IMidiTransport`. It enumerates the selected
+backend, accepts only an exact enumerated route identity with the matching backend/direction, keeps RX and TX
+independent, refuses a connection without either route, and exposes selected-route disappearance as a visible
+`degraded` state requiring deliberate reselection. It performs no port-name guessing, fuzzy fallback, or
+cross-backend translation.
+
+`MonitorEventQueue` is an application-owned, mutex-protected bounded queue. A native callback may copy/move a
+message into it without touching Qt. Full-queue events are rejected and counted; after GUI acceptance closes,
+later events are separately rejected and counted. `MonitorEventBridge` is a GUI-thread timer adapter that drains
+at most 512 events per 16 ms tick into `MidiMonitorModel`; shutdown stops the timer and closes queue acceptance
+before presentation children are destroyed. No detached thread, `QPointer`, arbitrary sleep, or timeout is used.
+
+The MIDI Monitor workspace now contains the production `QAbstractTableModel` table with the frozen nine columns.
+Its history is capped at 10,000 rows and batch insertion evicts the exact oldest overflow before inserting. The
+initial Qt-independent tests prove exact RX/TX connection, explicit missing-route failure, degraded state without
+silent rebinding, queue capacity/high-water/drop accounting, bounded model eviction, raw-byte visibility, batch
+drain, and rejection after GUI acceptance closes.
+
+Current Debug validation: all 12 CI-labelled tests pass, including both Stage-5 tests and all retained Stage-2–4
+unit/WinMM regressions; failures/skips are zero and `git diff --check` passes.

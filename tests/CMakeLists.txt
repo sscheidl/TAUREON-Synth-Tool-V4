@@ -48,6 +48,22 @@ set_tests_properties(stage5_gui_smoke PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 
+add_executable(stage5_application_tests
+    unit/Stage5ApplicationTests.cpp
+    "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp")
+target_include_directories(stage5_application_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_application_tests PRIVATE taureon_midi_core Qt6::Core)
+if(MSVC)
+    target_compile_options(stage5_application_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_application_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_application_unit COMMAND stage5_application_tests)
+set_tests_properties(stage5_application_unit PROPERTIES
+    LABELS "stage5;unit;ci"
+    ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+
 if(WIN32)
     add_executable(stage2_winmm_header_tests unit/Stage2WinmmHeaderTests.cpp)
     target_include_directories(stage2_winmm_header_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

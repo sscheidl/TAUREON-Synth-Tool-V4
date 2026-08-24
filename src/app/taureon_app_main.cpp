@@ -1,4 +1,5 @@
 #include "gui/MainWindow.hpp"
+#include "app/MonitorEventQueue.hpp"
 
 #include <QApplication>
 
@@ -8,7 +9,8 @@
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
 
-    taureon::gui::MainWindow window;
+    taureon::app::MonitorEventQueue monitor_queue(4096);
+    taureon::gui::MainWindow window(monitor_queue);
     const bool smoke_test = std::any_of(argv + 1, argv + argc, [](const char* argument) {
         return std::string_view(argument) == "--smoke-test";
     });

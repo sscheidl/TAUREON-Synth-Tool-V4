@@ -1,5 +1,7 @@
 #pragma once
 
+#include "app/MonitorEventQueue.hpp"
+
 #include <QMainWindow>
 
 class QLabel;
@@ -8,9 +10,13 @@ class QStackedWidget;
 
 namespace taureon::gui {
 
+class MidiMonitorModel;
+class MonitorEventBridge;
+
 class MainWindow final : public QMainWindow {
 public:
-    MainWindow();
+    explicit MainWindow(app::MonitorEventQueue& monitor_queue);
+    ~MainWindow() override;
 
     [[nodiscard]] bool has_expected_shell() const noexcept;
 
@@ -20,6 +26,8 @@ private:
     QListWidget* navigation_{};
     QStackedWidget* workspace_stack_{};
     QLabel* workspace_heading_{};
+    MidiMonitorModel* monitor_model_{};
+    MonitorEventBridge* monitor_bridge_{};
 };
 
 } // namespace taureon::gui
