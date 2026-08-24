@@ -1,10 +1,10 @@
 # Stage 1 Brief – Native WMS and WinMM Transport Spikes
 
-**Stage:** 1  
-**Status:** DRAFT / PENDING PROJECT MANAGER AND USER APPROVAL  
-**Implementation lead:** Codex  
-**Coordination:** ChatGPT Classic / Project Manager  
-**Mandatory review:** Claude Code  
+**Stage:** 1
+**Status:** DRAFT / PENDING PROJECT MANAGER AND USER APPROVAL
+**Implementation lead:** Codex
+**Coordination:** ChatGPT Classic / Project Manager
+**Mandatory review:** Claude Code
 **Decision authority:** User where required
 
 ## Goal

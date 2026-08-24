@@ -1,6 +1,6 @@
 # Stage 0 Report – Bootstrap, Inventory, Provenance & Architecture Verification
 
-**Status:** PASS / CLOSED  
+**Status:** PASS / CLOSED
 **Gate recommendation:** PASS
 
 **Execution date:** 2026-08-24  
