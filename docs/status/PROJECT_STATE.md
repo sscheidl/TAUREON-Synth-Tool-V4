@@ -10,8 +10,9 @@ Stage 0 – Bootstrap, inventory, provenance, architecture verification
 Status: PASS / CLOSED
 Gate: PASS
 
-Next stage: Stage 1 – Native transport spikes
-Status: PLANNED / brief prepared for Project Manager and User review; not authorized to start
+Stage 1 – Native transport spikes (WMS + WinMM)
+Status: ACTIVE / authorized by User 2026-08-24
+Implementation lead: Codex. Mandatory Claude Code review at the Stage 1 gate.
 ```
 
 ## Project location
@@ -56,7 +57,8 @@ Stage 0 recorded the current WMS C++/WinRT namespace, documented initialization/
 
 Stage 1 must establish evidence for:
 
-- exact pinned WMS package/runtime deployment pairing;
+- exact pinned WMS package/runtime deployment pairing, and acquisition of any build-time SDK input (none present locally);
+- unpackaged desktop initialization and API-mode observation entry points;
 - timestamp normalization;
 - WMS maximum transmission constraints and actual SysEx7 callback sequences;
 - WinMM persistent identity and `MIDIHDR` lifecycle;
@@ -93,9 +95,19 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 No unresolved Stage 0 blocker remains. The mandatory Claude Code re-review concluded **PASS WITH NON-BLOCKING FOLLOW-UPS**; no P0/P1 finding remains.
 
+## Stage 0 evidence correction (2026-08-24)
+
+The recorded WMS integration route was re-derived from the installed `Microsoft.Windows.Devices.Midi2.winmd`.
+The earlier entry named a wrong namespace root and three identifiers that do not exist in the SDK. The
+Stage 0 report's review record was also corrected: the reviewer's verdict was HOLD with two P1 findings, not
+the "PASS WITH NON-BLOCKING FOLLOW-UPS" that had been entered. Stage 0 closure per D-012 stands; only the
+evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stages/STAGE_0_REPORT.md).
+
 ## Exact next action
 
-Project Manager and User review `docs/stages/STAGE_1_BRIEF.md`. Do not begin Stage 1 before that brief is approved.
+Codex executes Stage 1 per [`STAGE_1_BRIEF.md`](../stages/STAGE_1_BRIEF.md), starting with acquisition of the
+pinned WMS SDK package — no client code before that package exists locally. Stage 1 ends with
+`STAGE_1_REPORT.md` and the mandatory Claude Code gate review. Do not begin Stage 2.
 
 ## Hardware validation
 

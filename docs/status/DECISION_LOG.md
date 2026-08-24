@@ -18,5 +18,6 @@ This log records concise product/process decisions that are important but do not
 | D-010 | 2026-08-24 | Production Qt GUI remains Stage 5; earlier HTML mockup is design-only | Project Manager | Core/transport evidence precedes real GUI wiring |
 | D-011 | 2026-08-24 | Create the V4 GitHub repository as private `sscheidl/TAUREON-Synth-Tool-V4` | User | Remote `origin` is the private V4 repository; Stage 1 remains gated by the Stage 0 review |
 | D-012 | 2026-08-24 | Close Stage 0 with PASS after mandatory Claude Code re-review | User | Stage 1 is planned only; its brief requires Project Manager/User approval before any transport work |
+| D-013 | 2026-08-24 | Authorize Stage 1 start after correcting the Stage 0 WMS evidence and review record | User | Stage 1 is ACTIVE; Stage 0 closure per D-012 stands, corrected evidence supersedes the earlier route entry |
 
 Technical architecture changes belong in ADRs, not this log.
