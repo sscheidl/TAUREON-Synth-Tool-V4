@@ -12,7 +12,7 @@
 - Initialized a new, separate local Git repository on `main`; the legacy repository was inspected read-only and remains untouched.
 - Added a minimal C++20 CMake target, CMake presets, `.gitignore`, and Windows GitHub Actions configure/build/test workflow.
 - No source, fixture, profile, or binary was copied from the legacy project.
-- GitHub CLI is authenticated as `sscheidl`. Neither `TAUREON-Synth-Tool-V4` nor `TAUREON-Synth-Tool4-V4` exists under that account, but no remote was created because the final remote name and visibility were not specified after the local-name correction.
+- GitHub CLI is authenticated as `sscheidl`. The User approved a private `sscheidl/TAUREON-Synth-Tool-V4` repository; it was created and configured as local `origin`. No branch has been pushed yet.
 
 ## Environment/toolchain result
 
@@ -51,8 +51,8 @@ None. Stage 0 recorded supported facts and retained implementation-sensitive cho
 ## Blockers / Stop-Ask events
 
 - No Quality Policy Stop/Ask condition occurred.
-- Gate prerequisites pending: mandatory Claude Code Stage 0 review and User decision on final GitHub repository name/visibility. These are not a WMS or toolchain failure.
+- Gate prerequisite pending: mandatory Claude Code Stage 0 review. This is not a WMS or toolchain failure.
 
 ## Gate recommendation
 
-**HOLD.** Local technical acceptance evidence is sufficient to prepare the review handoff: the separate repository exists, the C++20 build/test passes, Qt and WinMM availability are known, the official WMS route is documented, and no essential legacy migration has unclear licensing because nothing was migrated. Do not start Stage 1 until the mandatory Claude Code review is complete and the GitHub repository decision is resolved.
+**HOLD.** Local technical acceptance evidence is sufficient to prepare the review handoff: the separate repository exists, the C++20 build/test passes, Qt and WinMM availability are known, the official WMS route is documented, and no essential legacy migration has unclear licensing because nothing was migrated. Do not start Stage 1 until the mandatory Claude Code review is complete.

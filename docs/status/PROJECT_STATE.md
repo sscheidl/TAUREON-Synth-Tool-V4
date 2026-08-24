@@ -7,7 +7,7 @@
 
 ```text
 Stage 0 – Bootstrap, inventory, provenance, architecture verification
-Status: LOCAL VALIDATION COMPLETE / mandatory Claude Code review and GitHub repository decision pending
+Status: LOCAL VALIDATION COMPLETE / mandatory Claude Code review pending
 Gate: HOLD RECOMMENDED
 ```
 
@@ -22,7 +22,7 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4
 GitHub repository:
 
 ```text
-Not created. Both TAUREON-Synth-Tool-V4 and TAUREON-Synth-Tool4-V4 were not found under the authenticated account; User decision on final name and visibility is pending.
+https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (private; origin configured locally; no branch has been pushed yet)
 ```
 
 Legacy local reference:
@@ -90,14 +90,11 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 No P0/P1 technical blocker was found in local Stage 0 validation.
 
-Gate prerequisites pending:
-
-- mandatory Claude Code Stage 0 review;
-- User decision on GitHub repository name/visibility before remote creation.
+Gate prerequisite pending: mandatory Claude Code Stage 0 review.
 
 ## Exact next action
 
-Provide the Stage 0 review handoff, obtain the GitHub-repository decision, and resolve the Stage 0 gate. Do not begin Stage 1 before that gate is resolved.
+Complete the Stage 0 review and resolve the Stage 0 gate. Do not begin Stage 1 before that gate is resolved.
 
 ## Hardware validation
 

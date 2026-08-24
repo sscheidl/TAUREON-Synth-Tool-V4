@@ -16,5 +16,6 @@ This log records concise product/process decisions that are important but do not
 | D-008 | 2026-08-24 | Product documentation is split by responsibility; old giant master documents are reference-only | Project Manager, accepted by User workflow | Avoid conflicting active instructions |
 | D-009 | 2026-08-24 | Five product domains may map to seven GUI workspaces | Project Manager | SysEx Manager and Diagnostics can be separate workspaces without changing product-domain model |
 | D-010 | 2026-08-24 | Production Qt GUI remains Stage 5; earlier HTML mockup is design-only | Project Manager | Core/transport evidence precedes real GUI wiring |
+| D-011 | 2026-08-24 | Create the V4 GitHub repository as private `sscheidl/TAUREON-Synth-Tool-V4` | User | Remote `origin` is the private V4 repository; Stage 1 remains gated by the Stage 0 review |
 
 Technical architecture changes belong in ADRs, not this log.
