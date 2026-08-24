@@ -1,6 +1,6 @@
 # TAUREON V4 – Architecture
 
-**Status:** Active architecture baseline; Stage 0/1 will verify open platform details  
+**Status:** Active architecture baseline; updated with Stage 0/1 evidence
 **Architecture review lead:** Claude Code  
 **Maintained by:** Project Manager after accepted decisions
 
@@ -87,6 +87,9 @@ Cross-cutting services:
 - overflow is observable;
 - shutdown prevents callbacks/use-after-free after destruction;
 - no detached worker threads.
+- cross-thread `QPointer` access is not a synchronization or lifetime mechanism;
+- production shutdown uses an explicit acceptance gate, callback/event revocation, resource close, worker-
+  thread teardown, and worker completion before dependent object destruction.
 
 ### Routing
 
@@ -94,6 +97,11 @@ Cross-cutting services:
 - WMS group identity is represented where relevant;
 - persisted identity is not only a numeric port index;
 - no fuzzy silent route substitution.
+- route identity is backend-specific and includes the backend discriminator;
+- WMS endpoint/group identity and individual WinMM MIDI 1.0 port identity are not transferable;
+- changing backend invalidates or requires exact re-resolution of persisted routes;
+- missing or ambiguous resolution requires visible user selection; never silently translate/rebind across
+  backends.
 
 ## 4. MIDI transport contract
 
@@ -143,6 +151,14 @@ Requirements include:
 - prepare → queue → completion → unprepare lifecycle;
 - deterministic shutdown;
 - no RtMidi wrapper hidden under a native name.
+
+Stage 1's spike requeued input headers with `midiInAddBuffer` inside `midiInProc`. This is not the production
+design decision and its virtual-loopback success does not establish vendor-driver safety. Stage 2 must keep
+native callbacks minimal and evaluate/prefer callback -> signal/queue -> worker-owned `MIDIHDR` requeue.
+Production output-header ownership and failure paths require RAII.
+
+The pinned RC4 WMS/WinMM correlation helpers fail-fast in the isolated Stage 1 probe. They are not an
+architecture dependency and must not be used to silently translate route identities across backends.
 
 ## 7. MIDI Core
 
@@ -276,18 +292,16 @@ Diagnostics must expose enough information to explain:
 
 ## 14. Architecture decisions still open
 
-Stage 0/1 must resolve through evidence/ADRs:
+Stage 1 resolved the spike package/initializer mechanics and demonstrated backend-specific identity. Stage 2
+and later must consume that evidence while resolving these production decisions:
 
-- exact current WMS package/namespace;
-- unpackaged desktop initialization;
-- supported API-mode detection;
-- stable WMS endpoint/group identity;
-- WinMM persistent identity;
-- timestamp normalization;
-- WMS maximum transmission constraints;
-- recommended SysEx7 helper/API;
-- WMS runtime deployment requirements;
-- Qt/WMS initialization/lifetime interaction.
+- production WMS SDK/runtime version and deployment policy, including supported API-mode detection;
+- serialized backend-discriminated route identities and exact backend-change re-resolution UX;
+- timestamp normalization and WMS maximum-transmission constraints;
+- MIDI 1.0 `F0 ... F7` byte-stream <-> UMP SysEx7 conversion and segmentation/reassembly;
+- WinMM callback-to-worker requeue and complete RAII ownership/error paths;
+- WMS integration regression availability/skip policy;
+- Qt/WMS lifetime and apartment behavior in the actual `QApplication` product host.
 
 No implementation should guess these where official documentation or spike evidence is required.
 

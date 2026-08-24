@@ -183,7 +183,16 @@ Build the reusable product core around verified Stage 1 behavior.
 - no shadow receiver;
 - repeated lifecycle test (target: 100 open/close cycles);
 - clean resource closure;
-- deterministic route identity;
+- persisted route identity includes its backend;
+- WMS endpoint/group identity and WinMM port identity are not assumed transferable;
+- backend changes require exact route re-resolution or visible user selection; no cross-backend fuzzy rebind;
+- RC4 WMS/WinMM correlation helpers are not an architecture dependency;
+- native WinMM callbacks perform minimal work; evaluate/prefer callback -> signal/queue -> worker-owned
+  `MIDIHDR` requeue;
+- production error paths use RAII for prepared WinMM headers and payload lifetime;
+- cross-thread `QPointer` access is not used as synchronization;
+- provide opt-in/labeled local regressions for WMS 100-cycle and full WMS-native WinMM-loopback evidence;
+- hosted CI skips/reports unavailable WMS integration prerequisites instead of claiming simulated coverage;
 - failures observable.
 
 No GUI yet.
@@ -212,6 +221,7 @@ Make the generic engine correct before device-specific features or GUI.
 ### Acceptance
 
 - byte-exact generic SysEx roundtrip;
+- byte-exact MIDI 1.0 `F0 ... F7` SysEx <-> UMP SysEx7 conversion, including segmentation and reassembly;
 - malformed/incomplete data cannot be marked valid;
 - large-data tests pass to `QUALITY_POLICY.md`;
 - cancellation/failure paths pass;
@@ -273,6 +283,9 @@ The mockup is a workflow reference, not source code to port.
 - bounded model/view monitor;
 - 100k-event synthetic stress;
 - large SysEx synthetic workflow remains responsive;
+- repeat WMS apartment/lifetime/close-active/shutdown validation in the actual `QApplication` product host
+  and its GUI-main-thread apartment model;
+- close-while-active assertions measure actual worker-active state;
 - high-DPI/readability tests pass.
 
 No unattended real-hardware writes.

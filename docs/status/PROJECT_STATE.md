@@ -11,8 +11,11 @@ Status: PASS / CLOSED
 Gate: PASS
 
 Stage 1 – Native transport spikes (WMS + WinMM)
-Status: ACTIVE / authorized by User 2026-08-24
-Implementation lead: Codex. Mandatory Claude Code review at the Stage 1 gate.
+Status: PASS / CLOSED
+Gate: PASS WITH NON-BLOCKING FOLLOW-UPS (mandatory Claude Code review; no P0/P1 findings)
+
+Stage 2 – MIDI Core + transport abstraction
+Status: PLANNED / NOT STARTED
 ```
 
 ## Project location
@@ -26,7 +29,7 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4
 GitHub repository:
 
 ```text
-https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (private; origin configured locally; no branch has been pushed yet)
+https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (private; `main` pushed at baseline `eb63c4a`)
 ```
 
 Legacy local reference:
@@ -55,14 +58,16 @@ https://github.com/sscheidl/TAUREON-Synth-Tool
 
 Stage 0 recorded the current WMS C++/WinRT namespace, documented initialization/API-mode route, endpoint/group identity guidance, and SysEx7 helper in `docs/reference/ENVIRONMENT_REPORT.md`.
 
-Stage 1 must establish evidence for:
+Stage 1 implementation established evidence for:
 
 - exact pinned WMS package/runtime deployment pairing, and acquisition of any build-time SDK input (none present locally);
 - unpackaged desktop initialization and API-mode observation entry points;
-- timestamp normalization;
-- WMS maximum transmission constraints and actual SysEx7 callback sequences;
-- WinMM persistent identity and `MIDIHDR` lifecycle;
-- Qt/WMS initialization/lifetime interaction.
+- immediate-send `MidiClock` metadata; timestamp normalization remains an explicit future decision;
+- actual SysEx7 callback sequence and byte-exact UMP payload handling, but not MIDI 1.0 `F0`/`F7` framing
+  conversion;
+- backend-specific WMS and WinMM identity behavior;
+- 100 WinMM open/close lifecycles, including one complete short/SysEx send/receive/`MOM_DONE` cycle;
+- Qt Core/QCoreApplication plus dedicated WMS MTA-worker interaction, not the production QApplication host.
 
 ## Governance
 
@@ -93,7 +98,29 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-No unresolved Stage 0 blocker remains. The mandatory Claude Code re-review concluded **PASS WITH NON-BLOCKING FOLLOW-UPS**; no P0/P1 finding remains.
+Stage 0 and Stage 1 have no unresolved P0/P1 blocker. The mandatory Claude Code Stage 1 review concluded
+PASS WITH NON-BLOCKING FOLLOW-UPS. A uniquely named temporary WMS-native loopback supplied the safe WinMM
+evidence and was removed after testing. Stage 2 remains planned and has not started.
+
+Pinned RC4 limitations remain visible but are not transport assumptions: the newer API-mode query is absent
+from the pinned metadata, and the isolated WinMM/WMS correlation helpers fail-fast and are not used for
+identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
+
+## Mandatory later-stage inputs from Stage 1
+
+- **Stage 2:** Persist the backend as part of route identity. Never assume WMS endpoint/group identities and
+  WinMM port identities are transferable. Backend changes require exact re-resolution or visible user
+  selection; no fuzzy cross-backend rebind. Do not depend on the RC4 correlation helpers.
+- **Stage 2:** Keep WinMM callbacks minimal and evaluate/prefer callback -> signal/queue -> worker-owned
+  `MIDIHDR` requeue. Use RAII for production output-header/payload error paths. Do not use cross-thread
+  `QPointer` access as synchronization.
+- **Stage 2:** Add opt-in/labeled local WMS/WinMM lifecycle and byte-integrity regressions. Hosted CI must
+  skip/report unavailable WMS prerequisites rather than simulate coverage. Spike-only hard-coded Qt paths
+  and configure-time projection are not production build architecture.
+- **Stage 3:** Prove byte-exact MIDI 1.0 `F0 ... F7` SysEx <-> UMP SysEx7 conversion, segmentation, and
+  reassembly. R-003 remains open.
+- **Stage 5:** Repeat apartment/lifetime/close-active/shutdown validation in the actual `QApplication` host
+  and measure actual active state at close.
 
 ## Stage 0 evidence correction (2026-08-24)
 
@@ -105,9 +132,8 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Codex executes Stage 1 per [`STAGE_1_BRIEF.md`](../stages/STAGE_1_BRIEF.md), starting with acquisition of the
-pinned WMS SDK package — no client code before that package exists locally. Stage 1 ends with
-`STAGE_1_REPORT.md` and the mandatory Claude Code gate review. Do not begin Stage 2.
+Project Manager/User prepares and approves the Stage 2 brief with the mandatory inputs above before any
+Stage 2 implementation begins. Stage 2 is not in progress.
 
 ## Hardware validation
 
