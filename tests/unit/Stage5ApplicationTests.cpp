@@ -3,6 +3,7 @@
 #include "app/ConnectionController.hpp"
 #include "app/MonitorEventQueue.hpp"
 #include "gui/MidiMonitorModel.hpp"
+#include "gui/MidiMonitorFilterModel.hpp"
 #include "gui/MonitorEventBridge.hpp"
 #include "transports/fake/FakeMidiTransport.hpp"
 
@@ -20,8 +21,9 @@ midi::MidiEndpointDescriptor endpoint(const midi::MidiDirection direction, std::
             std::nullopt, std::nullopt};
 }
 
-app::MonitorEvent monitor_event(const std::uint64_t sequence, const std::uint8_t note) {
-    return {sequence, midi::MidiDirection::input,
+app::MonitorEvent monitor_event(const std::uint64_t sequence, const std::uint8_t note,
+                                const midi::MidiDirection direction = midi::MidiDirection::input) {
+    return {sequence, direction,
             {midi::MidiBackend::windows_midi_services,
              midi::Midi1NativeMessage{{0x90, note, 0x7f}}, midi::MidiTimestamp{sequence, "fake"}}};
 }
@@ -76,9 +78,25 @@ void queue_and_model_tests() {
     TAUREON_REQUIRE(bridged_queue.push(monitor_event(5, 64)));
     bridge.drain_once();
     TAUREON_REQUIRE(bridged_model.rowCount() == 1);
+    TAUREON_REQUIRE(bridged_queue.push(monitor_event(6, 65)));
+    bridge.set_paused(true);
+    bridge.drain_once();
+    TAUREON_REQUIRE(bridged_model.rowCount() == 1);
+    TAUREON_REQUIRE(bridge.presentation_stats().discarded_while_paused == 1);
     bridge.shutdown();
-    TAUREON_REQUIRE(!bridged_queue.push(monitor_event(6, 65)));
+    TAUREON_REQUIRE(!bridged_queue.push(monitor_event(7, 66)));
     TAUREON_REQUIRE(bridged_queue.stats().rejected_after_close == 1);
+
+    gui::MidiMonitorModel filter_source(4);
+    filter_source.append_batch({monitor_event(8, 67),
+                                monitor_event(9, 68, midi::MidiDirection::output)});
+    gui::MidiMonitorFilterModel filter;
+    filter.setSourceModel(&filter_source);
+    filter.set_direction("TX");
+    TAUREON_REQUIRE(filter.rowCount() == 1);
+    filter.set_direction({});
+    filter.set_type_filter("Note On");
+    TAUREON_REQUIRE(filter.rowCount() == 2);
 }
 
 } // namespace

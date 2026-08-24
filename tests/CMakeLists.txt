@@ -50,6 +50,7 @@ set_tests_properties(stage5_gui_smoke PROPERTIES
 
 add_executable(stage5_application_tests
     unit/Stage5ApplicationTests.cpp
+    "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorFilterModel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp")
 target_include_directories(stage5_application_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -91,6 +92,23 @@ add_test(NAME stage5_profile_ui_unit COMMAND stage5_profile_ui_tests)
 set_tests_properties(stage5_profile_ui_unit PROPERTIES
     LABELS "stage5;gui;unit;ci"
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+
+add_executable(stage5_monitor_stress_tests
+    unit/Stage5MonitorStressTests.cpp
+    "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp")
+target_include_directories(stage5_monitor_stress_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_monitor_stress_tests PRIVATE taureon_midi_core Qt6::Core)
+if(MSVC)
+    target_compile_options(stage5_monitor_stress_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_monitor_stress_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_monitor_stress COMMAND stage5_monitor_stress_tests)
+set_tests_properties(stage5_monitor_stress PROPERTIES
+    LABELS "stage5;stress;ci"
+    TIMEOUT 30
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 
 if(WIN32)

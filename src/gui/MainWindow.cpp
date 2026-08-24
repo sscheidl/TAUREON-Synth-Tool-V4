@@ -1,5 +1,6 @@
 #include "gui/MainWindow.hpp"
 #include "gui/MidiMonitorModel.hpp"
+#include "gui/MidiMonitorFilterModel.hpp"
 #include "gui/MonitorEventBridge.hpp"
 #include "gui/ProfileMatchPanel.hpp"
 
@@ -7,6 +8,7 @@
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
 #include <QStackedWidget>
@@ -14,6 +16,7 @@
 #include <QStringList>
 #include <QToolBar>
 #include <QTableView>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -66,16 +69,61 @@ QWidget* make_workspace_page(const QString& name) {
     return page;
 }
 
-QWidget* make_monitor_page(MidiMonitorModel& model) {
+QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) {
     auto* page = new QWidget;
     auto* layout = new QVBoxLayout(page);
+    auto* controls = new QHBoxLayout;
+    auto* direction = new QComboBox(page);
+    direction->addItems({"All directions", "RX", "TX"});
+    direction->setAccessibleName("Monitor direction filter");
+    auto* type_filter = new QLineEdit(page);
+    type_filter->setPlaceholderText("Filter event type");
+    type_filter->setAccessibleName("Monitor event type filter");
+    auto* pause = new QPushButton("Pause presentation", page);
+    pause->setCheckable(true);
+    pause->setToolTip("Presentation events are counted and discarded while paused; transport capture continues.");
+    auto* clear = new QPushButton("Clear", page);
+    auto* accounting = new QLabel("Presentation running", page);
+    accounting->setObjectName("monitorPresentationAccounting");
+    controls->addWidget(direction);
+    controls->addWidget(type_filter, 1);
+    controls->addWidget(pause);
+    controls->addWidget(clear);
+    controls->addWidget(accounting);
+    layout->addLayout(controls);
+
+    auto* proxy = new MidiMonitorFilterModel(page);
+    proxy->setSourceModel(&model);
     auto* table = new QTableView(page);
     table->setObjectName("midiMonitorTable");
-    table->setModel(&model);
+    table->setModel(proxy);
     table->setAlternatingRowColors(true);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSortingEnabled(false);
     layout->addWidget(table);
+
+    QObject::connect(direction, &QComboBox::currentTextChanged, page,
+                     [proxy](const QString& value) {
+                         proxy->set_direction(value == "All directions" ? QString{} : value);
+                     });
+    QObject::connect(type_filter, &QLineEdit::textChanged, page,
+                     [proxy](const QString& value) { proxy->set_type_filter(value); });
+    QObject::connect(pause, &QPushButton::toggled, page, [&bridge, pause](const bool paused) {
+        bridge.set_paused(paused);
+        pause->setText(paused ? "Resume presentation" : "Pause presentation");
+    });
+    QObject::connect(clear, &QPushButton::clicked, page, [&model] { model.clear(); });
+    auto* accounting_timer = new QTimer(page);
+    accounting_timer->setInterval(250);
+    QObject::connect(accounting_timer, &QTimer::timeout, page, [&bridge, accounting] {
+        const auto stats = bridge.presentation_stats();
+        accounting->setText(
+            QStringLiteral("%1 · displayed %2 · paused-discarded %3")
+                .arg(stats.paused ? "Paused" : "Running")
+                .arg(stats.displayed)
+                .arg(stats.discarded_while_paused));
+    });
+    accounting_timer->start();
     return page;
 }
 
@@ -125,7 +173,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue) {
     workspace_stack_->setObjectName("workspaceStack");
     monitor_model_ = new MidiMonitorModel(10'000, this);
     monitor_bridge_ = new MonitorEventBridge(monitor_queue, *monitor_model_, this);
-    workspace_stack_->addWidget(make_monitor_page(*monitor_model_));
+    workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_));
     for (std::size_t index = 1; index < 4; ++index) {
         workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(index)));
     }

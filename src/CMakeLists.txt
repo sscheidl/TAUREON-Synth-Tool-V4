@@ -31,6 +31,8 @@ add_executable(taureon_app
     app/taureon_app_main.cpp
     gui/MainWindow.cpp
     gui/MainWindow.hpp
+    gui/MidiMonitorFilterModel.cpp
+    gui/MidiMonitorFilterModel.hpp
     gui/MonitorEventBridge.cpp
     gui/MonitorEventBridge.hpp
     gui/MidiMonitorModel.cpp

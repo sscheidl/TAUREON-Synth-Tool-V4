@@ -19,7 +19,19 @@ MonitorEventBridge::~MonitorEventBridge() { shutdown(); }
 
 void MonitorEventBridge::drain_once() {
     if (!accepting_gui_updates_) return;
-    model_.append_batch(queue_.drain(512));
+    auto events = queue_.drain(512);
+    if (stats_.paused) {
+        stats_.discarded_while_paused += events.size();
+        return;
+    }
+    stats_.displayed += events.size();
+    model_.append_batch(std::move(events));
+}
+
+void MonitorEventBridge::set_paused(const bool paused) noexcept { stats_.paused = paused; }
+
+MonitorEventBridge::PresentationStats MonitorEventBridge::presentation_stats() const noexcept {
+    return stats_;
 }
 
 void MonitorEventBridge::shutdown() noexcept {

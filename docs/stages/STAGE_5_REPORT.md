@@ -111,3 +111,24 @@ overridden-manual evidence item in the last result and never occurs merely by pr
 
 The panel is present in the Devices & Profiles workspace. Wiring it to a live/imported SysEx workflow remains part
 of the later profile/application composition slice; no route or transport behavior is coupled to profile choice.
+
+## MIDI Monitor filters, pause policy, and 100,000-event evidence
+
+The production monitor uses a `QSortFilterProxyModel` for direction and case-insensitive event-type filters. These
+filters affect only visible rows. Clear resets only the bounded presentation model. Pause has an explicit policy:
+transport/callback accounting continues, the bounded application queue is drained, and paused presentation events
+are counted and discarded rather than creating hidden backlog. Resume affects only later events. The UI exposes
+displayed and paused-discarded counts and explains this policy in the control tooltip.
+
+The strict local responsiveness target was fixed at maximum 250 ms between independent 1-ms GUI heartbeat
+callbacks before running the 100,000-event test. A producer thread injected exact MIDI 1.0 event copies through
+the production `MonitorEventQueue`; the GUI thread used the production 512-event batch bridge and bounded model.
+Recorded Debug result:
+
+```json
+{"events":100000,"accepted":100000,"dropped":0,"queue_high_water":169,"model_rows":10000,"heartbeats":886,"max_heartbeat_delay_ms":2,"elapsed_ms":908}
+```
+
+The accounting identity `accepted + dropped == 100000` holds; current queue size is zero after drain, history never
+exceeds 10,000 rows, queue high-water remains below its 8,192 capacity, and displayed count equals accepted count.
+No per-event widget allocation, crash, deadlock, or unexplained loss occurred.
