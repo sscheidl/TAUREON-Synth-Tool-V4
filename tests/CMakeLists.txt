@@ -41,7 +41,7 @@ endif()
 add_test(NAME stage4_profile_unit COMMAND stage4_profile_tests)
 set_tests_properties(stage4_profile_unit PROPERTIES LABELS "stage4;unit;ci")
 
-find_package(Qt6 6.10 REQUIRED COMPONENTS Core)
+find_package(Qt6 6.10 REQUIRED COMPONENTS Core Widgets)
 add_test(NAME stage5_gui_smoke COMMAND taureon_app --smoke-test)
 set_tests_properties(stage5_gui_smoke PROPERTIES
     LABELS "stage5;gui;ci"
@@ -62,6 +62,35 @@ endif()
 add_test(NAME stage5_application_unit COMMAND stage5_application_tests)
 set_tests_properties(stage5_application_unit PROPERTIES
     LABELS "stage5;unit;ci"
+    ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+
+add_executable(stage5_profile_followup_tests unit/Stage5ProfileFollowupTests.cpp)
+target_include_directories(stage5_profile_followup_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_profile_followup_tests PRIVATE taureon_midi_core)
+target_compile_definitions(stage5_profile_followup_tests PRIVATE TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+if(MSVC)
+    target_compile_options(stage5_profile_followup_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_profile_followup_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_profile_followup_unit COMMAND stage5_profile_followup_tests)
+set_tests_properties(stage5_profile_followup_unit PROPERTIES LABELS "stage5;unit;ci")
+
+add_executable(stage5_profile_ui_tests
+    unit/Stage5ProfileUiTests.cpp
+    "${PROJECT_SOURCE_DIR}/src/gui/ProfileMatchPanel.cpp")
+target_include_directories(stage5_profile_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_profile_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
+target_compile_definitions(stage5_profile_ui_tests PRIVATE TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+if(MSVC)
+    target_compile_options(stage5_profile_ui_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_profile_ui_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_profile_ui_unit COMMAND stage5_profile_ui_tests)
+set_tests_properties(stage5_profile_ui_unit PROPERTIES
+    LABELS "stage5;gui;unit;ci"
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 
 if(WIN32)

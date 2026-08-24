@@ -157,6 +157,7 @@ enum class ProfileEvidenceKind {
     universal_identity,
     sysex_fingerprint,
     manual_selection,
+    overridden_manual_selection,
     generic_fallback,
     data_integrity_rejection,
 };

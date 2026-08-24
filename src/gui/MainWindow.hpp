@@ -12,6 +12,7 @@ namespace taureon::gui {
 
 class MidiMonitorModel;
 class MonitorEventBridge;
+class ProfileMatchPanel;
 
 class MainWindow final : public QMainWindow {
 public:
@@ -28,6 +29,7 @@ private:
     QLabel* workspace_heading_{};
     MidiMonitorModel* monitor_model_{};
     MonitorEventBridge* monitor_bridge_{};
+    ProfileMatchPanel* profile_panel_{};
 };
 
 } // namespace taureon::gui

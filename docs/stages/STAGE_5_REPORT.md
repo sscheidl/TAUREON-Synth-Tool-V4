@@ -91,3 +91,23 @@ drain, and rejection after GUI acceptance closes.
 
 Current Debug validation: all 12 CI-labelled tests pass, including both Stage-5 tests and all retained Stage-2–4
 unit/WinMM regressions; failures/skips are zero and `git diff --check` passes.
+
+## FU-3 bounded completion
+
+The Stage-4 matching precedence is unchanged. Native identity, Universal Identity, and SysEx fingerprint results
+now append a distinct `overridden_manual_selection` evidence item when they displace a different valid temporary
+manual choice. The winning `selected_profile_id` remains the stronger match. Saved explicit bindings retain rank
+one and return only saved-binding evidence.
+
+`ProfileSelectionService` keeps temporary and saved choices separate. Promotion is possible only from an actual
+overridden-manual evidence item in the last result and never occurs merely by presenting the result.
+`ProfileMatchPanel` visibly names the discarded choice, explains that stronger evidence won, and enables
+**Remember binding** only when a promotion callback is deliberately available. Its offscreen test proves:
+
+1. fingerprint precedence remains unchanged;
+2. the discarded manual profile is present in domain evidence;
+3. the GUI exposes the override visibly;
+4. deliberate promotion produces a saved binding that wins the subsequent match.
+
+The panel is present in the Devices & Profiles workspace. Wiring it to a live/imported SysEx workflow remains part
+of the later profile/application composition slice; no route or transport behavior is coupled to profile choice.

@@ -1,6 +1,7 @@
 #include "gui/MainWindow.hpp"
 #include "gui/MidiMonitorModel.hpp"
 #include "gui/MonitorEventBridge.hpp"
+#include "gui/ProfileMatchPanel.hpp"
 
 #include <QComboBox>
 #include <QFrame>
@@ -125,7 +126,12 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue) {
     monitor_model_ = new MidiMonitorModel(10'000, this);
     monitor_bridge_ = new MonitorEventBridge(monitor_queue, *monitor_model_, this);
     workspace_stack_->addWidget(make_monitor_page(*monitor_model_));
-    for (std::size_t index = 1; index < kWorkspaceNames.size(); ++index) {
+    for (std::size_t index = 1; index < 4; ++index) {
+        workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(index)));
+    }
+    profile_panel_ = new ProfileMatchPanel;
+    workspace_stack_->addWidget(profile_panel_);
+    for (std::size_t index = 5; index < kWorkspaceNames.size(); ++index) {
         workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(index)));
     }
     content_layout->addWidget(workspace_heading_);

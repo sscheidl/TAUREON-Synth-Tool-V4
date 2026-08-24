@@ -132,6 +132,16 @@ ProfileMatchResult ProfileRegistry::match(const sysex::SysExFrame& frame,
                 "saved explicit profile binding resolved exactly"};
     }
 
+    const auto with_overridden_manual = [this, &input](ProfileMatchResult result) {
+        if (!input.manual_profile_id || result.selected_profile_id == input.manual_profile_id) return result;
+        const auto* manual = find(*input.manual_profile_id);
+        if (!manual || manual->generic) return result;
+        result.evidence.push_back(
+            {manual->profile_id, ProfileEvidenceKind::overridden_manual_selection,
+             "temporary manual selection was overridden by stronger deterministic evidence"});
+        return result;
+    };
+
     if (input.native_identity) {
         std::vector<std::pair<const DeviceProfile*, ProfileMatchEvidence>> candidates;
         for (const auto& [id, profile] : profiles_) {
@@ -141,7 +151,7 @@ ProfileMatchResult ProfileRegistry::match(const sysex::SysExFrame& frame,
                                   {id, ProfileEvidenceKind::native_identity,
                                    "exact device-native identity evidence"}});
         }
-        if (!candidates.empty()) return from_candidates(candidates);
+        if (!candidates.empty()) return with_overridden_manual(from_candidates(candidates));
     }
 
     if (input.universal_identity) {
@@ -153,7 +163,7 @@ ProfileMatchResult ProfileRegistry::match(const sysex::SysExFrame& frame,
                                   {id, ProfileEvidenceKind::universal_identity,
                                    "exact Universal MIDI Identity evidence"}});
         }
-        if (!candidates.empty()) return from_candidates(candidates);
+        if (!candidates.empty()) return with_overridden_manual(from_candidates(candidates));
     }
 
     std::vector<std::pair<const DeviceProfile*, ProfileMatchEvidence>> fingerprint_candidates;
@@ -168,7 +178,9 @@ ProfileMatchResult ProfileRegistry::match(const sysex::SysExFrame& frame,
             break;
         }
     }
-    if (!fingerprint_candidates.empty()) return from_candidates(fingerprint_candidates);
+    if (!fingerprint_candidates.empty()) {
+        return with_overridden_manual(from_candidates(fingerprint_candidates));
+    }
 
     if (input.manual_profile_id) {
         const auto* selected = find(*input.manual_profile_id);

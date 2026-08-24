@@ -1,6 +1,7 @@
 add_library(taureon_midi_core STATIC
     app/ConnectionController.cpp
     app/MonitorEventQueue.cpp
+    app/ProfileSelectionService.cpp
     core/midi/MidiMessage.cpp
     core/midi/MidiTypes.cpp
     core/midi/RoutePersistence.cpp
@@ -33,7 +34,9 @@ add_executable(taureon_app
     gui/MonitorEventBridge.cpp
     gui/MonitorEventBridge.hpp
     gui/MidiMonitorModel.cpp
-    gui/MidiMonitorModel.hpp)
+    gui/MidiMonitorModel.hpp
+    gui/ProfileMatchPanel.cpp
+    gui/ProfileMatchPanel.hpp)
 target_link_libraries(taureon_app PRIVATE taureon_midi_core Qt6::Widgets)
 target_compile_features(taureon_app PRIVATE cxx_std_20)
 if(MSVC)
