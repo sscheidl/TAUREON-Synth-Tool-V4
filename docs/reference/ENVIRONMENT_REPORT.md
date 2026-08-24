@@ -49,7 +49,7 @@ The current WMS SDK/release is still documented as preview/RC material. Stage 1 
 
 ## GitHub state
 
-The authenticated GitHub account is `sscheidl`. Neither `sscheidl/TAUREON-Synth-Tool-V4` nor `sscheidl/TAUREON-Synth-Tool4-V4` currently resolves through GitHub CLI. No remote repository was created because the active documentation still names the latter while the User confirmed the former local project name, and repository visibility was not specified. This is a project-identity decision, not a technical WMS blocker.
+The authenticated GitHub account is `sscheidl`. Neither `sscheidl/TAUREON-Synth-Tool-V4` nor the earlier candidate `sscheidl/TAUREON-Synth-Tool4-V4` currently resolves through GitHub CLI. No remote repository was created because its final name and visibility were not specified. This is a project-identity decision, not a technical WMS blocker.
 
 ## Limitations and next proof
 

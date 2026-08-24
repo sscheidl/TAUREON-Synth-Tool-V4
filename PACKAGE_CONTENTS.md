@@ -3,7 +3,7 @@
 This ZIP is intended to seed the new project:
 
 ```text
-D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool4-V4
+D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4
 ```
 
 Recommended action:

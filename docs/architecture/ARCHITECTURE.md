@@ -297,7 +297,7 @@ No implementation should guess these where official documentation or spike evide
 The exact tree may evolve, but architectural boundaries should remain visible.
 
 ```text
-TAUREON-Synth-Tool4-V4/
+TAUREON-Synth-Tool-V4/
 ├─ CMakeLists.txt
 ├─ CMakePresets.json
 ├─ README.md

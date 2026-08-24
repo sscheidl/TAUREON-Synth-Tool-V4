@@ -16,7 +16,7 @@ Establish a clean V4 repository, prove the development environment, inventory us
 ### New project/repository
 
 - create/verify local V4 directory:
-  `D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool4-V4`
+  `D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4`
 - initialize new Git repository;
 - create/verify new GitHub repository;
 - add baseline documentation from this package;
