@@ -24,8 +24,8 @@ Gate: PASS WITH NON-BLOCKING FOLLOW-UPS (targeted Claude Code re-review; no P0/P
 Implementation lead: Codex
 
 Stage 4 – Device/profile isolation proof
-Status: IMPLEMENTATION COMPLETE / HOLD FOR MANDATORY ARCHITECTURE REVIEW
-Gate: HOLD pending Claude Code Opus/high review; software evidence is a PASS candidate
+Status: PASS / CLOSED at revision 986115d
+Gate: PASS WITH NON-BLOCKING FOLLOW-UP (mandatory Claude Code review; FU-3 is a Stage-5 brief input)
 Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
 ```
@@ -121,9 +121,9 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-No known Stage-4 implementation P0/P1 exists. Stage 4 remains on administrative HOLD until the mandatory
-Claude Code Opus/high architecture review accepts the integrated profile/fixture/taint path. No Stage-3 blocker
-or unresolved P0/P1 remains. The historical review P1 ordered-loss gap and both P2 findings
+No known Stage-4 implementation P0/P1 exists. Stage 4 is PASS/CLOSED at revision `986115d` after the mandatory
+Claude Code architecture review, with FU-3 carried forward as a non-blocking Stage-5 GUI/evidence refinement.
+No Stage-3 blocker or unresolved P0/P1 remains. The historical review P1 ordered-loss gap and both P2 findings
 were corrected without an architecture deviation and accepted by targeted Claude Code re-review. The authorized
 WMS investigation recorded complete 100- and 500-cycle handle series and confirmed reversible whole-process
 runtime plateaus rather than cumulative ownership growth. The retained harnesses now test directional sustained
@@ -148,9 +148,10 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
   sustained-overflow regression proves two affected frames are tainted and a later clean frame is not.
 - **Stage-4 FU-2 implemented:** `new_steady_high=false` when `start == 0`, because no independent warm-up
   envelope exists; the short rising-series regression remains non-applicable rather than self-referential.
-- **Stage 4 active:** strict profile schema/loader, deterministic registry/matching, Generic fallback, one bounded
-  Summit profile, and the User-approved read-only fixture are implemented pending final validation and mandatory
-  Claude Code architecture review.
+- **Stage 4 PASS / CLOSED:** strict profile schema/loader, deterministic registry/matching, Generic fallback, one
+  bounded Summit profile, and the User-approved read-only fixture were accepted. FU-3 (P3) requires the future
+  Stage-5 GUI to disclose a manual selection overridden by stronger fingerprint evidence and offer saved-binding
+  promotion; the matching order itself remains unchanged.
 - **Stage 5:** Repeat apartment/lifetime/close-active/shutdown validation in the actual `QApplication` host
   and measure actual active state at close.
 
@@ -164,8 +165,8 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Complete Stage-4 clean/local validation and `STAGE_4_REPORT.md`, then submit only the bounded Stage-4 handoff to
-the mandatory Claude Code Opus/high architecture review. Do not begin Stage 5.
+Review and authorize the complete Stage-5 brief. FU-3 is already recorded there as a mandatory input. Do not
+begin Stage-5 implementation before that authorization.
 
 ## Hardware validation
 

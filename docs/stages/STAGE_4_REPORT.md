@@ -4,8 +4,9 @@
 **Date:** 2026-08-24
 **Implementation lead:** Codex
 **Baseline revision:** `5994ea6b92d6431c6988045f0e841fa1e14bacfe`
-**Status:** IMPLEMENTATION COMPLETE / HOLD FOR MANDATORY ARCHITECTURE REVIEW
-**Result recommendation:** **HOLD** pending Claude Code Opus/high review; software evidence is a PASS candidate
+**Status:** PASS / CLOSED
+**Result recommendation:** **PASS WITH NON-BLOCKING FOLLOW-UP** — the mandatory Claude Code review accepted
+the Stage-4 architecture; FU-3 is a bounded Stage-5 GUI/evidence handoff.
 
 ## Outcome
 
@@ -117,8 +118,8 @@ ordered DataLoss / malformed capture
 ```
 
 Profile matching cannot clear or downgrade frame status/taint. R-003 remains exactly
-**Mitigated in software / targeted re-review pending** until the mandatory Stage-4 review accepts this integrated
-path.
+**Mitigated in software / targeted re-review pending**; the Stage-4 review accepted this integrated path, while
+the retained risk status continues to require its separately scoped targeted re-review.
 
 ## Files/modules changed
 
@@ -191,13 +192,33 @@ occurred.
 
 These are not claimed by the Stage-4 profile.
 
-## Gate recommendation
+## Gate disposition
 
-**HOLD** solely because the mandatory Claude Code Opus/high architecture review has not yet occurred. All known
-Stage-4 software, provenance, isolation, byte-integrity, clean-build and local-regression evidence is green and
-supports a PASS candidate. No unresolved known P0/P1 exists.
+**PASS / CLOSED** at revision `986115d`. Claude Code's mandatory review accepted the Stage-4 architecture with
+one non-blocking P3 follow-up. No Stage-4 code change is required for that finding. R-003 remains
+**Mitigated in software / targeted re-review pending** as recorded in the risk register.
+
+## Carried-forward Stage 4 review follow-ups
+
+### FU-3 (P3) — Discarded manual profile selection is invisible in the match result
+
+`ProfileRegistry::match` evaluates SysEx fingerprints (`ProfileRegistry.cpp:159-171`) before
+`input.manual_profile_id` (`:173-183`). When a fingerprint matches, the function returns
+`ConfidentSuggestion` for the recognised profile and the user's manual selection appears neither in
+`selected_profile_id` nor in the evidence list.
+
+This matches the approved selection order in `STAGE_4_BRIEF.md:132-139`, where manual selection ranks below
+fingerprint evidence, and is therefore not a deviation. The consequence only becomes visible in the GUI: a user
+who deliberately picks profile X while the data fingerprints as Y receives Y with no indication that their choice
+was not used. A saved explicit binding (rank 1) behaves differently and does win.
+
+Action: keep the selection order unchanged. Carry the discarded manual selection into
+`ProfileMatchResult::evidence` as an additional entry so the Stage 5 UI can show that an explicit choice was
+overridden by stronger evidence, and offer the user a way to promote it to a saved binding.
+
+Confidence: high.
 
 ## Next action
 
-Submit the bounded Stage-4 review handoff defined in `STAGE_4_BRIEF.md`. Verify every review finding before any
-fix. Do not begin Stage 5 until the Stage-4 gate is closed by User/Project Manager decision.
+Use FU-3 as a normative Stage-5 brief input. Do not change the accepted matching precedence or begin Stage-5
+implementation until the Stage-5 scope is separately authorized.

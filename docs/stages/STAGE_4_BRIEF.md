@@ -1,7 +1,7 @@
 # Stage 4 Brief – Device/Profile Isolation Proof
 
 **Stage:** 4
-**Status:** IMPLEMENTATION COMPLETE / HOLD FOR MANDATORY ARCHITECTURE REVIEW – User-authorized 2026-08-24; real-device target amended to Novation Summit
+**Status:** PASS / CLOSED at revision `986115d` – User-authorized 2026-08-24; real-device target amended to Novation Summit
 **Implementation lead:** Codex
 **Coordination:** ChatGPT Classic / Project Manager
 **Mandatory review:** Claude Code architecture review (Opus, high)
