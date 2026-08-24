@@ -132,3 +132,50 @@ Recorded Debug result:
 The accounting identity `accepted + dropped == 100000` holds; current queue size is zero after drain, history never
 exceeds 10,000 rows, queue high-water remains below its 8,192 capacity, and displayed count equals accepted count.
 No per-event widget allocation, crash, deadlock, or unexplained loss occurred.
+
+## Connection-bar application worker and fake-transport GUI evidence
+
+The product composition root now constructs one `ConnectionWorker`. The worker exclusively owns the selected
+native transport and the Qt-independent `ConnectionController`; backend construction, enumeration, open, close,
+snapshot access, transport destruction, and orderly backend switching execute on its joined application thread.
+The GUI receives only `future<Result<ConnectionSnapshot>>` values and polls readiness without blocking the Qt
+thread. No detached thread, arbitrary sleep, native callback access to Qt, cross-backend route translation, or
+lower-layer contract change was introduced. Invalid worker construction is rejected before a thread is started.
+
+The WMS transport retains its accepted internal MTA worker boundary. Construction and destruction of that
+transport occur from the application worker, while its SDK/session objects remain confined to the transport's
+established MTA thread. The composition-root declaration order destroys the window first, then joins and destroys
+the connection worker and its transport, and only afterward destroys the callback sequence and bounded monitor
+queue. Native receive callbacks copy messages only into `MonitorEventQueue`; they never invoke Qt.
+
+The persistent connection bar now performs real backend enumeration and exact route selection. Auto remains an
+inactive pre-connection policy until settings provide an exactly resolvable saved backend/routes. WMS labels show
+display name, endpoint device ID, and one-based group; WinMM labels show display name plus manufacturer, product,
+and driver identity. RX and TX remain independently optional. Backend changes close the current transport before
+constructing the next backend. Selected-route loss is presented as **Degraded** with the original binding retained
+and no fuzzy rebinding. Panic remains deliberately disabled with an explanation until its backend-appropriate,
+explicit-user-action implementation is completed.
+
+`stage5_connection_worker_unit` proves transport creation occurs off the caller/GUI thread, exact RX/TX connect,
+route-loss degradation without rebinding, deterministic disconnect, backend switching, and rejection of an empty
+factory without leaking a joinable thread. `stage5_connection_ui_unit` drives the production `MainWindow`, worker,
+controller, and bounded monitor boundary with `FakeMidiTransport`. It proves endpoint/group identity is visible,
+input-only and output-only connection both work, Connect/Disconnect transitions are explicit, and selected TX
+disappearance becomes visibly degraded. The GUI test uses a bounded event-processing guard and no sleep.
+
+No physical MIDI endpoint was selected and no driver, service, registry, API-mode, system PATH, or machine-wide Qt
+setting was changed. Product-host native WMS/WinMM lifecycle and close-while-active evidence remains a later
+Stage-5 validation slice and is not claimed by these fake-transport tests.
+
+### Paused checkpoint validation
+
+Before this active Stage-5 implementation checkpoint was frozen, the Debug build passed and the complete
+CI-labelled, non-local suite passed **17/17** with zero failures. This included all seven current Stage-5 tests,
+the monitor stress test, both new connection tests, and the retained Stage-2/3 WinMM partial-open and transport
+regressions. `git diff --check` also passed.
+
+The separately invoked local-MIDI suite passed its first two tests
+(`stage2_local_winmm_wms_loopback` and `stage3_local_winmm_realtime`) before the User requested a pause; the run
+was then deliberately interrupted while the third test was active. This checkpoint therefore does **not** claim a
+complete local-MIDI rerun, separate clean build, product-host native lifecycle result, or Stage-5 gate result.
+Stage 5 remains **ACTIVE** and Stage 6 remains unstarted.

@@ -111,6 +111,40 @@ set_tests_properties(stage5_monitor_stress PROPERTIES
     TIMEOUT 30
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 
+add_executable(stage5_connection_worker_tests
+    unit/Stage5ConnectionWorkerTests.cpp
+    "${PROJECT_SOURCE_DIR}/src/app/ConnectionWorker.cpp")
+target_include_directories(stage5_connection_worker_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_connection_worker_tests PRIVATE taureon_midi_core)
+if(MSVC)
+    target_compile_options(stage5_connection_worker_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_connection_worker_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_connection_worker_unit COMMAND stage5_connection_worker_tests)
+set_tests_properties(stage5_connection_worker_unit PROPERTIES LABELS "stage5;unit;ci")
+
+add_executable(stage5_connection_ui_tests
+    unit/Stage5ConnectionUiTests.cpp
+    "${PROJECT_SOURCE_DIR}/src/app/ConnectionWorker.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/MainWindow.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorFilterModel.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/ProfileMatchPanel.cpp")
+target_include_directories(stage5_connection_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_connection_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
+if(MSVC)
+    target_compile_options(stage5_connection_ui_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_connection_ui_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_connection_ui_unit COMMAND stage5_connection_ui_tests)
+set_tests_properties(stage5_connection_ui_unit PROPERTIES
+    LABELS "stage5;gui;unit;ci"
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+
 if(WIN32)
     add_executable(stage2_winmm_header_tests unit/Stage2WinmmHeaderTests.cpp)
     target_include_directories(stage2_winmm_header_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

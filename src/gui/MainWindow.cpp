@@ -21,7 +21,11 @@
 #include <QWidget>
 
 #include <array>
+#include <chrono>
 #include <cstddef>
+#include <type_traits>
+#include <utility>
+#include <variant>
 
 namespace taureon::gui {
 namespace {
@@ -43,14 +47,30 @@ QLabel* add_caption(QToolBar& bar, const QString& caption) {
     return label;
 }
 
-QComboBox* add_disabled_selector(QToolBar& bar, const QStringList& values,
-                                 const QString& explanation) {
+QComboBox* add_selector(QToolBar& bar, const QStringList& values) {
     auto* selector = new QComboBox(&bar);
     selector->addItems(values);
-    selector->setEnabled(false);
-    selector->setToolTip(explanation);
     bar.addWidget(selector);
     return selector;
+}
+
+QString endpoint_label(const midi::MidiEndpointDescriptor& endpoint) {
+    return std::visit(
+        [&endpoint](const auto& identity) -> QString {
+            using Identity = std::decay_t<decltype(identity)>;
+            if constexpr (std::is_same_v<Identity, midi::WmsRouteIdentity>) {
+                return QStringLiteral("%1 — %2 · group %3")
+                    .arg(QString::fromStdString(endpoint.display_name),
+                         QString::fromStdString(identity.endpoint_device_id))
+                    .arg(identity.group + 1);
+            } else {
+                return QStringLiteral("%1 — manufacturer %2 · product %3 · driver %4")
+                    .arg(QString::fromStdString(endpoint.display_name))
+                    .arg(identity.manufacturer_id)
+                    .arg(identity.product_id)
+                    .arg(identity.driver_version);
+            }
+        }, endpoint.identity.native);
 }
 
 QWidget* make_workspace_page(const QString& name) {
@@ -129,7 +149,9 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
 
 } // namespace
 
-MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue) {
+MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
+                       app::ConnectionWorker& connection_worker)
+    : connection_worker_(connection_worker) {
     setObjectName("taureonMainWindow");
     setWindowTitle("TAUREON Synth Tool V4");
     resize(1280, 800);
@@ -138,20 +160,30 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue) {
     connection_bar->setObjectName("connectionBar");
     connection_bar->setMovable(false);
 
-    const QString unavailable = "Connection selection is not active until the connection-controller slice is complete.";
     add_caption(*connection_bar, "Backend");
-    add_disabled_selector(*connection_bar,
-                          {"Auto", "Windows MIDI Services", "WinMM"}, unavailable);
+    backend_selector_ = add_selector(*connection_bar,
+                                     {"Auto", "Windows MIDI Services", "WinMM"});
+    backend_selector_->setObjectName("backendSelector");
+    backend_selector_->setAccessibleName("MIDI backend");
+    backend_selector_->setToolTip("Auto restores only an exactly resolvable saved route; none is saved yet.");
     add_caption(*connection_bar, "MIDI Input");
-    add_disabled_selector(*connection_bar, {"No input selected"}, unavailable);
+    receive_selector_ = add_selector(*connection_bar, {"No input selected"});
+    receive_selector_->setObjectName("receiveRouteSelector");
+    receive_selector_->setAccessibleName("MIDI input route");
+    receive_selector_->setEnabled(false);
     add_caption(*connection_bar, "MIDI Output");
-    add_disabled_selector(*connection_bar, {"No output selected"}, unavailable);
+    transmit_selector_ = add_selector(*connection_bar, {"No output selected"});
+    transmit_selector_->setObjectName("transmitRouteSelector");
+    transmit_selector_->setAccessibleName("MIDI output route");
+    transmit_selector_->setEnabled(false);
 
-    auto* connect_button = new QPushButton("Connect", connection_bar);
-    connect_button->setEnabled(false);
-    connect_button->setToolTip(unavailable);
-    connection_bar->addWidget(connect_button);
+    connect_button_ = new QPushButton("Connect", connection_bar);
+    connect_button_->setObjectName("connectButton");
+    connect_button_->setEnabled(false);
+    connect_button_->setToolTip("Select an exact RX or TX route before connecting.");
+    connection_bar->addWidget(connect_button_);
     auto* panic_button = new QPushButton("Panic", connection_bar);
+    panic_button->setObjectName("panicButton");
     panic_button->setEnabled(false);
     panic_button->setToolTip("Panic is unavailable until an explicitly selected TX route is connected.");
     connection_bar->addWidget(panic_button);
@@ -194,7 +226,20 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue) {
     });
     navigation_->setCurrentRow(0);
 
-    statusBar()->showMessage("Disconnected — no MIDI route is selected.");
+    connect(backend_selector_, &QComboBox::currentIndexChanged, this,
+            [this](const int index) { begin_backend_selection(index); });
+    connect(receive_selector_, &QComboBox::currentIndexChanged, this,
+            [this] { set_connection_busy(false); });
+    connect(transmit_selector_, &QComboBox::currentIndexChanged, this,
+            [this] { set_connection_busy(false); });
+    connect(connect_button_, &QPushButton::clicked, this, [this] { begin_connect_toggle(); });
+    connection_poll_timer_ = new QTimer(this);
+    connection_poll_timer_->setInterval(25);
+    connect(connection_poll_timer_, &QTimer::timeout, this, [this] { poll_connection_result(); });
+    connection_poll_timer_->start();
+
+    statusBar()->showMessage(
+        "Disconnected — Auto has no exactly resolvable saved route; choose a backend and routes.");
 }
 
 MainWindow::~MainWindow() { monitor_bridge_->shutdown(); }
@@ -209,6 +254,135 @@ void MainWindow::select_workspace(const int index) {
     if (index < 0 || index >= workspace_stack_->count()) return;
     workspace_stack_->setCurrentIndex(index);
     workspace_heading_->setText(kWorkspaceNames.at(static_cast<std::size_t>(index)));
+}
+
+void MainWindow::begin_backend_selection(const int index) {
+    if (pending_connection_) return;
+    connected_ = false;
+    receive_routes_.clear();
+    transmit_routes_.clear();
+    receive_selector_->clear();
+    transmit_selector_->clear();
+    receive_selector_->addItem("No input selected");
+    transmit_selector_->addItem("No output selected");
+    if (index == 0) {
+        receive_selector_->setEnabled(false);
+        transmit_selector_->setEnabled(false);
+        connect_button_->setEnabled(false);
+        statusBar()->showMessage(
+            "Auto requires an exactly resolvable saved backend and routes; deliberate selection is required.");
+        return;
+    }
+    const auto backend = index == 1 ? midi::MidiBackend::windows_midi_services :
+                                      midi::MidiBackend::winmm;
+    pending_connection_ = connection_worker_.select_backend(backend);
+    pending_action_ = PendingConnectionAction::backend;
+    set_connection_busy(true);
+    statusBar()->showMessage("Enumerating the selected backend on the application worker…");
+}
+
+void MainWindow::begin_connect_toggle() {
+    if (pending_connection_) return;
+    if (connected_) {
+        pending_connection_ = connection_worker_.disconnect();
+        pending_action_ = PendingConnectionAction::disconnect;
+        set_connection_busy(true);
+        statusBar()->showMessage("Disconnecting on the application worker…");
+        return;
+    }
+    const auto receive_index = receive_selector_->currentIndex() - 1;
+    const auto transmit_index = transmit_selector_->currentIndex() - 1;
+    std::optional<midi::MidiRouteIdentity> receive;
+    std::optional<midi::MidiRouteIdentity> transmit;
+    if (receive_index >= 0 && receive_index < static_cast<int>(receive_routes_.size())) {
+        receive = receive_routes_.at(static_cast<std::size_t>(receive_index));
+    }
+    if (transmit_index >= 0 && transmit_index < static_cast<int>(transmit_routes_.size())) {
+        transmit = transmit_routes_.at(static_cast<std::size_t>(transmit_index));
+    }
+    if (!receive && !transmit) {
+        statusBar()->showMessage("Select an exact MIDI input or output route before connecting.");
+        return;
+    }
+    pending_connection_ = connection_worker_.connect(std::move(receive), std::move(transmit));
+    pending_action_ = PendingConnectionAction::connect;
+    set_connection_busy(true);
+    statusBar()->showMessage("Connecting exact selected routes on the application worker…");
+}
+
+void MainWindow::poll_connection_result() {
+    using namespace std::chrono_literals;
+    if (!pending_connection_) {
+        if (backend_selector_->currentIndex() > 0 && ++idle_poll_ticks_ >= 10) {
+            idle_poll_ticks_ = 0;
+            pending_connection_ = connection_worker_.snapshot();
+            pending_action_ = PendingConnectionAction::snapshot;
+        }
+        return;
+    }
+    if (pending_connection_->wait_for(0ms) != std::future_status::ready) return;
+    auto result = pending_connection_->get();
+    const auto action = pending_action_;
+    pending_connection_.reset();
+    if (!result) {
+        connected_ = false;
+        set_connection_busy(false);
+        statusBar()->showMessage("MIDI operation failed: " + QString::fromStdString(result.error().message));
+        return;
+    }
+    apply_connection_snapshot(result.value(), action == PendingConnectionAction::backend);
+    set_connection_busy(false);
+}
+
+void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapshot,
+                                           const bool repopulate) {
+    if (repopulate) {
+        receive_routes_.clear();
+        transmit_routes_.clear();
+        receive_selector_->clear();
+        transmit_selector_->clear();
+        receive_selector_->addItem("No input selected");
+        transmit_selector_->addItem("No output selected");
+        for (const auto& endpoint : snapshot.endpoints) {
+            if (endpoint.identity.direction == midi::MidiDirection::input) {
+                receive_routes_.push_back(endpoint.identity);
+                receive_selector_->addItem(endpoint_label(endpoint));
+            } else {
+                transmit_routes_.push_back(endpoint.identity);
+                transmit_selector_->addItem(endpoint_label(endpoint));
+            }
+        }
+    }
+    connected_ = snapshot.state == app::ConnectionPresentationState::connected ||
+                 snapshot.state == app::ConnectionPresentationState::degraded;
+    connect_button_->setText(connected_ ? "Disconnect" : "Connect");
+    switch (snapshot.state) {
+    case app::ConnectionPresentationState::connected:
+        statusBar()->showMessage("Connected to the exact selected RX/TX routes.");
+        break;
+    case app::ConnectionPresentationState::degraded:
+        statusBar()->showMessage("Degraded: " + QString::fromStdString(snapshot.detail));
+        break;
+    case app::ConnectionPresentationState::error:
+        statusBar()->showMessage("MIDI error: " + QString::fromStdString(snapshot.detail));
+        break;
+    case app::ConnectionPresentationState::ready:
+        statusBar()->showMessage("Backend ready — select exact RX/TX routes.");
+        break;
+    case app::ConnectionPresentationState::disconnected:
+        statusBar()->showMessage("Disconnected.");
+        break;
+    }
+}
+
+void MainWindow::set_connection_busy(const bool busy) {
+    backend_selector_->setEnabled(!busy);
+    const bool backend_ready = !busy && backend_selector_->currentIndex() > 0;
+    receive_selector_->setEnabled(backend_ready && !connected_);
+    transmit_selector_->setEnabled(backend_ready && !connected_);
+    const bool route_selected = receive_selector_->currentIndex() > 0 ||
+                                transmit_selector_->currentIndex() > 0;
+    connect_button_->setEnabled(!busy && (connected_ || (backend_ready && route_selected)));
 }
 
 } // namespace taureon::gui

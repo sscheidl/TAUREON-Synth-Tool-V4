@@ -28,6 +28,10 @@ endif()
 find_package(Qt6 6.10 REQUIRED COMPONENTS Widgets)
 
 add_executable(taureon_app
+    app/ConnectionWorker.cpp
+    app/ConnectionWorker.hpp
+    app/NativeTransportFactory.cpp
+    app/NativeTransportFactory.hpp
     app/taureon_app_main.cpp
     gui/MainWindow.cpp
     gui/MainWindow.hpp
@@ -50,4 +54,9 @@ endif()
 if(WIN32)
     add_subdirectory(transports/winmm)
     add_subdirectory(transports/wms)
+    target_link_libraries(taureon_app PRIVATE taureon_winmm_transport)
+    if(TARGET taureon_wms_transport)
+        target_link_libraries(taureon_app PRIVATE taureon_wms_transport)
+        target_compile_definitions(taureon_app PRIVATE TAUREON_HAS_WMS_TRANSPORT=1)
+    endif()
 endif()
