@@ -125,11 +125,11 @@ It does **not** own:
 - restore workflows;
 - GUI presentation.
 
-The Stage 2 production contract is `IMidiTransport`. It exposes backend identity, capabilities, enumeration,
+The production contract is `IMidiTransport`. It exposes backend identity, capabilities, enumeration,
 independent optional RX/TX routes, open/close state, native message send/delivery boundaries, endpoint-change
 delivery, explicit errors, and diagnostics. Current transport states are `Closed`, `Opening`, `Open`,
-`Closing`, and `Failed`. Stage 3 behavior such as pacing, SysEx framing, retries, and protocol state machines is
-deliberately absent.
+`Closing`, and `Failed`. SysEx framing and pacing are deliberately above this contract; retries and device
+protocol state machines remain later profile/protocol concerns.
 
 Native messages retain either exact MIDI 1.0 bytes or complete UMP words plus optional backend-native
 timestamp metadata. Unknown UMP is representable and is not prematurely flattened.
@@ -142,7 +142,7 @@ Target properties:
 - no `midi.exe` subprocess;
 - native endpoint/group information;
 - UMP-native receive representation;
-- SysEx7 reassembly from UMP packets;
+- complete UMP packet delivery for generic SysEx7 reassembly above transport;
 - deterministic initialization and shutdown.
 
 The production boundary uses the project-local pinned RC4 SDK dependency and build-time C++/WinRT projection.
@@ -151,8 +151,10 @@ sessions/connections. Close disconnects connections and closes the session; dest
 uninitializes the apartment, and joins the worker. Hosted CI can disable this backend when the pinned local SDK
 is unavailable; that condition is not reported as a WMS runtime PASS.
 
-Timestamp conversion, maximum-transfer behavior, realtime receive/send, and endpoint notification subscription
-remain later-stage work.
+Stage 3 added bounded callback handoff to the same worker, complete UMP receive, immediate/native-timestamp UMP
+send, group enforcement, RX/TX/drop/late-callback/high-water diagnostics, and deterministic queue rejection at
+close. Native WMS timestamps are retained as `wms-native-ticks`; cross-backend timestamp normalization,
+maximum-transmission policy, and endpoint notification subscription remain later-stage work.
 
 ## 6. Native WinMM backend
 
@@ -171,6 +173,11 @@ Requirements include:
 The production callback captures a bounded native event and signals a transport-owned worker. It never requeues
 inside `midiInProc`. The worker copies/delivers data and requeues returned headers. Completion events needed to
 recover native ownership are prioritized over droppable short events; overflow is observable.
+
+Stage 3 added MIDI 1.0 short receive/send and long send. Outgoing long-message owners are registered under the
+transport before submit, remain alive through `MOM_DONE`, and are unprepared before handle close. Input chunks
+remain application-owned byte copies above the native header boundary and may be assembled across any number
+of callbacks by the generic SysEx parser.
 
 Input/output `MIDIHDR` owners model prepare, submit, completion/return, unprepare, and release explicitly. A
 submitted header cannot be destroyed. Shutdown disables application acceptance, stops/resets input, drains
@@ -197,6 +204,10 @@ The MIDI Core owns generic representation and parsing of:
 
 It has no GUI dependency.
 
+The parsed MIDI 1.0 view is additive: exact raw bytes remain authoritative. Malformed or incomplete data returns
+an explicit typed error, while unknown legal statuses remain representable. Complete UMP word sequences and
+native timestamp metadata remain available without MIDI 1.0 flattening.
+
 ## 8. SysEx engine
 
 Responsibilities:
@@ -212,6 +223,11 @@ Responsibilities:
 
 The SysEx engine treats payloads as bytes unless a device protocol above it supplies semantics.
 
+Stage 3 establishes complete/incomplete/malformed frame states, incremental chunk-independent parsing,
+realtime-byte separation, explicit data-loss tainting, exact binary `.syx` persistence, and 64-bit UMP SysEx7
+complete/start/continue/end conversion. MIDI 1.0 framing bytes are removed only while encoding SysEx7 metadata
+and restored exactly during reassembly.
+
 ## 9. Transfer engine
 
 The transfer engine is separate from transport.
@@ -223,11 +239,14 @@ It owns:
 - cancellation;
 - timeout;
 - progress;
-- optional request/response state machines through protocol hooks;
-- destructive-operation classification/warnings;
-- profile-specific transfer policy.
+- explicit software-acceptance progress and error propagation.
 
 Transport only moves messages from A to B.
+
+The Stage 3 engine uses one owned, joinable worker; cancellation wakes pacing waits, shutdown cancels and joins,
+and progress says messages/bytes *accepted by the software transport boundary*. It does not claim receipt or
+storage by physical hardware. Device-specific pacing defaults, retries, handshakes, and destructive-operation
+policy belong above this generic engine.
 
 ## 10. Device/profile model
 
@@ -317,14 +336,13 @@ Diagnostics must expose enough information to explain:
 
 ## 14. Architecture decisions still open
 
-Stage 2 resolved the production interface, persisted route identity, WinMM callback/worker split, and header
-ownership model. Remaining later-stage decisions are:
+Stages 2 and 3 resolved the production interface, persisted route identity, WinMM callback/worker split/header
+ownership model, generic realtime send/receive boundary, and exact MIDI 1.0 SysEx ↔ UMP SysEx7 conversion.
+Remaining later-stage decisions are:
 
 - production WMS SDK/runtime version and deployment policy, including supported API-mode detection;
 - timestamp normalization and WMS maximum-transmission constraints;
-- MIDI 1.0 `F0 ... F7` byte-stream <-> UMP SysEx7 conversion and segmentation/reassembly;
 - application UX for deliberate route reselection after a backend or endpoint change;
-- production WMS/WinMM realtime send and receive behavior at the existing native-message boundary;
 - Qt/WMS lifetime and apartment behavior in the actual `QApplication` product host.
 
 No implementation should guess these where official documentation or spike evidence is required.

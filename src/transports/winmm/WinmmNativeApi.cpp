@@ -54,8 +54,14 @@ MMRESULT NativeWinmmTransportApi::reset_input(HMIDIIN handle) { return midiInRes
 
 MMRESULT NativeWinmmTransportApi::close_input(HMIDIIN handle) { return midiInClose(handle); }
 
-MMRESULT NativeWinmmTransportApi::open_output(HMIDIOUT& handle, const UINT index) {
-    return midiOutOpen(&handle, index, 0, 0, CALLBACK_NULL);
+MMRESULT NativeWinmmTransportApi::open_output(HMIDIOUT& handle, const UINT index,
+                                               const DWORD_PTR callback,
+                                               const DWORD_PTR instance) {
+    return midiOutOpen(&handle, index, callback, instance, CALLBACK_FUNCTION);
+}
+
+MMRESULT NativeWinmmTransportApi::send_short(HMIDIOUT handle, const DWORD message) {
+    return midiOutShortMsg(handle, message);
 }
 
 MMRESULT NativeWinmmTransportApi::reset_output(HMIDIOUT handle) { return midiOutReset(handle); }

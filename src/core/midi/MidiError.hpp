@@ -20,6 +20,12 @@ enum class MidiErrorCode {
     invalid_state,
     serialization_error,
     queue_overflow,
+    malformed_data,
+    incomplete_data,
+    io_error,
+    timeout,
+    transfer_cancelled,
+    transport_disconnected,
 };
 
 struct MidiError {

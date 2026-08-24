@@ -2,6 +2,7 @@
 
 #include "transports/IMidiTransport.hpp"
 
+#include <functional>
 #include <mutex>
 
 namespace taureon::midi {
@@ -24,6 +25,9 @@ public:
 
     void set_endpoints(std::vector<MidiEndpointDescriptor> endpoints);
     void remove_endpoint(const MidiRouteIdentity& identity);
+    void set_send_hook(std::function<Result<void>(const NativeMidiMessage&)> hook);
+    void emit_received(const NativeMidiMessage& message);
+    void report_dropped_events(std::uint64_t count = 1);
 
 private:
     [[nodiscard]] Result<void> validate_route(
@@ -37,6 +41,7 @@ private:
     MidiConnectionRequest connection_;
     MidiMessageHandler message_handler_;
     EndpointChangeHandler endpoint_handler_;
+    std::function<Result<void>(const NativeMidiMessage&)> send_hook_;
     MidiTransportDiagnostics diagnostics_;
 };
 

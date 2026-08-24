@@ -20,7 +20,9 @@ public:
     [[nodiscard]] virtual MMRESULT stop_input(HMIDIIN handle) = 0;
     [[nodiscard]] virtual MMRESULT reset_input(HMIDIIN handle) = 0;
     [[nodiscard]] virtual MMRESULT close_input(HMIDIIN handle) = 0;
-    [[nodiscard]] virtual MMRESULT open_output(HMIDIOUT& handle, UINT index) = 0;
+    [[nodiscard]] virtual MMRESULT open_output(HMIDIOUT& handle, UINT index, DWORD_PTR callback,
+                                               DWORD_PTR instance) = 0;
+    [[nodiscard]] virtual MMRESULT send_short(HMIDIOUT handle, DWORD message) = 0;
     [[nodiscard]] virtual MMRESULT reset_output(HMIDIOUT handle) = 0;
     [[nodiscard]] virtual MMRESULT close_output(HMIDIOUT handle) = 0;
 };
@@ -44,7 +46,9 @@ public:
     MMRESULT stop_input(HMIDIIN handle) override;
     MMRESULT reset_input(HMIDIIN handle) override;
     MMRESULT close_input(HMIDIIN handle) override;
-    MMRESULT open_output(HMIDIOUT& handle, UINT index) override;
+    MMRESULT open_output(HMIDIOUT& handle, UINT index, DWORD_PTR callback,
+                         DWORD_PTR instance) override;
+    MMRESULT send_short(HMIDIOUT handle, DWORD message) override;
     MMRESULT reset_output(HMIDIOUT handle) override;
     MMRESULT close_output(HMIDIOUT handle) override;
 

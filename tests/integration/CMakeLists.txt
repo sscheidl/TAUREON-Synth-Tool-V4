@@ -14,6 +14,20 @@ set_tests_properties(stage2_local_winmm_wms_loopback PROPERTIES
     SKIP_RETURN_CODE 77
     TIMEOUT 120)
 
+add_executable(stage3_winmm_local Stage3WinmmLocal.cpp)
+target_link_libraries(stage3_winmm_local PRIVATE taureon_winmm_transport)
+target_compile_definitions(stage3_winmm_local PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_compile_options(stage3_winmm_local PRIVATE /W4 /permissive- /EHsc)
+add_test(NAME stage3_local_winmm_realtime
+    COMMAND "${TAUREON_PWSH_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
+            -File "${PROJECT_SOURCE_DIR}/tools/RunStage3WmsLoopback.ps1"
+            -Executable "$<TARGET_FILE:stage3_winmm_local>" -Cycles 100)
+set_tests_properties(stage3_local_winmm_realtime PROPERTIES
+    LABELS "stage3;local-midi;integration;winmm;realtime;byte-integrity"
+    RESOURCE_LOCK "local-midi-environment"
+    SKIP_RETURN_CODE 77
+    TIMEOUT 180)
+
 if(TARGET taureon_wms_transport)
     add_executable(stage2_wms_local Stage2WmsLocal.cpp)
     target_link_libraries(stage2_wms_local PRIVATE taureon_wms_transport)
@@ -28,6 +42,20 @@ if(TARGET taureon_wms_transport)
         RESOURCE_LOCK "local-midi-environment"
         SKIP_RETURN_CODE 77
         TIMEOUT 120)
+
+    add_executable(stage3_wms_local Stage3WmsLocal.cpp)
+    target_link_libraries(stage3_wms_local PRIVATE taureon_wms_transport)
+    target_compile_definitions(stage3_wms_local PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_compile_options(stage3_wms_local PRIVATE /W4 /permissive- /EHsc)
+    add_test(NAME stage3_local_wms_realtime
+        COMMAND "${TAUREON_PWSH_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
+                -File "${PROJECT_SOURCE_DIR}/tools/RunStage3WmsLoopback.ps1"
+                -Executable "$<TARGET_FILE:stage3_wms_local>" -Cycles 100)
+    set_tests_properties(stage3_local_wms_realtime PROPERTIES
+        LABELS "stage3;local-midi;integration;wms;realtime;byte-integrity"
+        RESOURCE_LOCK "local-midi-environment"
+        SKIP_RETURN_CODE 77
+        TIMEOUT 180)
 endif()
 
 if(TAUREON_BUILD_STAGE1_SPIKES)

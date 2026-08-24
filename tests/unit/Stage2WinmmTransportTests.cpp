@@ -91,7 +91,10 @@ public:
         return MMSYSERR_NOERROR;
     }
 
-    MMRESULT open_output(HMIDIOUT&, UINT) override { return MMSYSERR_NOTSUPPORTED; }
+    MMRESULT open_output(HMIDIOUT&, UINT, DWORD_PTR, DWORD_PTR) override {
+        return MMSYSERR_NOTSUPPORTED;
+    }
+    MMRESULT send_short(HMIDIOUT, DWORD) override { return MMSYSERR_NOTSUPPORTED; }
     MMRESULT reset_output(HMIDIOUT) override { return MMSYSERR_NOTSUPPORTED; }
     MMRESULT close_output(HMIDIOUT) override { return MMSYSERR_NOTSUPPORTED; }
 

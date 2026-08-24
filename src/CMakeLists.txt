@@ -1,8 +1,13 @@
 add_library(taureon_midi_core STATIC
+    core/midi/MidiMessage.cpp
     core/midi/MidiTypes.cpp
     core/midi/RoutePersistence.cpp
     core/midi/RouteResolver.cpp
     core/midi/TransportState.cpp
+    core/sysex/SysEx7.cpp
+    core/sysex/SysExStreamParser.cpp
+    core/sysex/SyxFile.cpp
+    core/transfer/TransferEngine.cpp
     transports/fake/FakeMidiTransport.cpp)
 
 target_include_directories(taureon_midi_core PUBLIC "${PROJECT_SOURCE_DIR}/src")

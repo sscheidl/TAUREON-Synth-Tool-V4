@@ -19,8 +19,11 @@ Status: PASS / CLOSED after targeted-review P1 remediation and User gate
 Implementation lead: Codex
 
 Stage 3 – Realtime MIDI + SysEx engine
-Status: ACTIVE / authorized by User 2026-08-24
+Status: IMPLEMENTATION COMPLETE / PASS RECOMMENDED / awaiting User gate
 Implementation lead: Codex
+
+Stage 4 – Device/profile isolation proof
+Status: PLANNED / NOT AUTHORIZED
 ```
 
 ## Project location
@@ -34,7 +37,7 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4
 GitHub repository:
 
 ```text
-https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (private; `main` pushed through Stage 2 commit `9bcbf0d`)
+https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (private; `main` includes the dedicated Stage-3 completion commit recorded in Git history)
 ```
 
 Legacy local reference:
@@ -114,10 +117,9 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-The targeted Claude Code Stage 2 review found one P1 in WinMM partial-open `MIDIHDR` unwind and placed the gate
-on HOLD. Codex confirmed and fixed the defect by registering prepared buffers under transport ownership before
-submit, then added an exact transport-level regression. The clean CI suite and final local regressions passed;
-the closure commit was pushed, and the User closed Stage 2 with PASS before authorizing Stage 3.
+No Stage-3 implementation blocker or unresolved P0/P1 is known. The Stage-2 partial-open P1 remains closed by
+its transport-level regression. Stage-3 exact conversion, large-data, failure-path, clean-CI, and 100-cycle
+local WMS/WinMM evidence are recorded in [`STAGE_3_REPORT.md`](../stages/STAGE_3_REPORT.md).
 
 Pinned RC4 limitations remain visible but are not transport assumptions: the newer API-mode query is absent
 from the pinned metadata, and the isolated WinMM/WMS correlation helpers fail-fast and are not used for
@@ -128,8 +130,9 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
 - **Stage 2 PASS / CLOSED:** Backend-specific persistence/resolution, WinMM worker
   requeue/RAII, WMS MTA lifetime, P1 closure regression, and opt-in local regressions are implemented and
   recorded in [`STAGE_2_REPORT.md`](../stages/STAGE_2_REPORT.md).
-- **Stage 3:** Prove byte-exact MIDI 1.0 `F0 ... F7` SysEx <-> UMP SysEx7 conversion, segmentation, and
-  reassembly. Preserve the Stage 2 transport/ownership invariants. R-003 remains open.
+- **Stage 3 gate:** User/Project Manager accepts or rejects the PASS recommendation. R-003 is closed for the
+  generic software layer; physical-device behavior remains explicitly unvalidated.
+- **Stage 4:** Begin only after a separate User gate and approved brief.
 - **Stage 5:** Repeat apartment/lifetime/close-active/shutdown validation in the actual `QApplication` host
   and measure actual active state at close.
 
@@ -143,8 +146,8 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Codex executes Stage 3 under [`STAGE_3_BRIEF.md`](../stages/STAGE_3_BRIEF.md). Finish with its complete report,
-clean build/tests, dedicated commit, push, and PASS/HOLD recommendation. Do not begin Stage 4.
+User/Project Manager resolves the Stage-3 gate from [`STAGE_3_REPORT.md`](../stages/STAGE_3_REPORT.md) and its
+PASS recommendation. Do not begin Stage 4.
 
 ## Hardware validation
 

@@ -104,6 +104,7 @@ Result<void> FakeMidiTransport::close() {
 
 Result<void> FakeMidiTransport::send(const NativeMidiMessage& message) {
     MidiMessageHandler handler;
+    std::function<Result<void>(const NativeMidiMessage&)> hook;
     {
         std::scoped_lock lock(mutex_);
         if (lifecycle_.state() != TransportState::open) {
@@ -115,7 +116,15 @@ Result<void> FakeMidiTransport::send(const NativeMidiMessage& message) {
                 {MidiErrorCode::unsupported_capability, "message backend mismatch", {}, std::nullopt});
         }
         handler = message_handler_;
-        ++diagnostics_.delivered_messages;
+        hook = send_hook_;
+    }
+    if (hook) {
+        const auto result = hook(message);
+        if (!result) return result;
+    }
+    {
+        std::scoped_lock lock(mutex_);
+        ++diagnostics_.transmitted_messages;
     }
     if (handler) handler(message);
     return Result<void>::success();
@@ -156,6 +165,28 @@ void FakeMidiTransport::remove_endpoint(const MidiRouteIdentity& identity) {
                             EndpointChangeKind::disappeared,
                  identity, std::nullopt});
     }
+}
+
+void FakeMidiTransport::set_send_hook(
+    std::function<Result<void>(const NativeMidiMessage&)> hook) {
+    std::scoped_lock lock(mutex_);
+    send_hook_ = std::move(hook);
+}
+
+void FakeMidiTransport::emit_received(const NativeMidiMessage& message) {
+    MidiMessageHandler handler;
+    {
+        std::scoped_lock lock(mutex_);
+        handler = message_handler_;
+        ++diagnostics_.native_callbacks;
+        ++diagnostics_.delivered_messages;
+    }
+    if (handler) handler(message);
+}
+
+void FakeMidiTransport::report_dropped_events(const std::uint64_t count) {
+    std::scoped_lock lock(mutex_);
+    diagnostics_.dropped_events += count;
 }
 
 } // namespace taureon::midi

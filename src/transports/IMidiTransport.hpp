@@ -26,8 +26,10 @@ struct MidiTransportCapabilities {
 struct MidiTransportDiagnostics {
     std::uint64_t native_callbacks{};
     std::uint64_t delivered_messages{};
+    std::uint64_t transmitted_messages{};
     std::uint64_t dropped_events{};
     std::uint64_t callbacks_after_acceptance_closed{};
+    std::uint64_t queue_high_water_mark{};
 };
 
 using MidiMessageHandler = std::function<void(const NativeMidiMessage&)>;

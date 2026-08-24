@@ -17,5 +17,5 @@ jobs:
           -DTAUREON_ENABLE_LOCAL_MIDI_INTEGRATION_TESTS=OFF
       - name: Build
         run: cmake --build build/ci --config Debug --parallel
-      - name: Test environment-independent Stage 2 suite
+      - name: Test environment-independent Stage 2 and Stage 3 suite
         run: ctest --test-dir build/ci -C Debug -L ci --output-on-failure

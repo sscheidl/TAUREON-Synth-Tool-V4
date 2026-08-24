@@ -67,22 +67,27 @@ struct WinmmTransport::Impl {
     struct CallbackEvent {
         UINT message{};
         DWORD_PTR parameter{};
+        DWORD_PTR timestamp{};
     };
 
     WinmmTransportApiPtr native_api;
     HMIDIIN input_handle{};
     HMIDIOUT output_handle{};
     std::vector<std::unique_ptr<WinmmInputBuffer>> input_buffers;
+    std::vector<std::unique_ptr<WinmmOutputBuffer>> output_buffers;
     std::atomic<bool> accepting_callbacks{false};
     std::atomic<std::uint64_t> native_callbacks{0};
     std::atomic<std::uint64_t> delivered_messages{0};
+    std::atomic<std::uint64_t> transmitted_messages{0};
     std::atomic<std::uint64_t> dropped_callbacks{0};
     std::atomic<std::uint64_t> callbacks_after_acceptance_closed{0};
+    std::atomic<std::uint64_t> queue_high_water_mark{0};
 
     std::mutex queue_mutex;
     std::condition_variable queue_changed;
     std::deque<std::function<void()>> commands;
     std::deque<CallbackEvent> callbacks;
+    std::deque<MIDIHDR*> output_completions;
     bool stopping{};
     std::thread worker;
 
@@ -117,7 +122,7 @@ struct WinmmTransport::Impl {
     }
 
     static void CALLBACK input_callback(HMIDIIN, const UINT message, const DWORD_PTR instance,
-                                        const DWORD_PTR parameter, DWORD_PTR) {
+                                        const DWORD_PTR parameter, const DWORD_PTR timestamp) {
         auto* self = reinterpret_cast<Impl*>(instance);
         if (self == nullptr || (message != MIM_DATA && message != MIM_LONGDATA &&
                                 message != MIM_ERROR && message != MIM_LONGERROR)) {
@@ -150,7 +155,29 @@ struct WinmmTransport::Impl {
                     return;
                 }
             }
-            self->callbacks.push_back({message, parameter});
+            self->callbacks.push_back({message, parameter, timestamp});
+            const auto depth = static_cast<std::uint64_t>(self->callbacks.size());
+            auto high_water = self->queue_high_water_mark.load(std::memory_order_relaxed);
+            while (depth > high_water &&
+                   !self->queue_high_water_mark.compare_exchange_weak(
+                       high_water, depth, std::memory_order_relaxed)) {}
+        }
+        self->queue_changed.notify_one();
+    }
+
+    static void CALLBACK output_callback(HMIDIOUT, const UINT message, const DWORD_PTR instance,
+                                         const DWORD_PTR parameter, DWORD_PTR) {
+        auto* self = reinterpret_cast<Impl*>(instance);
+        if (self == nullptr || message != MOM_DONE) return;
+        ++self->native_callbacks;
+        {
+            std::scoped_lock lock(self->queue_mutex);
+            self->output_completions.push_back(reinterpret_cast<MIDIHDR*>(parameter));
+            const auto depth = static_cast<std::uint64_t>(self->output_completions.size());
+            auto high_water = self->queue_high_water_mark.load(std::memory_order_relaxed);
+            while (depth > high_water &&
+                   !self->queue_high_water_mark.compare_exchange_weak(
+                       high_water, depth, std::memory_order_relaxed)) {}
         }
         self->queue_changed.notify_one();
     }
@@ -159,14 +186,19 @@ struct WinmmTransport::Impl {
         for (;;) {
             std::function<void()> command;
             std::optional<CallbackEvent> callback;
+            MIDIHDR* output_completion{};
             {
                 std::unique_lock lock(queue_mutex);
                 queue_changed.wait(lock, [&] {
-                    return stopping || !callbacks.empty() || !commands.empty();
+                    return stopping || !output_completions.empty() || !callbacks.empty() ||
+                           !commands.empty();
                 });
                 if (!commands.empty()) {
                     command = std::move(commands.front());
                     commands.pop_front();
+                } else if (!output_completions.empty()) {
+                    output_completion = output_completions.front();
+                    output_completions.pop_front();
                 } else if (!callbacks.empty()) {
                     callback = callbacks.front();
                     callbacks.pop_front();
@@ -174,30 +206,96 @@ struct WinmmTransport::Impl {
                     break;
                 }
             }
-            if (callback) process_callback(*callback);
+            if (output_completion) process_output_completion(output_completion);
+            else if (callback) process_callback(*callback);
             else if (command) command();
         }
     }
 
+    static std::size_t short_message_size(const std::uint8_t status) noexcept {
+        if (status < 0x80) return 0;
+        if (status < 0xF0) {
+            const auto kind = static_cast<std::uint8_t>(status & 0xF0);
+            return kind == 0xC0 || kind == 0xD0 ? 2 : 3;
+        }
+        switch (status) {
+        case 0xF1:
+        case 0xF3:
+            return 2;
+        case 0xF2:
+            return 3;
+        case 0xF6:
+        case 0xF8:
+        case 0xF9:
+        case 0xFA:
+        case 0xFB:
+        case 0xFC:
+        case 0xFD:
+        case 0xFE:
+        case 0xFF:
+            return 1;
+        default:
+            return 0;
+        }
+    }
+
+    void deliver(std::vector<std::uint8_t> bytes, const DWORD_PTR timestamp) {
+        MidiMessageHandler handler;
+        {
+            std::scoped_lock lock(handler_mutex);
+            handler = message_handler;
+        }
+        if (handler && !bytes.empty()) {
+            handler({MidiBackend::winmm, Midi1NativeMessage{std::move(bytes)},
+                     MidiTimestamp{static_cast<std::uint64_t>(timestamp),
+                                   "winmm-milliseconds"}});
+            ++delivered_messages;
+        }
+    }
+
     void process_callback(const CallbackEvent& event) {
+        if (event.message == MIM_DATA || event.message == MIM_ERROR) {
+            if (event.message == MIM_ERROR) {
+                ++dropped_callbacks;
+                return;
+            }
+            const auto packed = static_cast<DWORD>(event.parameter);
+            const auto status = static_cast<std::uint8_t>(packed & 0xFFu);
+            const auto size = short_message_size(status);
+            if (size == 0) {
+                ++dropped_callbacks;
+                return;
+            }
+            std::vector<std::uint8_t> bytes(size);
+            for (std::size_t index = 0; index < size; ++index) {
+                bytes[index] = static_cast<std::uint8_t>((packed >> (index * 8u)) & 0xFFu);
+            }
+            deliver(std::move(bytes), event.timestamp);
+            return;
+        }
         if (event.message != MIM_LONGDATA && event.message != MIM_LONGERROR) return;
         auto* header = reinterpret_cast<MIDIHDR*>(event.parameter);
         for (auto& buffer : input_buffers) {
             if (buffer->native_header() != header) continue;
             buffer->mark_returned();
-            if (event.message == MIM_LONGDATA && accepting_callbacks.load(std::memory_order_acquire)) {
-                const auto bytes = buffer->recorded_bytes();
-                MidiMessageHandler handler;
-                {
-                    std::scoped_lock lock(handler_mutex);
-                    handler = message_handler;
+            if (accepting_callbacks.load(std::memory_order_acquire)) {
+                if (event.message == MIM_LONGDATA) {
+                    const auto bytes = buffer->recorded_bytes();
+                    deliver(bytes, event.timestamp);
+                } else {
+                    ++dropped_callbacks;
                 }
-                if (handler && !bytes.empty()) {
-                    handler({MidiBackend::winmm, Midi1NativeMessage{bytes}, std::nullopt});
-                    ++delivered_messages;
-                }
-                static_cast<void>(buffer->submit());
+                if (!buffer->submit()) ++dropped_callbacks;
             }
+            queue_changed.notify_all();
+            return;
+        }
+    }
+
+    void process_output_completion(MIDIHDR* header) {
+        for (auto& buffer : output_buffers) {
+            if (buffer->native_header() != header) continue;
+            buffer->mark_completed();
             queue_changed.notify_all();
             return;
         }
@@ -302,7 +400,9 @@ struct WinmmTransport::Impl {
                 static_cast<void>(close_on_worker());
                 return Result<void>::failure(index.error());
             }
-            const auto result = native_api->open_output(output_handle, index.value());
+            const auto result = native_api->open_output(
+                output_handle, index.value(), reinterpret_cast<DWORD_PTR>(&output_callback),
+                reinterpret_cast<DWORD_PTR>(this));
             if (result != MMSYSERR_NOERROR) {
                 static_cast<void>(close_on_worker());
                 return Result<void>::failure(
@@ -314,6 +414,13 @@ struct WinmmTransport::Impl {
 
     bool all_input_buffers_returned() const {
         for (const auto& buffer : input_buffers) {
+            if (buffer->submitted()) return false;
+        }
+        return true;
+    }
+
+    bool all_output_buffers_returned() const {
+        for (const auto& buffer : output_buffers) {
             if (buffer->submitted()) return false;
         }
         return true;
@@ -345,9 +452,115 @@ struct WinmmTransport::Impl {
         return Result<void>::success();
     }
 
+    void drain_one_output_completion(std::unique_lock<std::mutex>& lock) {
+        auto* header = output_completions.front();
+        output_completions.pop_front();
+        lock.unlock();
+        process_output_completion(header);
+        lock.lock();
+    }
+
+    Result<void> wait_for_output_buffers(const char* operation) {
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        std::unique_lock lock(queue_mutex);
+        while (!all_output_buffers_returned()) {
+            if (!output_completions.empty()) {
+                drain_one_output_completion(lock);
+                continue;
+            }
+            if (!queue_changed.wait_until(lock, deadline,
+                                          [&] { return !output_completions.empty(); })) {
+                return Result<void>::failure(
+                    {MidiErrorCode::timeout,
+                     "timed out waiting for WinMM to return submitted output headers",
+                     operation, std::nullopt});
+            }
+        }
+        return Result<void>::success();
+    }
+
+    Result<void> send_on_worker(const NativeMidiMessage& message) {
+        if (!output_handle) {
+            return Result<void>::failure(
+                {MidiErrorCode::invalid_state, "WinMM output is not open", {}, std::nullopt});
+        }
+        if (message.backend != MidiBackend::winmm) {
+            return Result<void>::failure(
+                {MidiErrorCode::invalid_route, "message is not for WinMM", {}, std::nullopt});
+        }
+        const auto* midi1 = std::get_if<Midi1NativeMessage>(&message.data);
+        if (midi1 == nullptr) {
+            return Result<void>::failure(
+                {MidiErrorCode::unsupported_capability, "WinMM requires MIDI 1.0 bytes", {},
+                 std::nullopt});
+        }
+        if (midi1->bytes.empty()) {
+            return Result<void>::failure(
+                {MidiErrorCode::malformed_data, "cannot send an empty MIDI message", {},
+                 std::nullopt});
+        }
+
+        const auto expected_short_size = short_message_size(midi1->bytes.front());
+        if (expected_short_size != 0 && midi1->bytes.size() == expected_short_size) {
+            DWORD packed{};
+            for (std::size_t index = 0; index < midi1->bytes.size(); ++index) {
+                packed |= static_cast<DWORD>(midi1->bytes[index]) << (index * 8u);
+            }
+            const auto result = native_api->send_short(output_handle, packed);
+            if (result != MMSYSERR_NOERROR) {
+                return Result<void>::failure(
+                    native_error(MidiErrorCode::native_api_error, "midiOutShortMsg", result));
+            }
+            ++transmitted_messages;
+            return Result<void>::success();
+        }
+
+        if (midi1->bytes.front() != 0xF0 || midi1->bytes.back() != 0xF7) {
+            return Result<void>::failure(
+                {MidiErrorCode::malformed_data,
+                 "WinMM long messages must be complete F0...F7 SysEx frames", {}, std::nullopt});
+        }
+
+        auto buffer = std::make_unique<WinmmOutputBuffer>(*native_api, output_handle, midi1->bytes);
+        const auto prepared = buffer->prepare();
+        if (!prepared) return prepared;
+        output_buffers.push_back(std::move(buffer));
+        const auto submitted = output_buffers.back()->submit();
+        if (!submitted) {
+            const auto unprepared = output_buffers.back()->unprepare();
+            output_buffers.pop_back();
+            if (!unprepared) return unprepared;
+            return submitted;
+        }
+
+        auto returned = wait_for_output_buffers("midiOutLongMsg");
+        if (!returned) {
+            const auto reset = native_api->reset_output(output_handle);
+            if (reset != MMSYSERR_NOERROR) return returned;
+            returned = wait_for_output_buffers("midiOutReset");
+            if (!returned) return returned;
+        }
+        const auto unprepared = output_buffers.back()->unprepare();
+        if (!unprepared) return unprepared;
+        output_buffers.pop_back();
+        ++transmitted_messages;
+        return Result<void>::success();
+    }
+
     Result<void> close_on_worker() {
         std::optional<MidiError> first_error;
         accepting_callbacks.store(false, std::memory_order_release);
+        {
+            std::scoped_lock lock(queue_mutex);
+            for (auto event = callbacks.begin(); event != callbacks.end();) {
+                if (event->message == MIM_LONGDATA || event->message == MIM_LONGERROR) {
+                    ++event;
+                } else {
+                    event = callbacks.erase(event);
+                    ++dropped_callbacks;
+                }
+            }
+        }
 
         if (input_handle) {
             const auto stopped = native_api->stop_input(input_handle);
@@ -379,14 +592,35 @@ struct WinmmTransport::Impl {
 
         if (output_handle) {
             const auto reset = native_api->reset_output(output_handle);
-            if (reset != MMSYSERR_NOERROR && !first_error) {
-                first_error = native_error(MidiErrorCode::close_failure, "midiOutReset", reset);
-            }
-            const auto closed = native_api->close_output(output_handle);
-            if (closed != MMSYSERR_NOERROR && !first_error) {
-                first_error = native_error(MidiErrorCode::close_failure, "midiOutClose", closed);
-            } else if (closed == MMSYSERR_NOERROR) {
-                output_handle = nullptr;
+            if (reset != MMSYSERR_NOERROR) {
+                if (!first_error) {
+                    first_error = native_error(MidiErrorCode::close_failure, "midiOutReset", reset);
+                }
+            } else {
+                const auto returned = wait_for_output_buffers("midiOutReset");
+                if (!returned && !first_error) first_error = returned.error();
+                if (returned) {
+                    bool all_unprepared = true;
+                    for (auto& buffer : output_buffers) {
+                        const auto result = buffer->unprepare();
+                        if (!result) {
+                            all_unprepared = false;
+                            if (!first_error) first_error = result.error();
+                        }
+                    }
+                    if (all_unprepared) {
+                        output_buffers.clear();
+                        const auto closed = native_api->close_output(output_handle);
+                        if (closed != MMSYSERR_NOERROR) {
+                            if (!first_error) {
+                                first_error = native_error(MidiErrorCode::close_failure,
+                                                           "midiOutClose", closed);
+                            }
+                        } else {
+                            output_handle = nullptr;
+                        }
+                    }
+                }
             }
         }
         if (first_error) return Result<void>::failure(std::move(*first_error));
@@ -410,8 +644,9 @@ MidiTransportCapabilities WinmmTransport::capabilities() const noexcept {
 
 MidiTransportDiagnostics WinmmTransport::diagnostics() const noexcept {
     return {impl_->native_callbacks.load(), impl_->delivered_messages.load(),
-            impl_->dropped_callbacks.load(),
-            impl_->callbacks_after_acceptance_closed.load()};
+            impl_->transmitted_messages.load(), impl_->dropped_callbacks.load(),
+            impl_->callbacks_after_acceptance_closed.load(),
+            impl_->queue_high_water_mark.load()};
 }
 
 TransportState WinmmTransport::state() const noexcept { return lifecycle_.state(); }
@@ -451,10 +686,12 @@ Result<void> WinmmTransport::close() {
     return result;
 }
 
-Result<void> WinmmTransport::send(const NativeMidiMessage&) {
-    return Result<void>::failure(
-        {MidiErrorCode::unsupported_capability,
-         "production WinMM message sending begins in Stage 3", {}, std::nullopt});
+Result<void> WinmmTransport::send(const NativeMidiMessage& message) {
+    if (lifecycle_.state() != TransportState::open) {
+        return Result<void>::failure(
+            {MidiErrorCode::invalid_state, "WinMM transport is not open", {}, std::nullopt});
+    }
+    return impl_->invoke([this, message] { return impl_->send_on_worker(message); });
 }
 
 void WinmmTransport::set_message_handler(MidiMessageHandler handler) {

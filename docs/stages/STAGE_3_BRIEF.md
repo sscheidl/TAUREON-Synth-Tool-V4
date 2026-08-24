@@ -1,7 +1,7 @@
 # Stage 3 Brief – Generic MIDI, SysEx & Transfer Engine
 
 **Stage:** 3
-**Status:** APPROVED / ACTIVE (User authorization 2026-08-24)
+**Status:** IMPLEMENTATION COMPLETE / PASS RECOMMENDED / awaiting User gate
 **Implementation lead:** Codex
 **Coordination:** ChatGPT Classic / Project Manager
 **Review:** targeted Claude Code review only if architecture changes materially, a P0/P1 appears, byte/lifetime integrity remains uncertain, or the Project Manager requests it
