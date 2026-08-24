@@ -15,7 +15,11 @@ Status: PASS / CLOSED
 Gate: PASS WITH NON-BLOCKING FOLLOW-UPS (mandatory Claude Code review; no P0/P1 findings)
 
 Stage 2 – MIDI Core + transport abstraction
-Status: PLANNED / NOT STARTED
+Status: IMPLEMENTATION COMPLETE / PASS recommended / gate disposition pending
+Implementation lead: Codex
+
+Stage 3 – Realtime MIDI + SysEx engine
+Status: PLANNED / NOT STARTED / not authorized
 ```
 
 ## Project location
@@ -55,6 +59,16 @@ https://github.com/sscheidl/TAUREON-Synth-Tool
 - one active backend per logical connection;
 - device-specific logic above transport;
 - generic SysEx byte integrity is a core invariant.
+
+Stage 2 production implementation established:
+
+- backend-specific, versioned persisted route identity with exact/missing/ambiguous/invalid resolution;
+- no WinMM index-only persistence, fuzzy fallback, or WMS↔WinMM translation;
+- a Qt-independent `IMidiTransport`, error/result model, lifecycle states, native message representation, and
+  fake transport;
+- WMS worker/MTA ownership with deterministic session/SDK/apartment teardown;
+- WinMM callback→bounded queue→worker requeue and deterministic `MIDIHDR` owners;
+- ordinary CI unit tests plus separately opt-in local WMS/WinMM regressions.
 
 Stage 0 recorded the current WMS C++/WinRT namespace, documented initialization/API-mode route, endpoint/group identity guidance, and SysEx7 helper in `docs/reference/ENVIRONMENT_REPORT.md`.
 
@@ -98,27 +112,21 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-Stage 0 and Stage 1 have no unresolved P0/P1 blocker. The mandatory Claude Code Stage 1 review concluded
-PASS WITH NON-BLOCKING FOLLOW-UPS. A uniquely named temporary WMS-native loopback supplied the safe WinMM
-evidence and was removed after testing. Stage 2 remains planned and has not started.
+Stages 0–2 have no unresolved P0/P1 blocker. Stage 2 implementation and its clean build are complete with a
+PASS recommendation. Final local regressions passed for both production transports and the isolated Stage 1
+byte-integrity path; every uniquely named temporary WMS-native loopback was removed after testing. Project
+Manager/User gate disposition is pending.
 
 Pinned RC4 limitations remain visible but are not transport assumptions: the newer API-mode query is absent
 from the pinned metadata, and the isolated WinMM/WMS correlation helpers fail-fast and are not used for
 identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
 
-## Mandatory later-stage inputs from Stage 1
+## Mandatory later-stage inputs
 
-- **Stage 2:** Persist the backend as part of route identity. Never assume WMS endpoint/group identities and
-  WinMM port identities are transferable. Backend changes require exact re-resolution or visible user
-  selection; no fuzzy cross-backend rebind. Do not depend on the RC4 correlation helpers.
-- **Stage 2:** Keep WinMM callbacks minimal and evaluate/prefer callback -> signal/queue -> worker-owned
-  `MIDIHDR` requeue. Use RAII for production output-header/payload error paths. Do not use cross-thread
-  `QPointer` access as synchronization.
-- **Stage 2:** Add opt-in/labeled local WMS/WinMM lifecycle and byte-integrity regressions. Hosted CI must
-  skip/report unavailable WMS prerequisites rather than simulate coverage. Spike-only hard-coded Qt paths
-  and configure-time projection are not production build architecture.
+- **Stage 2 completed:** Backend-specific persistence/resolution, WinMM worker requeue/RAII, WMS MTA lifetime,
+  and opt-in local regressions are implemented and recorded in [`STAGE_2_REPORT.md`](../stages/STAGE_2_REPORT.md).
 - **Stage 3:** Prove byte-exact MIDI 1.0 `F0 ... F7` SysEx <-> UMP SysEx7 conversion, segmentation, and
-  reassembly. R-003 remains open.
+  reassembly. Preserve the Stage 2 transport/ownership invariants. R-003 remains open.
 - **Stage 5:** Repeat apartment/lifetime/close-active/shutdown validation in the actual `QApplication` host
   and measure actual active state at close.
 
@@ -132,8 +140,8 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Project Manager/User prepares and approves the Stage 2 brief with the mandatory inputs above before any
-Stage 2 implementation begins. Stage 2 is not in progress.
+Project Manager/User reviews [`STAGE_2_REPORT.md`](../stages/STAGE_2_REPORT.md) and records the Stage 2 gate
+disposition. Stage 3 remains planned, not started, and not authorized; its brief requires separate approval.
 
 ## Hardware validation
 

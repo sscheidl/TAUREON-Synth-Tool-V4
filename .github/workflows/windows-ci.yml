@@ -10,8 +10,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -S . -B build/ci -A x64
+        run: >-
+          cmake -S . -B build/ci -A x64
+          -DTAUREON_BUILD_STAGE1_SPIKES=OFF
+          -DTAUREON_ENABLE_WMS_TRANSPORT=OFF
+          -DTAUREON_ENABLE_LOCAL_MIDI_INTEGRATION_TESTS=OFF
       - name: Build
         run: cmake --build build/ci --config Debug --parallel
-      - name: Test
-        run: ctest --test-dir build/ci -C Debug --output-on-failure
+      - name: Test environment-independent Stage 2 suite
+        run: ctest --test-dir build/ci -C Debug -L ci --output-on-failure

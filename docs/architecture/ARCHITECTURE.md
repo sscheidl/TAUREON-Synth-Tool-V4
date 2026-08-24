@@ -1,6 +1,6 @@
 # TAUREON V4 – Architecture
 
-**Status:** Active architecture baseline; updated with Stage 0/1 evidence
+**Status:** Active architecture baseline; updated with Stage 2 implementation
 **Architecture review lead:** Claude Code  
 **Maintained by:** Project Manager after accepted decisions
 
@@ -125,6 +125,15 @@ It does **not** own:
 - restore workflows;
 - GUI presentation.
 
+The Stage 2 production contract is `IMidiTransport`. It exposes backend identity, capabilities, enumeration,
+independent optional RX/TX routes, open/close state, native message send/delivery boundaries, endpoint-change
+delivery, explicit errors, and diagnostics. Current transport states are `Closed`, `Opening`, `Open`,
+`Closing`, and `Failed`. Stage 3 behavior such as pacing, SysEx framing, retries, and protocol state machines is
+deliberately absent.
+
+Native messages retain either exact MIDI 1.0 bytes or complete UMP words plus optional backend-native
+timestamp metadata. Unknown UMP is representable and is not prematurely flattened.
+
 ## 5. Windows MIDI Services backend
 
 Target properties:
@@ -136,7 +145,14 @@ Target properties:
 - SysEx7 reassembly from UMP packets;
 - deterministic initialization and shutdown.
 
-The exact package, namespace, runtime initialization model, API-mode query, timestamp behavior, and maximum-transfer behavior are **Stage 0/1 verification items**, not assumptions frozen by this document.
+The production boundary uses the project-local pinned RC4 SDK dependency and build-time C++/WinRT projection.
+The transport owns one worker thread that initializes an MTA apartment, initializes the SDK, and owns all WMS
+sessions/connections. Close disconnects connections and closes the session; destruction then shuts down the SDK,
+uninitializes the apartment, and joins the worker. Hosted CI can disable this backend when the pinned local SDK
+is unavailable; that condition is not reported as a WMS runtime PASS.
+
+Timestamp conversion, maximum-transfer behavior, realtime receive/send, and endpoint notification subscription
+remain later-stage work.
 
 ## 6. Native WinMM backend
 
@@ -152,10 +168,14 @@ Requirements include:
 - deterministic shutdown;
 - no RtMidi wrapper hidden under a native name.
 
-Stage 1's spike requeued input headers with `midiInAddBuffer` inside `midiInProc`. This is not the production
-design decision and its virtual-loopback success does not establish vendor-driver safety. Stage 2 must keep
-native callbacks minimal and evaluate/prefer callback -> signal/queue -> worker-owned `MIDIHDR` requeue.
-Production output-header ownership and failure paths require RAII.
+The production callback captures a bounded native event and signals a transport-owned worker. It never requeues
+inside `midiInProc`. The worker copies/delivers data and requeues returned headers. Completion events needed to
+recover native ownership are prioritized over droppable short events; overflow is observable.
+
+Input/output `MIDIHDR` owners model prepare, submit, completion/return, unprepare, and release explicitly. A
+submitted header cannot be destroyed. Shutdown disables application acceptance, stops/resets input, drains
+ownership completions, unprepares returned headers, closes native handles, and joins the worker without sleeps.
+See [ADR-0002](adr/ADR-0002-winmm-callback-and-header-ownership.md).
 
 The pinned RC4 WMS/WinMM correlation helpers fail-fast in the isolated Stage 1 probe. They are not an
 architecture dependency and must not be used to silently translate route identities across backends.
@@ -276,6 +296,11 @@ Settings use a versioned schema.
 
 Persist stable route identity, never numeric index alone.
 
+Stage 2 persistence schema version 1 contains backend and direction plus WMS endpoint ID/group or WinMM
+name/`wMid`/`wPid`/driver version. Runtime indices are enumeration hints only. Resolution is exact, missing,
+ambiguous, or invalid; no display-name fallback or cross-backend translation exists. See
+[ADR-0001](adr/ADR-0001-backend-specific-route-identity.md).
+
 Corrupt or obsolete settings fall back safely.
 
 Diagnostics must expose enough information to explain:
@@ -292,15 +317,14 @@ Diagnostics must expose enough information to explain:
 
 ## 14. Architecture decisions still open
 
-Stage 1 resolved the spike package/initializer mechanics and demonstrated backend-specific identity. Stage 2
-and later must consume that evidence while resolving these production decisions:
+Stage 2 resolved the production interface, persisted route identity, WinMM callback/worker split, and header
+ownership model. Remaining later-stage decisions are:
 
 - production WMS SDK/runtime version and deployment policy, including supported API-mode detection;
-- serialized backend-discriminated route identities and exact backend-change re-resolution UX;
 - timestamp normalization and WMS maximum-transmission constraints;
 - MIDI 1.0 `F0 ... F7` byte-stream <-> UMP SysEx7 conversion and segmentation/reassembly;
-- WinMM callback-to-worker requeue and complete RAII ownership/error paths;
-- WMS integration regression availability/skip policy;
+- application UX for deliberate route reselection after a backend or endpoint change;
+- production WMS/WinMM realtime send and receive behavior at the existing native-message boundary;
 - Qt/WMS lifetime and apartment behavior in the actual `QApplication` product host.
 
 No implementation should guess these where official documentation or spike evidence is required.

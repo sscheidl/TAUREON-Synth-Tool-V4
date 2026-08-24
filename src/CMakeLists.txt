@@ -1,0 +1,20 @@
+add_library(taureon_midi_core STATIC
+    core/midi/MidiTypes.cpp
+    core/midi/RoutePersistence.cpp
+    core/midi/RouteResolver.cpp
+    core/midi/TransportState.cpp
+    transports/fake/FakeMidiTransport.cpp)
+
+target_include_directories(taureon_midi_core PUBLIC "${PROJECT_SOURCE_DIR}/src")
+target_compile_features(taureon_midi_core PUBLIC cxx_std_20)
+
+if(MSVC)
+    target_compile_options(taureon_midi_core PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(taureon_midi_core PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+if(WIN32)
+    add_subdirectory(transports/winmm)
+    add_subdirectory(transports/wms)
+endif()

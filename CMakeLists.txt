@@ -16,7 +16,9 @@ endif()
 
 include(CTest)
 
-option(TAUREON_BUILD_STAGE1_SPIKES "Build isolated Stage 1 native transport spikes" ON)
+add_subdirectory(src)
+
+option(TAUREON_BUILD_STAGE1_SPIKES "Build isolated Stage 1 native transport spikes" OFF)
 if(TAUREON_BUILD_STAGE1_SPIKES AND WIN32)
     add_subdirectory(spikes/wms_direct)
     add_subdirectory(spikes/winmm_direct)
@@ -24,4 +26,5 @@ endif()
 
 if(BUILD_TESTING)
     add_test(NAME taureon_bootstrap_runs COMMAND taureon_bootstrap)
+    add_subdirectory(tests)
 endif()

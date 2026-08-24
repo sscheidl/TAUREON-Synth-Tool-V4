@@ -21,5 +21,6 @@ This log records concise product/process decisions that are important but do not
 | D-013 | 2026-08-24 | Authorize Stage 1 start after correcting the Stage 0 WMS evidence and review record | User | Stage 1 is ACTIVE; Stage 0 closure per D-012 stands, corrected evidence supersedes the earlier route entry |
 | D-014 | 2026-08-24 | Approve one temporary software-loopback endpoint for Stage 1, preferring WMS-native loopback facilities and allowing an installed third-party facility only as fallback | User / Project Manager | A uniquely named WMS-native pair may be created, verified through WinMM, tested, and removed without driver/system changes or physical MIDI traffic |
 | D-015 | 2026-08-24 | Close Stage 1 after mandatory Claude Code review with PASS WITH NON-BLOCKING FOLLOW-UPS and no P0/P1 findings | User / Project Manager | Stage 1 evidence is accepted with mandatory Stage 2/3/5 inputs; Stage 2 remains planned and not started |
+| D-016 | 2026-08-24 | Approve and start Stage 2 under `STAGE_2_BRIEF.md` | User | Codex implements only the MIDI Core/transport architecture; Stage 3 remains forbidden pending a later gate |
 
 Technical architecture changes belong in ADRs, not this log.
