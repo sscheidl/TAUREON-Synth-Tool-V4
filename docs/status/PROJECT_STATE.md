@@ -7,8 +7,11 @@
 
 ```text
 Stage 0 – Bootstrap, inventory, provenance, architecture verification
-Status: LOCAL VALIDATION COMPLETE / mandatory Claude Code review pending
-Gate: HOLD RECOMMENDED
+Status: PASS / CLOSED
+Gate: PASS
+
+Next stage: Stage 1 – Native transport spikes
+Status: PLANNED / brief prepared for Project Manager and User review; not authorized to start
 ```
 
 ## Project location
@@ -51,7 +54,7 @@ https://github.com/sscheidl/TAUREON-Synth-Tool
 
 Stage 0 recorded the current WMS C++/WinRT namespace, documented initialization/API-mode route, endpoint/group identity guidance, and SysEx7 helper in `docs/reference/ENVIRONMENT_REPORT.md`.
 
-Still requiring Stage 1 spike evidence:
+Stage 1 must establish evidence for:
 
 - exact pinned WMS package/runtime deployment pairing;
 - timestamp normalization;
@@ -88,13 +91,11 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-No P0/P1 technical blocker was found in local Stage 0 validation.
-
-Gate prerequisite pending: mandatory Claude Code Stage 0 review.
+No unresolved Stage 0 blocker remains. The mandatory Claude Code re-review concluded **PASS WITH NON-BLOCKING FOLLOW-UPS**; no P0/P1 finding remains.
 
 ## Exact next action
 
-Complete the Stage 0 review and resolve the Stage 0 gate. Do not begin Stage 1 before that gate is resolved.
+Project Manager and User review `docs/stages/STAGE_1_BRIEF.md`. Do not begin Stage 1 before that brief is approved.
 
 ## Hardware validation
 

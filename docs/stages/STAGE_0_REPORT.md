@@ -1,7 +1,7 @@
 # Stage 0 Report – Bootstrap, Inventory, Provenance & Architecture Verification
 
-**Status:** LOCAL VALIDATION COMPLETE / REVIEW PENDING  
-**Gate recommendation:** HOLD
+**Status:** PASS / CLOSED  
+**Gate recommendation:** PASS
 
 **Execution date:** 2026-08-24  
 **Scope:** Stage 0 only. No production transport, GUI, device/profile, hardware-send, driver, registry, service, or MIDI API-mode work was performed.
@@ -24,7 +24,7 @@
 
 - Local WMS Runtime and Tools `1.0.17-rc.4.25`, App SDK Runtime files, and `MidiSrv` were found; inspection did not alter them.
 - Official documentation identifies a C++/WinRT C++20 integration route using `Windows.Devices.Midi2`, `MidiApi::EnsureServiceAvailable()`, `MidiApi::GetCurrentlySelectedApiMode()`, `MidiSession`, endpoint-device-id plus group identity, and `MidiSystemExclusive7MessageHelper`.
-- The WMS SDK remains preview/RC. Stage 1 must pin the package/runtime pair and prove initialization, enumeration, callback, loopback, API-mode observation, SysEx7 handling, and shutdown. No WMS client was built or opened in Stage 0.
+- The WMS SDK remains preview/RC. Stage 1 must pin the exact WMS SDK package, C++/WinRT package, `.winmd`, runtime, and deployment-file versions used by the spike, then prove initialization, enumeration, callback, loopback, API-mode observation, SysEx7 handling, and shutdown. No WMS client was built or opened in Stage 0.
 
 ## WinMM verification result
 
@@ -48,11 +48,18 @@ None. Stage 0 recorded supported facts and retained implementation-sensitive cho
 - `cmake --build --preset vs2022-x64-debug --parallel` — built `taureon_bootstrap` successfully.
 - `ctest --preset vs2022-x64-debug` — passed `1/1` test, `taureon_bootstrap_runs`.
 
+## Final mandatory architecture review
+
+- Claude Code re-review result: **PASS WITH NON-BLOCKING FOLLOW-UPS**.
+- No P0/P1 findings remain.
+- The obsolete WMS consumption citation was replaced by the current official SDK overview.
+- The Stage 1 brief now makes the route-identity and Qt/WMS coexistence acceptance requirements mandatory.
+
 ## Blockers / Stop-Ask events
 
 - No Quality Policy Stop/Ask condition occurred.
-- Gate prerequisite pending: mandatory Claude Code Stage 0 review. This is not a WMS or toolchain failure.
+- No unresolved Stage 0 blocker remains.
 
 ## Gate recommendation
 
-**HOLD.** Local technical acceptance evidence is sufficient to prepare the review handoff: the separate repository exists, the C++20 build/test passes, Qt and WinMM availability are known, the official WMS route is documented, and no essential legacy migration has unclear licensing because nothing was migrated. Do not start Stage 1 until the mandatory Claude Code review is complete.
+**PASS.** The separate repository exists, the C++20 build/test passes, Qt and WinMM availability are known, the official WMS route is documented, the private GitHub remote is configured, no essential legacy migration has unclear licensing because nothing was migrated, and the mandatory architecture review found no P0/P1 issue. Stage 1 remains planned until its brief is approved.

@@ -28,20 +28,20 @@ The Stage 0 skeleton deliberately has no Qt or WMS dependency. Qt availability i
 
 ### Current documented integration route
 
-1. Use the WMS App SDK's C++/WinRT projection and the `Windows.Devices.Midi2` namespace; target a 64-bit C++20 desktop process. The official consumption guide states that CMake consumers generate projections with a compatible `cppwinrt.exe` and the supplied WMS `.winmd`.
+1. Use the WMS App SDK's C++/WinRT projection and the `Windows.Devices.Midi2` namespace; target a 64-bit C++20 desktop process. The current SDK overview identifies the `Windows.Devices.Midi2` NuGet package and C++/WinRT 3.x package as the required C++ inputs.
 2. On a dedicated MTA-capable MIDI worker, initialize the WinRT apartment, call `MidiApi::EnsureServiceAvailable()`, then query `MidiApi::GetCurrentlySelectedApiMode()` before creating a `MidiSession`. A `LegacyMode` result must be reported/fallback-handled, never changed by TAUREON.
 3. Persist WMS routes using `MidiEndpointDeviceInformation.EndpointDeviceId` and, where applicable, `MidiGroupTerminalBlock.FirstGroup.Index`; names and numeric port indexes are not persistent identifiers.
 4. Use `MidiSystemExclusive7MessageHelper` for SysEx7 UMP byte extraction/reassembly. Its correctness, transfer limits, timestamp conversion, and Qt worker lifecycle still require Stage 1 spike evidence.
 
 Official sources (checked 2026-08-24):
 
-- [Consuming the MIDI SDK from C++/CMake](https://microsoft.github.io/MIDI/kb/consuming-midi-api/)
+- [Windows MIDI Services App SDK overview](https://microsoft.github.io/MIDI/sdk-overview/)
 - [Moving from WinMM to Windows MIDI Services](https://microsoft.github.io/MIDI/kb/moving-from-winmm-to-wms/)
 - [MidiApiMode](https://microsoft.github.io/MIDI/sdk-reference/MidiApiModeEnum/)
 - [Persistent endpoint identifiers](https://microsoft.github.io/MIDI/kb/identifiers/)
 - [SysEx7 message helper](https://microsoft.github.io/MIDI/sdk-reference/Utilities/Messages/MidiSystemExclusive7MessageHelper/)
 
-The current WMS SDK/release is still documented as preview/RC material. Stage 1 must pin the exact package/runtime pairing and prove a clean executable deployment; Stage 0 makes no production-readiness claim.
+The current WMS SDK/release is still documented as preview/RC material. Stage 1 must record and pin the exact WMS SDK package, C++/WinRT package, `.winmd`, runtime, and deployment-file versions used by the spike, then prove a clean executable deployment. Stage 0 makes no production-readiness claim.
 
 ## WinMM
 

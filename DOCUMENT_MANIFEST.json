@@ -2,7 +2,7 @@
   "package": "TAUREON-Synth-Tool-V4_Documentation",
   "generated": "2026-08-24",
   "purpose": "Clean V4 project documentation baseline",
-  "file_count_including_manifest": 28,
+  "file_count_including_manifest": 29,
   "files": [
     "CHANGELOG.md",
     "PACKAGE_CONTENTS.md",
@@ -26,6 +26,7 @@
     "docs/reference/SUPERSEDED_DOCUMENTS.md",
     "docs/stages/STAGE_0_BRIEF.md",
     "docs/stages/STAGE_0_REPORT.md",
+    "docs/stages/STAGE_1_BRIEF.md",
     "docs/stages/STAGE_BRIEF_TEMPLATE.md",
     "docs/stages/STAGE_REPORT_TEMPLATE.md",
     "docs/status/DECISION_LOG.md",
