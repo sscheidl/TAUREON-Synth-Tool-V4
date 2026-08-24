@@ -51,6 +51,9 @@ unprepares returned headers, closes handles, and joins the worker. Production co
 
 - Fake native-API unit tests cover prepare, submit, completion/return, unprepare, retryable failures, and
   rejection of unprepare while submitted.
+- A transport-level injected-native-API regression drives `open()` through input submit failure and proves
+  unprepare occurs before the native handle closes; this closes the targeted-review P1 without changing the
+  ownership model.
 - The production WinMM transport completed 100 open/close cycles over a uniquely named temporary WMS
   loopback with stable handles, zero dropped callback events, and zero callbacks after acceptance closed.
 - Stage 1 byte-integrity evidence remains an isolated opt-in regression and is not linked into production.

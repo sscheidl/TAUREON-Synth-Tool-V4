@@ -2,9 +2,10 @@
 
 **Stage:** 2
 **Baseline revision:** `fb543a5689d5e5e9ef0903cf42c4f1e3d13879bf` on `main`
-**Completion revision:** dedicated Stage 2 commit containing this report
-**Status:** IMPLEMENTATION COMPLETE / awaiting Project Manager/User gate disposition
-**Result recommendation:** PASS
+**Completion revision:** `9bcbf0d825627461a285529c18484e5eae77eb7d` on `main` / `origin/main`
+**P1 closure revision:** dedicated closure commit containing this updated report
+**Status:** HOLD remediation complete / targeted re-review and Project Manager/User gate disposition pending
+**Result recommendation:** PASS after P1 closure
 
 ## Completed work
 
@@ -22,6 +23,8 @@
   header return/requeue, observable drops/late callbacks, deterministic close, and RAII-quality input/output
   `MIDIHDR` ownership primitives.
 - Added ordinary CI unit tests and separately opt-in/labeled local WMS/WinMM regressions.
+- Closed the targeted-review P1 in the WinMM partial-open submit-failure path and added an exact
+  transport-level regression for the native-handle/unprepare ordering.
 - Added architecture ADRs, CI policy, risk updates, and this gate evidence.
 
 No Stage 3 SysEx engine, realtime monitor, transfer/pacing logic, product GUI, device profile, legacy
@@ -34,9 +37,10 @@ migration, third backend, or physical-hardware path was implemented.
 - `src/transports/IMidiTransport.hpp`: production transport contract.
 - `src/transports/fake/`: deterministic fake transport.
 - `src/transports/wms/`: production WMS enumeration/open/close and worker/MTA lifetime.
-- `src/transports/winmm/`: production WinMM transport, callback/worker queue, and `MIDIHDR` owners.
+- `src/transports/winmm/`: production WinMM transport, injectable native API boundary, callback/worker queue,
+  and `MIDIHDR` owners.
 - `cmake/TaureonWmsSdk.cmake`: build-time pinned C++/WinRT projection.
-- `tests/unit/`: environment-independent core and WinMM ownership tests.
+- `tests/unit/`: environment-independent core, WinMM header-owner, and WinMM transport error-path tests.
 - `tests/integration/` and `tools/RunStage2WinmmWmsLoopback.ps1`: opt-in local regressions with guarded
   temporary endpoint creation/removal.
 - `.github/workflows/windows-ci.yml`: explicit environment-independent Stage 2 configuration and `ci` label.
@@ -86,6 +90,24 @@ unprepare, and release. Submitted storage cannot be unprepared or destroyed. Clo
 acceptance, stops/resets input, drains reset completions, unprepares returned headers, closes handles, and joins
 the worker. Production code contains no sleep-based synchronization.
 
+### Targeted review P1 and closure
+
+The targeted Claude Code review placed Stage 2 on HOLD after finding one P1 in the input partial-open path.
+When `midiInAddBuffer` failed, the prepared buffer was still a local `unique_ptr`; `close_on_worker()` closed
+and nulled the transport handle before the local buffer destructor called `midiInUnprepareHeader` with its
+stale handle. `MMSYSERR_INVALHANDLE` then caused the defensive destructor to call `std::terminate()`.
+
+The fix registers the successfully prepared buffer in transport-owned `input_buffers` before calling
+`submit()`. On failure, the existing close path therefore owns the buffer and performs stop/reset, legal
+unprepare on the still-open handle, buffer release, and handle close in that order. Submitted memory is never
+released early, the success path and callback ownership are unchanged, and no architecture deviation or
+special destructor exception was introduced.
+
+`stage2_winmm_transport_unit` drives `WinmmTransport::open()` through the exact injected
+`midiInAddBuffer` failure. It asserts the explicit returned error, `Failed` state, successful subsequent close
+to `Closed`, zero prepared headers, no live handle, no abort, and the exact native ordering
+`prepare → submit failure → stop/reset → unprepare → close`.
+
 The production WinMM transport completed 100 open/close cycles against the verified temporary WMS loopback
 with identical sampled first/final process handle counts, 200 native header callbacks, zero dropped events, and
 zero callbacks after acceptance closed. The Stage 1 opt-in short/SysEx test again proved exact short data,
@@ -109,6 +131,18 @@ cmake --build build/stage2-clean-20260824 --config Debug --parallel
 ctest --test-dir build/stage2-clean-20260824 -C Debug -L ci --output-on-failure
 ctest --test-dir build/stage2-clean-20260824 -C Debug -N -L local-midi
 git diff --check
+
+# Targeted P1 closure
+cmake --build --preset vs2022-x64-debug --parallel
+ctest --preset vs2022-x64-debug -R stage2_winmm_transport_unit -V
+ctest --preset vs2022-x64-debug -L unit --output-on-failure
+cmake -S . -B build/stage2-p1-clean-20260824 -A x64 `
+  -DTAUREON_BUILD_STAGE1_SPIKES=OFF `
+  -DTAUREON_ENABLE_WMS_TRANSPORT=ON `
+  -DTAUREON_ENABLE_LOCAL_MIDI_INTEGRATION_TESTS=OFF
+cmake --build build/stage2-p1-clean-20260824 --config Debug --parallel
+ctest --test-dir build/stage2-p1-clean-20260824 -C Debug -L ci --output-on-failure
+ctest --preset vs2022-x64-debug -L local-midi --output-on-failure
 ```
 
 ## Automated test summary
@@ -116,7 +150,8 @@ git diff --check
 Final results:
 
 - Clean build: PASS; MIDI core, WMS transport, WinMM transport, and unit executables compiled from scratch.
-- Ordinary CI suite: 2/2 PASS (`stage2_core_unit`, `stage2_winmm_header_unit`).
+- Ordinary CI suite: 3/3 PASS (`stage2_core_unit`, `stage2_winmm_header_unit`,
+  `stage2_winmm_transport_unit`).
 - Opt-in local suite: 3/3 PASS (`stage2_local_winmm_wms_loopback`, `stage2_local_wms_lifecycle`, isolated
   `stage2_local_stage1_winmm_byte_integrity`).
 - Clean build local-MIDI registration: 0 tests, as required with the option OFF.
@@ -137,14 +172,15 @@ observation.
   bounded queue, worker requeue, and deterministic `MIDIHDR` ownership.
 
 Both ADRs formalize decisions explicitly expected by the approved Stage 2 brief; they do not deviate from the
-approved transport model. No P0/P1, architecture deviation, or unresolved lifetime uncertainty arose, so the
-brief does not require an automatic Claude Code review at this gate.
+approved transport model. The later targeted Claude Code review found one P1 implementation defect in
+partial-open ownership ordering. The fix uses the existing transport-owned buffer model and required no ADR or
+architecture change. No P0/P1 remains in the closure candidate.
 
 ## Risk changes
 
 - R-002 remains open because vendor-driver/hardware behavior is not tested, but production ownership,
-  callback/worker separation, error-path unit coverage, and safe 100-cycle evidence now mitigate the
-  architecture portion.
+  callback/worker separation, exact transport-level submit-failure coverage, header-level error coverage, and
+  safe 100-cycle evidence now mitigate the architecture portion.
 - R-005 probability is reduced to Low for the core layer because persistence and resolution now reject
   backend mismatch, ambiguity, and fuzzy rebinding. Later GUI reselection UX remains open.
 - R-003 remains open and unchanged for Stage 3 byte-stream↔SysEx7 conversion/reassembly.
@@ -160,7 +196,9 @@ These are required production hardening outcomes, not scope deviations.
 
 ## Stop / Ask events
 
-None. No P0/P1, system-change requirement, identity loss, byte uncertainty, or ownership blocker occurred.
+The targeted Claude Code review placed the gate on HOLD for the verified WinMM partial-open P1. The defect was
+confirmed and fixed without expanding scope or changing architecture. No system-change requirement, identity
+loss, byte uncertainty, additional P0/P1, or Stop/Ask condition arose during closure.
 
 ## Known limitations and hardware-dependent items not tested
 
@@ -173,8 +211,9 @@ None. No P0/P1, system-change requirement, identity loss, byte uncertainty, or o
 
 ## Gate recommendation
 
-**PASS.** All 21 Stage 2 acceptance criteria are met, all final applicable tests pass, and no unresolved P0/P1
-remains. The Project Manager/User may close Stage 2. Stage 3 must remain not started until that gate decision.
+**PASS after P1 closure.** All 21 Stage 2 acceptance criteria are met, all final applicable tests pass, and no
+unresolved P0/P1 remains. Targeted re-review and Project Manager/User gate disposition may close Stage 2.
+Stage 3 remained unstarted throughout remediation and must remain so until a separate authorization.
 
 ## Next action if approved
 

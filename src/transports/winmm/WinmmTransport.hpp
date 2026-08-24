@@ -1,6 +1,7 @@
 #pragma once
 
 #include "transports/IMidiTransport.hpp"
+#include "WinmmNativeApi.hpp"
 
 #include <memory>
 
@@ -9,6 +10,7 @@ namespace taureon::midi::winmm {
 class WinmmTransport final : public IMidiTransport {
 public:
     WinmmTransport();
+    explicit WinmmTransport(WinmmTransportApiPtr native_api);
     ~WinmmTransport() override;
 
     WinmmTransport(const WinmmTransport&) = delete;

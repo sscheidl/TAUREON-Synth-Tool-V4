@@ -1,5 +1,6 @@
 add_library(taureon_winmm_transport STATIC
     WinmmMidiHeader.cpp
+    WinmmNativeApi.cpp
     WinmmTransport.cpp)
 
 target_include_directories(taureon_winmm_transport PUBLIC "${PROJECT_SOURCE_DIR}/src")

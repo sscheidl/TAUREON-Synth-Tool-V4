@@ -15,7 +15,7 @@ Status: PASS / CLOSED
 Gate: PASS WITH NON-BLOCKING FOLLOW-UPS (mandatory Claude Code review; no P0/P1 findings)
 
 Stage 2 – MIDI Core + transport abstraction
-Status: IMPLEMENTATION COMPLETE / PASS recommended / gate disposition pending
+Status: HOLD / targeted-review P1 remediated / PASS recommended / gate disposition pending
 Implementation lead: Codex
 
 Stage 3 – Realtime MIDI + SysEx engine
@@ -33,7 +33,7 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4
 GitHub repository:
 
 ```text
-https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (private; `main` pushed at baseline `eb63c4a`)
+https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (private; `main` pushed through Stage 2 commit `9bcbf0d`)
 ```
 
 Legacy local reference:
@@ -68,6 +68,7 @@ Stage 2 production implementation established:
   fake transport;
 - WMS worker/MTA ownership with deterministic session/SDK/apartment teardown;
 - WinMM callback→bounded queue→worker requeue and deterministic `MIDIHDR` owners;
+- transport-level WinMM submit-failure coverage proving unprepare-before-close on partial-open unwind;
 - ordinary CI unit tests plus separately opt-in local WMS/WinMM regressions.
 
 Stage 0 recorded the current WMS C++/WinRT namespace, documented initialization/API-mode route, endpoint/group identity guidance, and SysEx7 helper in `docs/reference/ENVIRONMENT_REPORT.md`.
@@ -112,10 +113,11 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-Stages 0–2 have no unresolved P0/P1 blocker. Stage 2 implementation and its clean build are complete with a
-PASS recommendation. Final local regressions passed for both production transports and the isolated Stage 1
-byte-integrity path; every uniquely named temporary WMS-native loopback was removed after testing. Project
-Manager/User gate disposition is pending.
+The targeted Claude Code Stage 2 review found one P1 in WinMM partial-open `MIDIHDR` unwind and placed the gate
+on HOLD. Codex confirmed and fixed the defect by registering prepared buffers under transport ownership before
+submit, then added an exact transport-level regression. No unresolved P0/P1 remains in the closure candidate.
+The clean CI suite and final local regressions pass; every uniquely named temporary WMS-native loopback was
+removed after testing. Targeted re-review and Project Manager/User gate disposition are pending.
 
 Pinned RC4 limitations remain visible but are not transport assumptions: the newer API-mode query is absent
 from the pinned metadata, and the isolated WinMM/WMS correlation helpers fail-fast and are not used for
@@ -123,8 +125,9 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
 
 ## Mandatory later-stage inputs
 
-- **Stage 2 completed:** Backend-specific persistence/resolution, WinMM worker requeue/RAII, WMS MTA lifetime,
-  and opt-in local regressions are implemented and recorded in [`STAGE_2_REPORT.md`](../stages/STAGE_2_REPORT.md).
+- **Stage 2 implementation complete; gate on HOLD:** Backend-specific persistence/resolution, WinMM worker
+  requeue/RAII, WMS MTA lifetime, P1 closure regression, and opt-in local regressions are implemented and
+  recorded in [`STAGE_2_REPORT.md`](../stages/STAGE_2_REPORT.md).
 - **Stage 3:** Prove byte-exact MIDI 1.0 `F0 ... F7` SysEx <-> UMP SysEx7 conversion, segmentation, and
   reassembly. Preserve the Stage 2 transport/ownership invariants. R-003 remains open.
 - **Stage 5:** Repeat apartment/lifetime/close-active/shutdown validation in the actual `QApplication` host
@@ -140,8 +143,9 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Project Manager/User reviews [`STAGE_2_REPORT.md`](../stages/STAGE_2_REPORT.md) and records the Stage 2 gate
-disposition. Stage 3 remains planned, not started, and not authorized; its brief requires separate approval.
+Claude Code/Project Manager/User reviews the documented P1 closure in
+[`STAGE_2_REPORT.md`](../stages/STAGE_2_REPORT.md) and records the Stage 2 gate disposition. Stage 3 remains
+planned, not started, and not authorized; its brief requires separate approval.
 
 ## Hardware validation
 

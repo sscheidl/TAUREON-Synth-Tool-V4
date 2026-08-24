@@ -1,6 +1,6 @@
 #include "WinmmTransport.hpp"
 
-#include "WinmmMidiHeader.hpp"
+#include "WinmmNativeApi.hpp"
 #include "core/midi/RouteResolver.hpp"
 
 #include <windows.h>
@@ -17,6 +17,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <utility>
@@ -55,6 +56,11 @@ MidiError resolution_error(const RouteResolutionStatus status) {
     return {MidiErrorCode::invalid_route, "WinMM route is invalid", {}, std::nullopt};
 }
 
+WinmmTransportApiPtr require_native_api(WinmmTransportApiPtr native_api) {
+    if (!native_api) throw std::invalid_argument("WinMM native API must not be null");
+    return native_api;
+}
+
 } // namespace
 
 struct WinmmTransport::Impl {
@@ -63,7 +69,7 @@ struct WinmmTransport::Impl {
         DWORD_PTR parameter{};
     };
 
-    NativeWinmmHeaderApi header_api;
+    WinmmTransportApiPtr native_api;
     HMIDIIN input_handle{};
     HMIDIOUT output_handle{};
     std::vector<std::unique_ptr<WinmmInputBuffer>> input_buffers;
@@ -84,7 +90,8 @@ struct WinmmTransport::Impl {
     MidiMessageHandler message_handler;
     EndpointChangeHandler endpoint_handler;
 
-    Impl() : worker([this] { worker_main(); }) {}
+    explicit Impl(WinmmTransportApiPtr api)
+        : native_api(std::move(api)), worker([this] { worker_main(); }) {}
 
     ~Impl() {
         static_cast<void>(invoke([this] { return close_on_worker(); }));
@@ -198,9 +205,9 @@ struct WinmmTransport::Impl {
 
     Result<std::vector<MidiEndpointDescriptor>> enumerate_on_worker() const {
         std::vector<MidiEndpointDescriptor> endpoints;
-        for (UINT index = 0; index < midiInGetNumDevs(); ++index) {
+        for (UINT index = 0; index < native_api->input_device_count(); ++index) {
             MIDIINCAPSW caps{};
-            const auto result = midiInGetDevCapsW(index, &caps, sizeof(caps));
+            const auto result = native_api->input_device_caps(index, caps);
             if (result != MMSYSERR_NOERROR) {
                 return Result<std::vector<MidiEndpointDescriptor>>::failure(
                     native_error(MidiErrorCode::native_api_error, "midiInGetDevCapsW", result));
@@ -212,9 +219,9 @@ struct WinmmTransport::Impl {
                                  name, MidiProtocol::midi1,
                                  {true, false, true, false}, index, std::nullopt});
         }
-        for (UINT index = 0; index < midiOutGetNumDevs(); ++index) {
+        for (UINT index = 0; index < native_api->output_device_count(); ++index) {
             MIDIOUTCAPSW caps{};
-            const auto result = midiOutGetDevCapsW(index, &caps, sizeof(caps));
+            const auto result = native_api->output_device_caps(index, caps);
             if (result != MMSYSERR_NOERROR) {
                 return Result<std::vector<MidiEndpointDescriptor>>::failure(
                     native_error(MidiErrorCode::native_api_error, "midiOutGetDevCapsW", result));
@@ -254,29 +261,29 @@ struct WinmmTransport::Impl {
             }
             const auto index = resolve_index(*request.receive_route, endpoints.value());
             if (!index) return Result<void>::failure(index.error());
-            const auto result = midiInOpen(&input_handle, index.value(),
-                                           reinterpret_cast<DWORD_PTR>(&input_callback),
-                                           reinterpret_cast<DWORD_PTR>(this), CALLBACK_FUNCTION);
+            const auto result = native_api->open_input(
+                input_handle, index.value(), reinterpret_cast<DWORD_PTR>(&input_callback),
+                reinterpret_cast<DWORD_PTR>(this));
             if (result != MMSYSERR_NOERROR) {
                 return Result<void>::failure(
                     native_error(MidiErrorCode::open_failure, "midiInOpen", result));
             }
             for (int count = 0; count < 2; ++count) {
-                auto buffer = std::make_unique<WinmmInputBuffer>(header_api, input_handle, 4096);
+                auto buffer = std::make_unique<WinmmInputBuffer>(*native_api, input_handle, 4096);
                 auto prepared = buffer->prepare();
                 if (!prepared) {
                     static_cast<void>(close_on_worker());
                     return prepared;
                 }
-                auto submitted = buffer->submit();
+                input_buffers.push_back(std::move(buffer));
+                auto submitted = input_buffers.back()->submit();
                 if (!submitted) {
                     static_cast<void>(close_on_worker());
                     return submitted;
                 }
-                input_buffers.push_back(std::move(buffer));
             }
             accepting_callbacks.store(true, std::memory_order_release);
-            const auto started = midiInStart(input_handle);
+            const auto started = native_api->start_input(input_handle);
             if (started != MMSYSERR_NOERROR) {
                 static_cast<void>(close_on_worker());
                 return Result<void>::failure(
@@ -295,7 +302,7 @@ struct WinmmTransport::Impl {
                 static_cast<void>(close_on_worker());
                 return Result<void>::failure(index.error());
             }
-            const auto result = midiOutOpen(&output_handle, index.value(), 0, 0, CALLBACK_NULL);
+            const auto result = native_api->open_output(output_handle, index.value());
             if (result != MMSYSERR_NOERROR) {
                 static_cast<void>(close_on_worker());
                 return Result<void>::failure(
@@ -343,11 +350,11 @@ struct WinmmTransport::Impl {
         accepting_callbacks.store(false, std::memory_order_release);
 
         if (input_handle) {
-            const auto stopped = midiInStop(input_handle);
+            const auto stopped = native_api->stop_input(input_handle);
             if (stopped != MMSYSERR_NOERROR && !first_error) {
                 first_error = native_error(MidiErrorCode::close_failure, "midiInStop", stopped);
             }
-            const auto reset = midiInReset(input_handle);
+            const auto reset = native_api->reset_input(input_handle);
             if (reset != MMSYSERR_NOERROR && !first_error) {
                 first_error = native_error(MidiErrorCode::close_failure, "midiInReset", reset);
             }
@@ -361,7 +368,7 @@ struct WinmmTransport::Impl {
             }
             if (!first_error) {
                 input_buffers.clear();
-                const auto closed = midiInClose(input_handle);
+                const auto closed = native_api->close_input(input_handle);
                 if (closed != MMSYSERR_NOERROR) {
                     first_error = native_error(MidiErrorCode::close_failure, "midiInClose", closed);
                 } else {
@@ -371,11 +378,11 @@ struct WinmmTransport::Impl {
         }
 
         if (output_handle) {
-            const auto reset = midiOutReset(output_handle);
+            const auto reset = native_api->reset_output(output_handle);
             if (reset != MMSYSERR_NOERROR && !first_error) {
                 first_error = native_error(MidiErrorCode::close_failure, "midiOutReset", reset);
             }
-            const auto closed = midiOutClose(output_handle);
+            const auto closed = native_api->close_output(output_handle);
             if (closed != MMSYSERR_NOERROR && !first_error) {
                 first_error = native_error(MidiErrorCode::close_failure, "midiOutClose", closed);
             } else if (closed == MMSYSERR_NOERROR) {
@@ -387,7 +394,11 @@ struct WinmmTransport::Impl {
     }
 };
 
-WinmmTransport::WinmmTransport() : impl_(std::make_unique<Impl>()) {}
+WinmmTransport::WinmmTransport()
+    : WinmmTransport(std::make_shared<NativeWinmmTransportApi>()) {}
+
+WinmmTransport::WinmmTransport(WinmmTransportApiPtr native_api)
+    : impl_(std::make_unique<Impl>(require_native_api(std::move(native_api)))) {}
 
 WinmmTransport::~WinmmTransport() { static_cast<void>(close()); }
 

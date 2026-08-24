@@ -17,6 +17,14 @@ if(WIN32)
     target_compile_options(stage2_winmm_header_tests PRIVATE /W4 /permissive- /EHsc)
     add_test(NAME stage2_winmm_header_unit COMMAND stage2_winmm_header_tests)
     set_tests_properties(stage2_winmm_header_unit PROPERTIES LABELS "stage2;unit;ci;winmm")
+
+    add_executable(stage2_winmm_transport_tests unit/Stage2WinmmTransportTests.cpp)
+    target_include_directories(stage2_winmm_transport_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(stage2_winmm_transport_tests PRIVATE taureon_winmm_transport)
+    target_compile_definitions(stage2_winmm_transport_tests PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_compile_options(stage2_winmm_transport_tests PRIVATE /W4 /permissive- /EHsc)
+    add_test(NAME stage2_winmm_transport_unit COMMAND stage2_winmm_transport_tests)
+    set_tests_properties(stage2_winmm_transport_unit PROPERTIES LABELS "stage2;unit;ci;winmm")
 endif()
 
 option(TAUREON_ENABLE_LOCAL_MIDI_INTEGRATION_TESTS

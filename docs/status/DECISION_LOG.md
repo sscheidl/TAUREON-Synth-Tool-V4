@@ -22,5 +22,6 @@ This log records concise product/process decisions that are important but do not
 | D-014 | 2026-08-24 | Approve one temporary software-loopback endpoint for Stage 1, preferring WMS-native loopback facilities and allowing an installed third-party facility only as fallback | User / Project Manager | A uniquely named WMS-native pair may be created, verified through WinMM, tested, and removed without driver/system changes or physical MIDI traffic |
 | D-015 | 2026-08-24 | Close Stage 1 after mandatory Claude Code review with PASS WITH NON-BLOCKING FOLLOW-UPS and no P0/P1 findings | User / Project Manager | Stage 1 evidence is accepted with mandatory Stage 2/3/5 inputs; Stage 2 remains planned and not started |
 | D-016 | 2026-08-24 | Approve and start Stage 2 under `STAGE_2_BRIEF.md` | User | Codex implements only the MIDI Core/transport architecture; Stage 3 remains forbidden pending a later gate |
+| D-017 | 2026-08-24 | Place Stage 2 on HOLD for the targeted Claude Code P1 and authorize narrowly scoped closure remediation | User / Project Manager | Fix WinMM partial-open header unwind, add the exact transport regression, preserve the accepted architecture, and keep Stage 3 unstarted |
 
 Technical architecture changes belong in ADRs, not this log.

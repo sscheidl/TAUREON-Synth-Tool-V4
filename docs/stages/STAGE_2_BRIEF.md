@@ -1,7 +1,7 @@
 # Stage 2 Brief – MIDI Core and Transport Interface
 
 **Stage:** 2
-**Status:** APPROVED / IMPLEMENTATION COMPLETE (PASS recommended; gate pending)
+**Status:** APPROVED / HOLD remediation complete (PASS recommended after P1 closure; gate pending)
 **Implementation lead:** Codex
 **Coordination:** ChatGPT Classic / Project Manager
 **Review:** targeted Claude Code review only if architecture changes materially, a P0/P1 appears, or the Project Manager requests it
