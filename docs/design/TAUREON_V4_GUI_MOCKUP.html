@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TAUREON V4 – Clickable GUI Mockup</title>
+<style>
+:root{
+  --bg:#0f1115;
+  --panel:#171a20;
+  --panel2:#1d2128;
+  --panel3:#232832;
+  --text:#edf0f5;
+  --muted:#9ca5b3;
+  --line:#303744;
+  --accent:#d7b36b;
+  --accent2:#f0cc84;
+  --good:#65c58f;
+  --warn:#e2b95f;
+  --bad:#d66f6f;
+  --shadow:0 12px 40px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:linear-gradient(180deg,#0d0f13,#11151b);
+  color:var(--text);
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+  font-size:14px;
+  min-width:1180px;
+}
+button,select,input,textarea{font:inherit}
+button,select{
+  background:var(--panel3);
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:7px;
+  padding:7px 10px;
+}
+button{cursor:pointer}
+button:hover{border-color:#566174;background:#29303b}
+button.primary{background:#5f4b26;border-color:#9b7b3b;color:#fff3d5}
+button.primary:hover{background:#725b2e}
+button.ghost{background:transparent}
+button.danger{border-color:#714444;color:#f2b5b5}
+select{min-width:160px}
+.app{height:100vh;display:flex;flex-direction:column}
+.titlebar{
+  height:42px;display:flex;align-items:center;gap:14px;padding:0 18px;
+  border-bottom:1px solid #252a32;background:#0e1014;
+}
+.brand{font-weight:700;letter-spacing:.8px;color:var(--accent2);font-size:15px}
+.version{color:var(--muted);font-size:12px}
+.window-spacer{flex:1}
+.mode-pill{
+  color:#cfd6df;background:#191d24;border:1px solid var(--line);
+  padding:4px 8px;border-radius:999px;font-size:12px
+}
+.connection{
+  display:grid;grid-template-columns:auto 145px 1fr 1fr auto auto;
+  align-items:end;gap:12px;padding:12px 18px;
+  border-bottom:1px solid var(--line);background:var(--panel);
+}
+.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:5px}
+.field select{width:100%}
+.conn-status{display:flex;align-items:center;gap:8px;padding-bottom:7px;white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;background:#67707e;box-shadow:0 0 0 3px rgba(103,112,126,.12)}
+.dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(101,197,143,.12)}
+.tabs{
+  display:flex;gap:2px;padding:0 14px;background:#12151a;border-bottom:1px solid var(--line)
+}
+.tab{
+  border:0;border-radius:0;background:transparent;color:var(--muted);
+  padding:12px 15px;border-bottom:2px solid transparent
+}
+.tab:hover{background:#191d24;color:#fff}
+.tab.active{color:var(--text);border-bottom-color:var(--accent);background:#171a20}
+.workspace{flex:1;overflow:auto;padding:14px;background:radial-gradient(circle at top left,#151922 0,#101319 45%,#0e1116 100%)}
+.page{display:none;height:100%}
+.page.active{display:block}
+.toolbar{
+  display:flex;align-items:center;gap:8px;padding:10px;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px 10px 0 0;
+}
+.toolbar .spacer{flex:1}
+.toolbar label{color:var(--muted);font-size:12px}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)
+}
+.table-wrap{border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;overflow:hidden;background:var(--panel)}
+table{width:100%;border-collapse:collapse}
+th{
+  text-align:left;color:#b9c1cc;background:#1b2027;font-weight:600;font-size:12px;
+  padding:9px 10px;border-bottom:1px solid var(--line)
+}
+td{padding:9px 10px;border-bottom:1px solid #252b34;color:#e2e7ee}
+tr:hover td{background:#1d222a}
+.mgr-row.selected td{background:#252117}
+.mgr-row.selected td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.raw{font-family:Consolas,monospace;color:#9fb0c7}
+.muted{color:var(--muted)}
+.gold{color:var(--accent2)}
+.badge{
+  display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;
+  border:1px solid var(--line);font-size:11px;background:#171b21;color:#bec7d3
+}
+.badge.good{color:#9de0b7;border-color:#335f45}
+.badge.warn{color:#e8c985;border-color:#6d5930}
+.badge.special{color:#c6b4eb;border-color:#544572}
+.grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.section{padding:14px}
+.section h3{margin:0 0 10px;font-size:14px}
+.kpi{padding:13px;background:var(--panel2);border:1px solid var(--line);border-radius:8px}
+.kpi .v{font-size:22px;font-weight:700;margin-top:4px}
+.small{font-size:12px;color:var(--muted)}
+.profile-layout{display:grid;grid-template-columns:290px 1fr;gap:14px;height:calc(100% - 4px)}
+.profile-list{padding:8px}
+.profile-item{
+  padding:10px;border-radius:7px;cursor:pointer;border:1px solid transparent;margin-bottom:3px
+}
+.profile-item:hover{background:var(--panel2)}
+.profile-item.active{background:#29251d;border-color:#5a4b2e}
+.profile-item .maker{font-size:11px;color:var(--muted)}
+.profile-item .model{font-weight:600;margin-top:2px}
+.profile-detail{padding:18px}
+.kv{display:grid;grid-template-columns:160px 1fr;gap:7px 12px;margin:12px 0}
+.kv div:nth-child(odd){color:var(--muted)}
+.codebox{
+  background:#0c0f13;border:1px solid var(--line);border-radius:8px;padding:12px;
+  font:12px Consolas,monospace;color:#b9c6d8;white-space:pre-wrap
+}
+.filebox{padding:16px}
+.file-title{font-size:17px;font-weight:650}
+.progress{height:8px;background:#262c35;border-radius:999px;overflow:hidden}
+.progress > div{height:100%;width:0%;background:linear-gradient(90deg,#8b713b,var(--accent2));transition:.3s}
+.log{height:180px;overflow:auto;background:#0b0e12;border:1px solid var(--line);border-radius:8px;padding:10px;font:12px Consolas,monospace}
+.log p{margin:0 0 5px;color:#aeb9c7}
+.diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.statusbar{
+  height:28px;padding:0 14px;display:flex;align-items:center;gap:16px;border-top:1px solid var(--line);
+  background:#0e1014;color:var(--muted);font-size:12px
+}
+.statusbar .spacer{flex:1}
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:20
+}
+.modal-backdrop.show{display:flex}
+.modal{
+  width:820px;max-height:82vh;background:#15191f;border:1px solid #3a424f;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.55);
+  overflow:hidden
+}
+.modal-head{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+.modal-head h3{margin:0;font-size:14px}
+.modal-head .spacer{flex:1}
+.modal-body{padding:14px}
+textarea{
+  width:100%;height:430px;resize:none;background:#0b0e12;color:#cbd6e4;border:1px solid var(--line);border-radius:8px;padding:12px;
+  font:12px Consolas,monospace
+}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 14px;border-top:1px solid var(--line)}
+.toast{
+  position:fixed;right:18px;bottom:44px;background:#232a34;border:1px solid #465162;color:#e9edf3;
+  padding:10px 13px;border-radius:8px;box-shadow:var(--shadow);display:none;z-index:40
+}
+.toast.show{display:block}
+.chk{display:inline-flex;gap:5px;align-items:center;color:#c8d0db;font-size:12px}
+.chk input{accent-color:#b99550}
+hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.fake-chart{
+  height:170px;border:1px solid var(--line);border-radius:8px;background:
+  linear-gradient(to right,transparent 49px,#202631 50px,transparent 51px),
+  linear-gradient(to bottom,transparent 33px,#202631 34px,transparent 35px),
+  #10141a;
+  position:relative;overflow:hidden
+}
+.fake-chart:after{
+  content:"";position:absolute;left:0;right:0;bottom:32%;height:2px;background:linear-gradient(90deg,transparent,#d7b36b 15%,#8ea0b7 34%,#d7b36b 48%,#8ea0b7 63%,#d7b36b 79%,transparent);
+  transform:skewY(-4deg)
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="titlebar">
+    <div class="brand">τAUREON V4</div>
+    <div class="version">Clickable GUI Mockup · no MIDI wiring</div>
+    <div class="window-spacer"></div>
+    <div class="mode-pill">Prototype</div>
+  </div>
+
+  <div class="connection">
+    <div class="field">
+      <label>Backend</label>
+      <select id="backend">
+        <option>Auto</option><option>Windows MIDI Services</option><option>WinMM</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>State</label>
+      <div class="conn-status"><span class="dot" id="connDot"></span><span id="connText">Disconnected</span></div>
+    </div>
+    <div class="field">
+      <label>MIDI Input</label>
+      <select id="midiIn">
+        <option>Novation Summit</option>
+        <option>Korg minilogue xd</option>
+        <option>ESI M8U eX 15</option>
+        <option>Native Instruments S61 MK3</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>MIDI Output</label>
+      <select id="midiOut">
+        <option>Novation Summit</option>
+        <option>Korg minilogue xd</option>
+        <option>ESI M8U eX 16</option>
+        <option>Native Instruments S61 MK3</option>
+      </select>
+    </div>
+    <button id="connectBtn" class="primary">Connect</button>
+    <button id="panicBtn" class="ghost">Panic</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-page="monitor">MIDI Monitor</button>
+    <button class="tab" data-page="sysex">SysEx Transfer</button>
+    <button class="tab" data-page="sysexmgr">SysEx Manager</button>
+    <button class="tab" data-page="library">Library / Librarian</button>
+    <button class="tab" data-page="profiles">Devices & Profiles</button>
+    <button class="tab" data-page="diagnostics">Diagnostics</button>
+    <button class="tab" data-page="settings">Settings</button>
+  </div>
+
+  <div class="workspace">
+
+    <section class="page active" id="monitor">
+      <div class="toolbar">
+        <label>Profile</label>
+        <select id="profileSelect">
+          <option>Auto → Novation Summit</option>
+          <option>General MIDI</option>
+          <option>Novation Summit</option>
+          <option>Korg minilogue xd</option>
+          <option>Dreadbox Artemis</option>
+          <option>Access Virus A</option>
+          <option>Kawai K5000S</option>
+        </select>
+        <button id="editProfileBtn">Edit JSON</button>
+        <span class="badge good" id="profileBadge">READY_COMPLEX</span>
+        <span style="width:12px"></span>
+        <label>Channel</label>
+        <select style="min-width:95px"><option>All</option><option>1</option><option>2</option><option>3</option></select>
+        <label class="chk"><input type="checkbox" checked> Notes</label>
+        <label class="chk"><input type="checkbox" checked> CC</label>
+        <label class="chk"><input type="checkbox" checked> NRPN/RPN</label>
+        <label class="chk"><input type="checkbox" checked> SysEx</label>
+        <label class="chk"><input type="checkbox"> Clock</label>
+        <div class="spacer"></div>
+        <button id="pauseBtn">Pause</button>
+        <button id="clearBtn">Clear</button>
+        <button id="exportBtn">Export</button>
+      </div>
+      <div class="table-wrap">
+        <table id="monitorTable">
+          <thead><tr><th>Time</th><th>Dir</th><th>Port</th><th>Ch</th><th>Type</th><th>Parameter / Event</th><th>Value</th><th>Raw</th></tr></thead>
+          <tbody>
+            <tr><td>20:31:04.221</td><td>IN</td><td>Summit</td><td>1</td><td>CC</td><td class="gold">Filter Resonance</td><td>84</td><td class="raw">B0 4F 54</td></tr>
+            <tr><td>20:31:04.408</td><td>IN</td><td>Summit</td><td>1</td><td>CC Pair</td><td class="gold">Filter Frequency</td><td>9234</td><td class="raw">B0 1D 48 / B0 3D 12</td></tr>
+            <tr><td>20:31:05.016</td><td>IN</td><td>Summit</td><td>1</td><td>Note On</td><td>C4</td><td>103</td><td class="raw">90 3C 67</td></tr>
+            <tr><td>20:31:05.244</td><td>IN</td><td>Summit</td><td>1</td><td>NRPN</td><td class="gold">Oscillator 1 Wave</td><td>Saw</td><td class="raw">B0 63 00 ...</td></tr>
+            <tr><td>20:31:05.997</td><td>IN</td><td>Summit</td><td>1</td><td>Pitch Bend</td><td>Pitch Bend</td><td>+218</td><td class="raw">E0 5A 41</td></tr>
+            <tr><td>20:31:06.514</td><td>IN</td><td>Summit</td><td>1</td><td>SysEx</td><td>Novation SysEx · 527 bytes</td><td>1 frame</td><td class="raw">F0 00 20 29 ... F7</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="page" id="sysex">
+      <div class="grid2">
+        <div class="card filebox">
+          <div class="small">Loaded file</div>
+          <div class="file-title">Summit_Singles_A-D.syx</div>
+          <div class="kv">
+            <div>Manufacturer</div><div>Novation</div>
+            <div>Profile</div><div>Novation Summit</div>
+            <div>Frames</div><div>512</div>
+            <div>Total bytes</div><div>269,824</div>
+            <div>Framing</div><div><span class="badge good">Valid</span></div>
+          </div>
+          <hr>
+          <div style="display:flex;gap:8px">
+            <button id="fakeOpen">Open File</button>
+            <button>Frame Inspector</button>
+          </div>
+        </div>
+        <div class="card section">
+          <h3>Transfer</h3>
+          <div class="kv">
+            <div>Output route</div><div><select><option>Novation Summit</option><option>ESI M8U eX 16</option></select></div>
+            <div>Profile</div><div><select><option>Novation Summit</option><option>General MIDI</option></select></div>
+            <div>Pacing</div><div><select><option>Profile Default</option><option>Conservative</option><option>Manual…</option></select></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button id="receiveBtn">Receive</button>
+            <button id="sendBtn" class="primary">Send</button>
+            <button id="cancelBtn" disabled>Cancel</button>
+          </div>
+          <div class="progress"><div id="progressBar"></div></div>
+          <div class="small" id="progressText" style="margin-top:6px">Idle</div>
+        </div>
+      </div>
+      <div class="card section" style="margin-top:14px">
+        <h3>Transfer Log</h3>
+        <div class="log" id="transferLog">
+          <p>20:30:44  File inspected: 512 frames, 269,824 bytes.</p>
+          <p>20:30:44  Profile hint: Novation Summit.</p>
+          <p>20:30:44  Ready.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="page" id="sysexmgr">
+      <div class="grid2">
+        <div class="card">
+          <div class="toolbar" style="border:0;border-bottom:1px solid var(--line);border-radius:10px 10px 0 0">
+            <button id="mgrAdd">Add Files</button>
+            <button id="mgrFolder">Add Folder</button>
+            <button id="mgrRemove">Remove</button>
+            <div class="spacer"></div>
+            <select id="mgrFilter" style="min-width:180px">
+              <option>All devices</option>
+              <option>Novation Summit</option>
+              <option>Kawai K5000S</option>
+              <option>Access Virus A</option>
+              <option>Unknown</option>
+            </select>
+          </div>
+          <div style="max-height:520px;overflow:auto">
+            <table id="mgrTable">
+              <thead><tr><th></th><th>File</th><th>Device</th><th>Frames</th><th>Size</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr class="mgr-row selected"><td><input type="checkbox" checked></td><td>Summit_Singles_A-D.syx</td><td>Novation Summit</td><td>512</td><td>269,824 B</td><td><span class="badge good">Valid</span></td></tr>
+                <tr class="mgr-row"><td><input type="checkbox"></td><td>K5000_A.syx</td><td>Kawai K5000S</td><td>1</td><td>129,428 B</td><td><span class="badge good">Valid</span></td></tr>
+                <tr class="mgr-row"><td><input type="checkbox"></td><td>Virus_Bank_A.syx</td><td>Access Virus A</td><td>128</td><td>34,176 B</td><td><span class="badge good">Valid</span></td></tr>
+                <tr class="mgr-row"><td><input type="checkbox"></td><td>mystery_dump.syx</td><td>Unknown</td><td>73</td><td>411,220 B</td><td><span class="badge warn">Unidentified</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card section">
+          <div style="display:flex;align-items:start;gap:12px">
+            <div>
+              <div class="small">Selected SysEx</div>
+              <div style="font-size:20px;font-weight:700">Summit_Singles_A-D.syx</div>
+            </div>
+            <div style="flex:1"></div>
+            <span class="badge good">Framing OK</span>
+          </div>
+
+          <div class="kv">
+            <div>Manufacturer</div><div>Novation</div>
+            <div>Detected profile</div><div>Summit</div>
+            <div>Frames</div><div>512</div>
+            <div>Total bytes</div><div>269,824</div>
+            <div>SHA-256</div><div class="raw">8f3a…7d91</div>
+            <div>Notes</div><div class="muted">4 banks × 128 single patches</div>
+          </div>
+
+          <hr>
+          <h3>Actions</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button id="mgrInspect">Inspect Frames</button>
+            <button id="mgrTransfer" class="primary">Open in Transfer</button>
+            <button id="mgrSplit">Split into Frames</button>
+            <button id="mgrMerge">Merge Selected</button>
+            <button id="mgrCompare">Compare Files</button>
+            <button id="mgrDuplicate">Duplicate</button>
+            <button id="mgrRename">Rename</button>
+            <button id="mgrExport">Export Copy</button>
+          </div>
+
+          <hr>
+          <h3>Frame Summary</h3>
+          <div class="table-wrap" style="border-top:1px solid var(--line);border-radius:8px">
+            <table>
+              <thead><tr><th>#</th><th>Bytes</th><th>Header</th><th>Interpretation</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>527</td><td class="raw">F0 00 20 29 …</td><td>Bank A · Slot 1</td></tr>
+                <tr><td>2</td><td>527</td><td class="raw">F0 00 20 29 …</td><td>Bank A · Slot 2</td></tr>
+                <tr><td>3</td><td>527</td><td class="raw">F0 00 20 29 …</td><td>Bank A · Slot 3</td></tr>
+                <tr><td>…</td><td>…</td><td class="raw">…</td><td>…</td></tr>
+                <tr><td>512</td><td>527</td><td class="raw">F0 00 20 29 …</td><td>Bank D · Slot 128</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card section" style="margin-top:14px">
+        <div style="display:flex;align-items:center">
+          <h3 style="margin:0">Batch / Collection Tools</h3>
+          <div style="flex:1"></div>
+          <span class="small">Prototype only — no file changes are performed</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button id="mgrScan">Scan / Identify</button>
+          <button id="mgrHash">Calculate Hashes</button>
+          <button id="mgrDuplicates">Find Duplicates</button>
+          <button id="mgrValidate">Validate Framing</button>
+          <button id="mgrSort">Sort by Device</button>
+          <button id="mgrMakeCollection">Create Collection</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="library">
+      <div class="toolbar">
+        <button>Import Files</button><button>Open Folder</button>
+        <div class="spacer"></div>
+        <input style="background:#11151a;border:1px solid var(--line);border-radius:7px;padding:7px 10px;color:#fff;width:260px" placeholder="Search library…">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Device</th><th>Type</th><th>Frames</th><th>Size</th><th>Modified</th></tr></thead>
+          <tbody>
+            <tr><td>Virus_Bank_A.syx</td><td>Access Virus A</td><td>SysEx Bank</td><td>128</td><td>34 KB</td><td>2026-08-20</td></tr>
+            <tr><td>Summit_Singles_A-D.syx</td><td>Novation Summit</td><td>SysEx Bank</td><td>512</td><td>264 KB</td><td>2026-08-22</td></tr>
+            <tr><td>K5000_A.syx</td><td>Kawai K5000S</td><td>SysEx Bank</td><td>1</td><td>126 KB</td><td>2026-08-22</td></tr>
+            <tr><td>TEO5_All_Banks.syx</td><td>Oberheim TEO-5</td><td>SysEx Bank</td><td>256</td><td>1.15 MB</td><td>2026-08-21</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="page" id="profiles">
+      <div class="profile-layout">
+        <div class="card profile-list">
+          <div class="small" style="padding:5px 8px 8px">Generated profiles</div>
+          <div class="profile-item active" data-profile="Summit"><div class="maker">NOVATION</div><div class="model">Summit</div></div>
+          <div class="profile-item" data-profile="Minilogue"><div class="maker">KORG</div><div class="model">minilogue xd</div></div>
+          <div class="profile-item" data-profile="Artemis"><div class="maker">DREADBOX</div><div class="model">Artemis</div></div>
+          <div class="profile-item" data-profile="Virus"><div class="maker">ACCESS</div><div class="model">Virus A</div></div>
+          <div class="profile-item" data-profile="K5000"><div class="maker">KAWAI</div><div class="model">K5000S</div></div>
+          <hr>
+          <div class="small" style="padding:0 8px 8px">User profiles</div>
+          <div class="profile-item" data-profile="Custom"><div class="maker">USER</div><div class="model">My Custom Synth</div></div>
+        </div>
+        <div class="card profile-detail">
+          <div style="display:flex;align-items:start">
+            <div>
+              <div class="small" id="profileMaker">NOVATION</div>
+              <div style="font-size:23px;font-weight:700" id="profileName">Summit</div>
+            </div>
+            <div style="flex:1"></div>
+            <span class="badge good" id="profileState">READY_COMPLEX</span>
+          </div>
+          <div class="kv" id="profileKv">
+            <div>Profile type</div><div>Data-driven MIDI profile</div>
+            <div>Source</div><div>Official MIDI implementation + cross-check</div>
+            <div>Firmware scope</div><div>Versioned / device-specific</div>
+            <div>Auto detect</div><div>summit · novation summit</div>
+            <div>Controls</div><div>CC + CC pairs + NRPN</div>
+          </div>
+          <div style="display:flex;gap:8px;margin:14px 0">
+            <button id="profileEdit2">Edit JSON</button>
+            <button id="duplicateBtn">Duplicate</button>
+            <button id="validateBtn">Validate</button>
+            <button>Open Folder</button>
+          </div>
+          <h3 style="margin-top:18px">Profile preview</h3>
+          <div class="codebox" id="profilePreview">{
+  "profile_info": { "description": "TAUREON V4 MIDI monitor profile" },
+  "device": { "manufacturer": "Novation", "model": "Summit" },
+  "controls": [
+    { "type": "cc_pair_msb_lsb", "name": "Filter Frequency", "msb": 29, "lsb": 61 },
+    { "type": "single_cc", "name": "Filter Resonance", "cc": 79 }
+  ]
+}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page" id="diagnostics">
+      <div class="diag-grid">
+        <div class="card section">
+          <h3>Application</h3>
+          <div class="kv">
+            <div>Version</div><div>TAUREON V4 prototype</div>
+            <div>Build</div><div>Mockup / no backend</div>
+            <div>Platform</div><div>Windows 11 x64 target</div>
+            <div>Backend</div><div id="diagBackend">Auto</div>
+            <div>Connection</div><div id="diagConnection">Disconnected</div>
+          </div>
+        </div>
+        <div class="card section">
+          <h3>Current Route</h3>
+          <div class="kv">
+            <div>Input</div><div id="diagIn">Novation Summit</div>
+            <div>Output</div><div id="diagOut">Novation Summit</div>
+            <div>Stable identity</div><div class="muted">mock:endpoint:001</div>
+            <div>Group</div><div>—</div>
+            <div>Protocol</div><div>MIDI 1.0</div>
+          </div>
+        </div>
+        <div class="card section">
+          <h3>Counters</h3>
+          <div class="grid3">
+            <div class="kpi"><div class="small">RX Events</div><div class="v">24,193</div></div>
+            <div class="kpi"><div class="small">TX Events</div><div class="v">812</div></div>
+            <div class="kpi"><div class="small">Dropped</div><div class="v">0</div></div>
+          </div>
+        </div>
+        <div class="card section">
+          <h3>Queue / Activity</h3>
+          <div class="fake-chart"></div>
+          <div class="small" style="margin-top:8px">Visual placeholder only.</div>
+        </div>
+      </div>
+      <div style="margin-top:14px"><button id="diagExport">Export Diagnostic Bundle</button></div>
+    </section>
+
+    <section class="page" id="settings">
+      <div class="grid2">
+        <div class="card section">
+          <h3>General</h3>
+          <div class="kv">
+            <div>Theme</div><div><select><option>System</option><option>Dark</option><option>Light</option></select></div>
+            <div>Default backend</div><div><select><option>Auto</option><option>WMS</option><option>WinMM</option></select></div>
+            <div>Monitor history</div><div><select><option>10,000 events</option><option>25,000 events</option><option>50,000 events</option></select></div>
+          </div>
+        </div>
+        <div class="card section">
+          <h3>MIDI Monitor</h3>
+          <label class="chk"><input type="checkbox" checked> Auto-select matching device profile</label><br><br>
+          <label class="chk"><input type="checkbox" checked> Hide Active Sensing by default</label><br><br>
+          <label class="chk"><input type="checkbox"> Show MIDI Clock by default</label><br><br>
+          <label class="chk"><input type="checkbox" checked> Keep raw bytes visible</label>
+        </div>
+        <div class="card section">
+          <h3>SysEx Defaults</h3>
+          <div class="kv">
+            <div>Pacing</div><div><select><option>Profile Default</option><option>50 ms</option><option>100 ms</option></select></div>
+            <div>Confirm send</div><div><select><option>Always</option><option>Known destructive only</option></select></div>
+          </div>
+        </div>
+        <div class="card section">
+          <h3>Prototype note</h3>
+          <p class="muted">These controls are intentionally not persisted. This page exists only to test grouping, wording and visual density.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="statusbar">
+    <span id="statusLeft">Ready · no backend connected</span>
+    <span class="spacer"></span>
+    <span>Profile: <span id="statusProfile">Auto → Novation Summit</span></span>
+    <span>Prototype only</span>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="jsonModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit MIDI Profile JSON</h3><div class="spacer"></div>
+      <span class="badge warn">Prototype editor</span>
+    </div>
+    <div class="modal-body">
+      <textarea id="jsonText">{
+  "profile_info": {
+    "description": "TAUREON V4 MIDI monitor profile",
+    "usage": "Human-readable interpretation layer for incoming MIDI events."
+  },
+  "schema_version": "0.1",
+  "device": {
+    "manufacturer": "Novation",
+    "model": "Summit",
+    "profile_status": "READY_COMPLEX"
+  },
+  "controls": []
+}</textarea>
+    </div>
+    <div class="modal-actions">
+      <button id="prettyBtn">Pretty Print</button>
+      <button id="validateJsonBtn">Validate</button>
+      <button id="closeModalBtn">Close</button>
+      <button id="saveJsonBtn" class="primary">Save User Copy</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const tabs=[...document.querySelectorAll('.tab')];
+const pages=[...document.querySelectorAll('.page')];
+tabs.forEach(t=>t.addEventListener('click',()=>{
+  tabs.forEach(x=>x.classList.remove('active'));
+  pages.forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById(t.dataset.page).classList.add('active');
+}));
+
+let connected=false;
+const connectBtn=document.getElementById('connectBtn');
+connectBtn.addEventListener('click',()=>{
+  connected=!connected;
+  connectBtn.textContent=connected?'Disconnect':'Connect';
+  document.getElementById('connDot').classList.toggle('on',connected);
+  document.getElementById('connText').textContent=connected?'Connected':'Disconnected';
+  document.getElementById('diagConnection').textContent=connected?'Connected':'Disconnected';
+  document.getElementById('statusLeft').textContent=connected?'Connected · UI simulation only':'Ready · no backend connected';
+});
+
+['backend','midiIn','midiOut'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{
+    document.getElementById('diagBackend').textContent=document.getElementById('backend').value;
+    document.getElementById('diagIn').textContent=document.getElementById('midiIn').value;
+    document.getElementById('diagOut').textContent=document.getElementById('midiOut').value;
+  });
+});
+
+document.getElementById('profileSelect').addEventListener('change',e=>{
+  document.getElementById('statusProfile').textContent=e.target.value;
+  document.getElementById('profileBadge').textContent=e.target.value==='General MIDI'?'READY':'READY_COMPLEX';
+  showToast('Monitor profile changed to: '+e.target.value);
+});
+
+document.getElementById('pauseBtn').addEventListener('click',e=>{
+  e.target.textContent=e.target.textContent==='Pause'?'Resume':'Pause';
+  showToast(e.target.textContent==='Resume'?'Monitor display paused':'Monitor display resumed');
+});
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  document.querySelector('#monitorTable tbody').innerHTML='';
+  showToast('Monitor display cleared');
+});
+document.getElementById('exportBtn').addEventListener('click',()=>showToast('Mock export triggered'));
+document.getElementById('panicBtn').addEventListener('click',()=>showToast('Panic clicked · no MIDI sent'));
+
+const modal=document.getElementById('jsonModal');
+function openModal(){modal.classList.add('show')}
+function closeModal(){modal.classList.remove('show')}
+document.getElementById('editProfileBtn').addEventListener('click',openModal);
+document.getElementById('profileEdit2').addEventListener('click',openModal);
+document.getElementById('closeModalBtn').addEventListener('click',closeModal);
+document.getElementById('saveJsonBtn').addEventListener('click',()=>{closeModal();showToast('User profile copy saved (simulation)')});
+document.getElementById('validateJsonBtn').addEventListener('click',()=>{
+  try{JSON.parse(document.getElementById('jsonText').value);showToast('JSON valid')}
+  catch(e){showToast('JSON error: '+e.message)}
+});
+document.getElementById('prettyBtn').addEventListener('click',()=>{
+  try{
+    const t=document.getElementById('jsonText');
+    t.value=JSON.stringify(JSON.parse(t.value),null,2); showToast('JSON formatted');
+  }catch(e){showToast('Cannot format invalid JSON')}
+});
+modal.addEventListener('click',e=>{if(e.target===modal)closeModal()});
+
+const profiles={
+  Summit:{maker:'NOVATION',state:'READY_COMPLEX',type:'Data-driven MIDI profile',source:'Official MIDI implementation + cross-check',scope:'Versioned / device-specific',detect:'summit · novation summit',controls:'CC + CC pairs + NRPN'},
+  Minilogue:{maker:'KORG',state:'READY',type:'Data-driven MIDI profile',source:'Official Korg MIDI implementation',scope:'Device-specific',detect:'minilogue xd · korg minilogue xd',controls:'Fixed CC map + SysEx metadata'},
+  Artemis:{maker:'DREADBOX',state:'READY_COMPLEX',type:'Selector-aware MIDI profile',source:'Official Artemis CC list',scope:'Versioned',detect:'artemis · dreadbox artemis',controls:'CC + selector model'},
+  Virus:{maker:'ACCESS',state:'PARTIAL',type:'Partial data-driven profile',source:'OS 2.8 parameter tables',scope:'Virus A / OS-specific',detect:'virus a · access virus',controls:'Partial fixed CC + SysEx notes'},
+  K5000:{maker:'KAWAI',state:'PARTIAL',type:'Partial data-driven profile',source:'Official MIDI implementation',scope:'K5000S',detect:'k5000s · kawai k5000',controls:'GM-style CC + NRPN subset'},
+  Custom:{maker:'USER',state:'USER_CREATED',type:'User profile',source:'Manual',scope:'User-defined',detect:'disabled',controls:'Editable'}
+};
+document.querySelectorAll('.profile-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.profile-item').forEach(x=>x.classList.remove('active'));
+    item.classList.add('active');
+    const p=profiles[item.dataset.profile];
+    document.getElementById('profileMaker').textContent=p.maker;
+    document.getElementById('profileName').textContent=item.querySelector('.model').textContent;
+    const state=document.getElementById('profileState'); state.textContent=p.state;
+    state.className='badge '+(p.state.includes('READY')?'good':p.state.includes('PARTIAL')?'warn':'special');
+    document.getElementById('profileKv').innerHTML=`
+      <div>Profile type</div><div>${p.type}</div>
+      <div>Source</div><div>${p.source}</div>
+      <div>Firmware scope</div><div>${p.scope}</div>
+      <div>Auto detect</div><div>${p.detect}</div>
+      <div>Controls</div><div>${p.controls}</div>`;
+  });
+});
+
+document.getElementById('duplicateBtn').addEventListener('click',()=>showToast('Profile duplicated to User Profiles (simulation)'));
+document.getElementById('validateBtn').addEventListener('click',()=>showToast('Profile validation passed (simulation)'));
+document.getElementById('diagExport').addEventListener('click',()=>showToast('Diagnostic bundle export simulated'));
+document.getElementById('fakeOpen').addEventListener('click',()=>showToast('File picker simulated'));
+
+let timer=null;
+function addLog(msg){
+  const log=document.getElementById('transferLog');
+  const p=document.createElement('p'); p.textContent=new Date().toLocaleTimeString()+'  '+msg; log.appendChild(p); log.scrollTop=log.scrollHeight;
+}
+document.getElementById('sendBtn').addEventListener('click',()=>{
+  if(timer) return;
+  let p=0;
+  document.getElementById('cancelBtn').disabled=false;
+  addLog('Send simulation started.');
+  timer=setInterval(()=>{
+    p+=8+Math.random()*9; if(p>100)p=100;
+    document.getElementById('progressBar').style.width=p+'%';
+    document.getElementById('progressText').textContent=Math.round(p)+'% · visual simulation';
+    if(p>=100){clearInterval(timer);timer=null;document.getElementById('cancelBtn').disabled=true;addLog('Send simulation complete.');}
+  },260);
+});
+document.getElementById('receiveBtn').addEventListener('click',()=>showToast('Receive mode clicked · no hardware action'));
+document.getElementById('cancelBtn').addEventListener('click',()=>{
+  if(timer){clearInterval(timer);timer=null;addLog('Transfer simulation cancelled.')}
+  document.getElementById('cancelBtn').disabled=true;
+  document.getElementById('progressText').textContent='Cancelled';
+});
+
+
+document.querySelectorAll('.mgr-row').forEach(row=>{
+  row.addEventListener('click',e=>{
+    if(e.target.tagName==='INPUT') return;
+    document.querySelectorAll('.mgr-row').forEach(x=>x.classList.remove('selected'));
+    row.classList.add('selected');
+  });
+});
+[
+ ['mgrAdd','File picker simulated'],
+ ['mgrFolder','Folder picker simulated'],
+ ['mgrRemove','Removed from manager view (simulation)'],
+ ['mgrInspect','Frame inspector opened (simulation)'],
+ ['mgrSplit','Split preview created (simulation)'],
+ ['mgrMerge','Merge workflow opened (simulation)'],
+ ['mgrCompare','Compare view opened (simulation)'],
+ ['mgrDuplicate','Duplicate created (simulation)'],
+ ['mgrRename','Rename dialog simulated'],
+ ['mgrExport','Export copy simulated'],
+ ['mgrScan','SysEx identification scan simulated'],
+ ['mgrHash','Hashes calculated (simulation)'],
+ ['mgrDuplicates','Duplicate scan complete (simulation)'],
+ ['mgrValidate','Framing validation complete (simulation)'],
+ ['mgrSort','Collection sorted by device (simulation)'],
+ ['mgrMakeCollection','New SysEx collection created (simulation)']
+].forEach(([id,msg])=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('click',()=>showToast(msg));
+});
+const mgrTransfer=document.getElementById('mgrTransfer');
+if(mgrTransfer) mgrTransfer.addEventListener('click',()=>{
+  document.querySelector('.tab[data-page="sysex"]').click();
+  showToast('Selected SysEx opened in Transfer (simulation)');
+});
+
+function showToast(text){
+  const t=document.getElementById('toast'); t.textContent=text;t.classList.add('show');
+  clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+</script>
+</body>
+</html>

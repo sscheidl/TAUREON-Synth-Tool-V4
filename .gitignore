@@ -1,0 +1,23 @@
+# CMake build trees and generated test output
+/build/
+/out/
+/cmake-build-*/
+
+# Visual Studio and C++ build artifacts
+/.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+*.pdb
+*.obj
+*.ilk
+*.exe
+*.dll
+*.lib
+*.exp
+
+# Local logs and temporary files
+*.log
+*.tmp
+*.bak
