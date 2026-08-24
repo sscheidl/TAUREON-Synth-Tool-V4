@@ -41,6 +41,13 @@ endif()
 add_test(NAME stage4_profile_unit COMMAND stage4_profile_tests)
 set_tests_properties(stage4_profile_unit PROPERTIES LABELS "stage4;unit;ci")
 
+find_package(Qt6 6.10 REQUIRED COMPONENTS Core)
+add_test(NAME stage5_gui_smoke COMMAND taureon_app --smoke-test)
+set_tests_properties(stage5_gui_smoke PROPERTIES
+    LABELS "stage5;gui;ci"
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+
 if(WIN32)
     add_executable(stage2_winmm_header_tests unit/Stage2WinmmHeaderTests.cpp)
     target_include_directories(stage2_winmm_header_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

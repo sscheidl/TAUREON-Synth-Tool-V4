@@ -22,6 +22,20 @@ else()
     target_compile_options(taureon_midi_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
+find_package(Qt6 6.10 REQUIRED COMPONENTS Widgets)
+
+add_executable(taureon_app
+    app/taureon_app_main.cpp
+    gui/MainWindow.cpp
+    gui/MainWindow.hpp)
+target_link_libraries(taureon_app PRIVATE taureon_midi_core Qt6::Widgets)
+target_compile_features(taureon_app PRIVATE cxx_std_20)
+if(MSVC)
+    target_compile_options(taureon_app PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(taureon_app PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 if(WIN32)
     add_subdirectory(transports/winmm)
     add_subdirectory(transports/wms)
