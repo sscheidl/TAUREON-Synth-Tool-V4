@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <string>
 #include <vector>
 
 using namespace taureon;
@@ -20,6 +21,10 @@ struct Cleanup {
 
 sysex::SysExFrame frame(std::vector<std::uint8_t> bytes) {
     return {sysex::SysExFrameStatus::complete, std::move(bytes), {}, std::nullopt, false};
+}
+
+bool contains(const std::string& value, const std::string& fragment) {
+    return value.find(fragment) != std::string::npos;
 }
 
 void syx_file_tests() {
@@ -71,6 +76,60 @@ void syx_file_tests() {
                     incomplete.value().raw_bytes);
 }
 
+void syx_file_error_context_tests() {
+    const auto base = std::filesystem::current_path();
+    const auto missing = base / "stage3-missing-input.syx";
+    const auto directory = base / "stage3-directory-input.syx";
+    const auto missing_parent = base / "stage3-missing-parent";
+    const auto inaccessible_temp_target = missing_parent / "write.syx";
+    const auto replace_directory = base / "stage3-replace-target.syx";
+    const auto replace_temp = std::filesystem::path(replace_directory.string() + ".taureon.tmp");
+    Cleanup cleanup{{missing, replace_temp, directory, replace_directory}};
+
+    std::error_code error;
+    std::filesystem::remove(missing, error);
+    std::filesystem::remove_all(missing_parent, error);
+    std::filesystem::remove_all(directory, error);
+    std::filesystem::remove_all(replace_directory, error);
+
+    const auto missing_result = sysex::load_syx_file(missing);
+    TAUREON_REQUIRE(!missing_result);
+    TAUREON_REQUIRE(contains(missing_result.error().message, missing.filename().string()));
+    TAUREON_REQUIRE(missing_result.error().native_code.has_value());
+    TAUREON_REQUIRE(!missing_result.error().native_api.empty());
+
+    TAUREON_REQUIRE(std::filesystem::create_directory(directory));
+    const auto directory_result = sysex::load_syx_file(directory);
+    TAUREON_REQUIRE(!directory_result);
+    TAUREON_REQUIRE(contains(directory_result.error().message, directory.filename().string()));
+    TAUREON_REQUIRE(directory_result.error().native_code.has_value());
+
+    const std::vector<sysex::SysExFrame> frames{frame({0xf0, 0x7d, 0xf7})};
+    const auto temp_open_result = sysex::save_syx_frames(inaccessible_temp_target, frames, true);
+    TAUREON_REQUIRE(!temp_open_result);
+    TAUREON_REQUIRE(contains(temp_open_result.error().message, "write.syx.taureon.tmp"));
+    TAUREON_REQUIRE(temp_open_result.error().native_code.has_value());
+    TAUREON_REQUIRE(contains(temp_open_result.error().native_api, "temporary"));
+
+    TAUREON_REQUIRE(std::filesystem::create_directory(replace_directory));
+    const auto replace_result = sysex::save_syx_frames(replace_directory, frames, true);
+    TAUREON_REQUIRE(!replace_result);
+    TAUREON_REQUIRE(contains(replace_result.error().message,
+                             replace_directory.filename().string()));
+    TAUREON_REQUIRE(contains(replace_result.error().message, replace_temp.filename().string()));
+    TAUREON_REQUIRE(replace_result.error().native_code.has_value());
+#ifdef _WIN32
+    TAUREON_REQUIRE(replace_result.error().native_api == "MoveFileExW");
+#else
+    TAUREON_REQUIRE(contains(replace_result.error().native_api, "rename"));
+#endif
+}
+
 } // namespace
 
-int main() { return test::run([] { syx_file_tests(); }); }
+int main() {
+    return test::run([] {
+        syx_file_tests();
+        syx_file_error_context_tests();
+    });
+}

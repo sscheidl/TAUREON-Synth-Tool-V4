@@ -188,6 +188,52 @@ void sysex7_tests() {
     TAUREON_REQUIRE(consecutive_frames.size() == consecutive.size());
     TAUREON_REQUIRE(consecutive_frames[0].bytes == consecutive[0]);
     TAUREON_REQUIRE(consecutive_frames[1].bytes == consecutive[1]);
+
+    const auto sequence = sysex::encode_sysex7(
+        complete({0xf0, 1, 2, 3, 4, 5, 6, 7, 8, 0xf7}), 6).value();
+    const sysex::UmpSysEx7Packet invalid_group6{0x36070000u, 0};
+
+    assembler.reset();
+    TAUREON_REQUIRE(assembler.consume(sequence.front()).empty());
+    const auto decode_failure = assembler.consume(invalid_group6);
+    TAUREON_REQUIRE(decode_failure.size() == 1);
+    TAUREON_REQUIRE(decode_failure.front().status == sysex::SysExFrameStatus::malformed);
+    TAUREON_REQUIRE(decode_failure.front().bytes.front() == 0xf0);
+    const auto end_after_failure = assembler.consume(sequence.back());
+    TAUREON_REQUIRE(end_after_failure.size() == 1);
+    TAUREON_REQUIRE(end_after_failure.front().status == sysex::SysExFrameStatus::malformed);
+
+    assembler.reset();
+    TAUREON_REQUIRE(assembler.consume(sequence.front()).empty());
+    TAUREON_REQUIRE(assembler.consume(invalid_group6).front().status ==
+                    sysex::SysExFrameStatus::malformed);
+    const sysex::UmpSysEx7Packet continuation_group6{0x36210102u, 0};
+    TAUREON_REQUIRE(assembler.consume(continuation_group6).front().status ==
+                    sysex::SysExFrameStatus::malformed);
+    TAUREON_REQUIRE(assembler.consume(sequence.back()).front().status ==
+                    sysex::SysExFrameStatus::malformed);
+
+    const auto group1 = sysex::encode_sysex7(
+        complete({0xf0, 1, 2, 3, 4, 5, 6, 7, 0xf7}), 1).value();
+    const auto group2 = sysex::encode_sysex7(
+        complete({0xf0, 10, 11, 12, 13, 14, 15, 16, 0xf7}), 2).value();
+    assembler.reset();
+    TAUREON_REQUIRE(assembler.consume(group1.front()).empty());
+    TAUREON_REQUIRE(assembler.consume(group2.front()).empty());
+    const sysex::UmpSysEx7Packet invalid_group1{0x31070000u, 0};
+    TAUREON_REQUIRE(assembler.consume(invalid_group1).front().status ==
+                    sysex::SysExFrameStatus::malformed);
+    const auto group2_complete = assembler.consume(group2.back());
+    TAUREON_REQUIRE(group2_complete.size() == 1);
+    TAUREON_REQUIRE(group2_complete.front().status == sysex::SysExFrameStatus::complete);
+    TAUREON_REQUIRE(group2_complete.front().group == 2);
+
+    const auto fresh = sysex::encode_sysex7(complete({0xf0, 0x55, 0xf7}), 1).value();
+    const auto fresh_result = assembler.consume(fresh.front());
+    TAUREON_REQUIRE(fresh_result.size() == 1);
+    TAUREON_REQUIRE(fresh_result.front().status == sysex::SysExFrameStatus::complete);
+    TAUREON_REQUIRE(fresh_result.front().bytes ==
+                    std::vector<std::uint8_t>({0xf0, 0x55, 0xf7}));
 }
 
 } // namespace

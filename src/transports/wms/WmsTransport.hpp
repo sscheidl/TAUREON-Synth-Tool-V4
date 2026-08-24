@@ -23,6 +23,7 @@ public:
     [[nodiscard]] Result<void> close() override;
     [[nodiscard]] Result<void> send(const NativeMidiMessage& message) override;
     void set_message_handler(MidiMessageHandler handler) override;
+    void set_stream_event_handler(MidiStreamEventHandler handler) override;
     void set_endpoint_change_handler(EndpointChangeHandler handler) override;
 
 private:

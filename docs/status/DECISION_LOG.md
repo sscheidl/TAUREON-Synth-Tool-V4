@@ -24,5 +24,6 @@ This log records concise product/process decisions that are important but do not
 | D-016 | 2026-08-24 | Approve and start Stage 2 under `STAGE_2_BRIEF.md` | User | Codex implements only the MIDI Core/transport architecture; Stage 3 remains forbidden pending a later gate |
 | D-017 | 2026-08-24 | Place Stage 2 on HOLD for the targeted Claude Code P1 and authorize narrowly scoped closure remediation | User / Project Manager | Fix WinMM partial-open header unwind, add the exact transport regression, preserve the accepted architecture, and keep Stage 3 unstarted |
 | D-018 | 2026-08-24 | Close Stage 2 with PASS after the P1 closure commit was tested and pushed; authorize Stage 3 under its supplied brief | User | Stage 3 becomes ACTIVE; Stage 4 remains forbidden pending its later gate |
+| D-019 | 2026-08-24 | Close Stage 3 after targeted Claude Code re-review with PASS WITH NON-BLOCKING FOLLOW-UPS and no P0/P1 findings | User / Project Manager | Historical HOLD and WMS handle-test evidence remain; two reviewer follow-ups become mandatory Stage-4-brief inputs; Stage 4 remains unauthorized |
 
 Technical architecture changes belong in ADRs, not this log.

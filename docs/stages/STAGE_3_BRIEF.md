@@ -1,7 +1,9 @@
 # Stage 3 Brief – Generic MIDI, SysEx & Transfer Engine
 
 **Stage:** 3
-**Status:** IMPLEMENTATION COMPLETE / PASS RECOMMENDED / awaiting User gate
+**Status:** PASS / CLOSED after targeted Claude Code re-review and User/Project Manager gate
+**Historical HOLD:** independent review found one P1 and two P2 findings; the report preserves remediation and
+WMS handle-test-contract evidence
 **Implementation lead:** Codex
 **Coordination:** ChatGPT Classic / Project Manager
 **Review:** targeted Claude Code review only if architecture changes materially, a P0/P1 appears, byte/lifetime integrity remains uncertain, or the Project Manager requests it

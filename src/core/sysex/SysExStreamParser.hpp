@@ -29,6 +29,7 @@ private:
     std::vector<std::uint8_t> current_;
     bool inside_{};
     bool current_data_loss_{};
+    bool pending_data_loss_{};
     SysExParserDiagnostics diagnostics_;
 };
 

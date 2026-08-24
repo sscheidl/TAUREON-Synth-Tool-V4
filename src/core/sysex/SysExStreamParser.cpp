@@ -28,7 +28,8 @@ SysExParseBatch SysExStreamParser::consume(const std::span<const std::uint8_t> b
             if (byte == 0xf0) {
                 current_.assign(1, byte);
                 inside_ = true;
-                current_data_loss_ = false;
+                current_data_loss_ = pending_data_loss_;
+                pending_data_loss_ = false;
             } else {
                 SysExFrame malformed{SysExFrameStatus::malformed, {byte},
                                      byte == 0xf7 ? "unexpected SysEx end" :
@@ -87,10 +88,17 @@ std::vector<SysExFrame> SysExStreamParser::finish() {
                          std::nullopt, current_data_loss_};
         record(frame);
         result.push_back(std::move(frame));
+    } else if (pending_data_loss_) {
+        SysExFrame frame{SysExFrameStatus::malformed, {},
+                         "capture ended after data loss without a following SysEx frame",
+                         std::nullopt, true};
+        record(frame);
+        result.push_back(std::move(frame));
     }
     current_.clear();
     inside_ = false;
     current_data_loss_ = false;
+    pending_data_loss_ = false;
     return result;
 }
 
@@ -98,11 +106,13 @@ void SysExStreamParser::reset() noexcept {
     current_.clear();
     inside_ = false;
     current_data_loss_ = false;
+    pending_data_loss_ = false;
 }
 
 void SysExStreamParser::notify_data_loss() noexcept {
     ++diagnostics_.data_loss_events;
     if (inside_) current_data_loss_ = true;
+    else pending_data_loss_ = true;
 }
 
 bool SysExStreamParser::inside_frame() const noexcept { return inside_; }

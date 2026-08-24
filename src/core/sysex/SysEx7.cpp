@@ -28,8 +28,9 @@ UmpSysEx7Packet make_packet(const std::uint8_t group, const SysEx7PacketStatus s
 }
 
 SysExFrame malformed_sequence(const std::uint8_t group, std::vector<std::uint8_t> bytes,
-                              std::string issue) {
-    return {SysExFrameStatus::malformed, std::move(bytes), std::move(issue), group, false};
+                              std::string issue, const bool affected_by_data_loss = false) {
+    return {SysExFrameStatus::malformed, std::move(bytes), std::move(issue), group,
+            affected_by_data_loss};
 }
 
 } // namespace
@@ -99,9 +100,22 @@ midi::Result<std::vector<UmpSysEx7Packet>> encode_sysex7(const SysExFrame& frame
 }
 
 std::vector<SysExFrame> SysEx7Assembler::consume(const UmpSysEx7Packet& packet) {
+    const auto packet_group = static_cast<std::uint8_t>((packet.word0 >> 24) & 0x0f);
     const auto decoded = decode_sysex7_packet(packet);
     if (!decoded) {
-        return {{SysExFrameStatus::malformed, {}, decoded.error().message, std::nullopt, false}};
+        auto& state = groups_[packet_group];
+        if (state.active) {
+            auto bytes = std::move(state.bytes);
+            const bool affected = state.affected_by_data_loss || state.pending_data_loss;
+            state = {};
+            return {{SysExFrameStatus::malformed, std::move(bytes),
+                     "invalid SysEx7 packet interrupted active sequence: " +
+                         decoded.error().message,
+                     packet_group, affected}};
+        }
+        const bool affected = state.pending_data_loss;
+        state = {};
+        return {{SysExFrameStatus::malformed, {}, decoded.error().message, packet_group, affected}};
     }
     const auto& value = decoded.value();
     auto& state = groups_[value.group];
@@ -110,22 +124,32 @@ std::vector<SysExFrame> SysEx7Assembler::consume(const UmpSysEx7Packet& packet) 
     if (value.status == SysEx7PacketStatus::complete) {
         if (state.active) {
             frames.push_back(malformed_sequence(value.group, std::move(state.bytes),
-                                                "complete packet interrupted active sequence"));
+                                                "complete packet interrupted active sequence",
+                                                state.affected_by_data_loss));
             state = {};
         }
         std::vector<std::uint8_t> bytes{0xf0};
         bytes.insert(bytes.end(), value.payload.begin(), value.payload.end());
         bytes.push_back(0xf7);
-        frames.push_back({SysExFrameStatus::complete, std::move(bytes), {}, value.group, false});
+        const bool affected = state.pending_data_loss;
+        state.pending_data_loss = false;
+        frames.push_back({affected ? SysExFrameStatus::malformed : SysExFrameStatus::complete,
+                          std::move(bytes),
+                          affected ? "capture affected by data loss" : "", value.group,
+                          affected});
         return frames;
     }
 
     if (value.status == SysEx7PacketStatus::start) {
         if (state.active) {
             frames.push_back(malformed_sequence(value.group, std::move(state.bytes),
-                                                "start packet interrupted active sequence"));
+                                                "start packet interrupted active sequence",
+                                                state.affected_by_data_loss));
+            state = {};
         }
         state.active = true;
+        state.affected_by_data_loss = state.pending_data_loss;
+        state.pending_data_loss = false;
         state.bytes.assign(1, 0xf0);
         state.bytes.insert(state.bytes.end(), value.payload.begin(), value.payload.end());
         return frames;
@@ -133,15 +157,22 @@ std::vector<SysExFrame> SysEx7Assembler::consume(const UmpSysEx7Packet& packet) 
 
     if (!state.active) {
         std::vector<std::uint8_t> bytes(value.payload.begin(), value.payload.end());
+        const bool affected = state.pending_data_loss;
+        state.pending_data_loss = false;
         return {malformed_sequence(value.group, std::move(bytes),
                                    value.status == SysEx7PacketStatus::continuation ?
-                                       "continuation without start" : "end without start")};
+                                       "continuation without start" : "end without start",
+                                   affected)};
     }
 
     state.bytes.insert(state.bytes.end(), value.payload.begin(), value.payload.end());
     if (value.status == SysEx7PacketStatus::end) {
         state.bytes.push_back(0xf7);
-        frames.push_back({SysExFrameStatus::complete, std::move(state.bytes), {}, value.group, false});
+        frames.push_back({state.affected_by_data_loss ? SysExFrameStatus::malformed :
+                                                       SysExFrameStatus::complete,
+                          std::move(state.bytes),
+                          state.affected_by_data_loss ? "capture affected by data loss" : "",
+                          value.group, state.affected_by_data_loss});
         state = {};
     }
     return frames;
@@ -152,12 +183,29 @@ std::vector<SysExFrame> SysEx7Assembler::finish() {
     for (std::uint8_t group = 0; group < groups_.size(); ++group) {
         auto& state = groups_[group];
         if (state.active) {
-            frames.push_back({SysExFrameStatus::incomplete, std::move(state.bytes),
-                              "unterminated SysEx7 packet sequence", group, false});
+            frames.push_back({state.affected_by_data_loss ? SysExFrameStatus::malformed :
+                                                           SysExFrameStatus::incomplete,
+                              std::move(state.bytes),
+                              state.affected_by_data_loss ?
+                                  "unterminated SysEx7 sequence affected by data loss" :
+                                  "unterminated SysEx7 packet sequence",
+                              group, state.affected_by_data_loss});
+            state = {};
+        } else if (state.pending_data_loss) {
+            frames.push_back({SysExFrameStatus::malformed, {},
+                              "capture ended after data loss without a following SysEx7 frame",
+                              group, true});
             state = {};
         }
     }
     return frames;
+}
+
+void SysEx7Assembler::notify_data_loss(const std::uint8_t group) noexcept {
+    if (group >= groups_.size()) return;
+    auto& state = groups_[group];
+    if (state.active) state.affected_by_data_loss = true;
+    else state.pending_data_loss = true;
 }
 
 void SysEx7Assembler::reset() noexcept {

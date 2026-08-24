@@ -1,5 +1,6 @@
 #include "core/sysex/SysEx7.hpp"
 #include "transports/wms/WmsTransport.hpp"
+#include "../HandleGrowth.hpp"
 
 #include <windows.h>
 
@@ -90,6 +91,8 @@ int main(int argc, char** argv) {
 
     DWORD steady_minimum = MAXDWORD;
     DWORD steady_maximum = 0;
+    std::vector<std::uint32_t> handle_samples;
+    handle_samples.reserve(cycles);
     const unsigned steady_start = cycles >= 20 ? (cycles / 2) + 1 : 1;
     for (unsigned cycle = 1; cycle <= cycles; ++cycle) {
         {
@@ -131,6 +134,7 @@ int main(int argc, char** argv) {
         if (!transport.close()) return EXIT_FAILURE;
         DWORD handles{};
         if (!GetProcessHandleCount(GetCurrentProcess(), &handles)) return EXIT_FAILURE;
+        handle_samples.push_back(static_cast<std::uint32_t>(handles));
         if (cycle >= steady_start) {
             steady_minimum = (std::min)(steady_minimum, handles);
             steady_maximum = (std::max)(steady_maximum, handles);
@@ -138,18 +142,31 @@ int main(int argc, char** argv) {
     }
 
     const auto diagnostics = transport.diagnostics();
+    const auto growth = taureon::test::analyze_handle_growth(handle_samples, steady_start - 1);
     const bool pass = transport.state() == TransportState::closed &&
                       diagnostics.transmitted_messages == cycles &&
                       diagnostics.delivered_messages >= cycles &&
                       diagnostics.dropped_events == 0 &&
                       diagnostics.callbacks_after_acceptance_closed == 0 &&
-                      steady_maximum - steady_minimum <= 1;
+                      !growth.sustained_growth;
     std::cout << "{\"event\":\"stage3_wms_realtime\",\"cycles\":" << cycles
               << ",\"tx\":" << diagnostics.transmitted_messages
               << ",\"rx_callbacks\":" << diagnostics.delivered_messages
               << ",\"dropped\":" << diagnostics.dropped_events
               << ",\"late\":" << diagnostics.callbacks_after_acceptance_closed
               << ",\"steady_span\":" << steady_maximum - steady_minimum
+              << ",\"reference_maximum\":" << growth.reference_maximum
+              << ",\"steady_slope\":" << static_cast<double>(growth.steady_slope)
+              << ",\"leading_median\":" << static_cast<double>(growth.leading_median)
+              << ",\"trailing_median\":" << static_cast<double>(growth.trailing_median)
+              << ",\"new_steady_high\":" << (growth.new_steady_high ? "true" : "false")
+              << ",\"sustained_growth\":" << (growth.sustained_growth ? "true" : "false")
+              << ",\"handle_samples\":[";
+    for (std::size_t index = 0; index < handle_samples.size(); ++index) {
+        if (index != 0) std::cout << ',';
+        std::cout << handle_samples[index];
+    }
+    std::cout << ']'
               << ",\"pass\":" << (pass ? "true" : "false") << "}" << std::endl;
     return pass ? EXIT_SUCCESS : EXIT_FAILURE;
 }

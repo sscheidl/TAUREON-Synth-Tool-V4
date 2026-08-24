@@ -97,6 +97,33 @@ struct NativeMidiMessage {
     bool operator==(const NativeMidiMessage&) const = default;
 };
 
+enum class MidiDataLossReason {
+    native_short_error,
+    native_long_error,
+    queue_overflow,
+    input_requeue_failure,
+    shutdown_discarded_data,
+    backend_reported_loss,
+};
+
+struct MidiDataLossEvent {
+    MidiBackend backend{MidiBackend::windows_midi_services};
+    MidiDataLossReason reason{MidiDataLossReason::backend_reported_loss};
+    bool affects_sysex{};
+    std::optional<std::uint8_t> group;
+    std::string detail;
+    std::optional<std::int64_t> native_code;
+
+    bool operator==(const MidiDataLossEvent&) const = default;
+};
+
+struct MidiStreamEvent {
+    std::uint64_t sequence{};
+    std::variant<NativeMidiMessage, MidiDataLossEvent> payload{NativeMidiMessage{}};
+
+    bool operator==(const MidiStreamEvent&) const = default;
+};
+
 enum class EndpointChangeKind {
     appeared,
     disappeared,

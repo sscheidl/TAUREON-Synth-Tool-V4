@@ -135,6 +135,11 @@ void FakeMidiTransport::set_message_handler(MidiMessageHandler handler) {
     message_handler_ = std::move(handler);
 }
 
+void FakeMidiTransport::set_stream_event_handler(MidiStreamEventHandler handler) {
+    std::scoped_lock lock(mutex_);
+    stream_event_handler_ = std::move(handler);
+}
+
 void FakeMidiTransport::set_endpoint_change_handler(EndpointChangeHandler handler) {
     std::scoped_lock lock(mutex_);
     endpoint_handler_ = std::move(handler);
@@ -175,13 +180,30 @@ void FakeMidiTransport::set_send_hook(
 
 void FakeMidiTransport::emit_received(const NativeMidiMessage& message) {
     MidiMessageHandler handler;
+    MidiStreamEventHandler stream_handler;
+    std::uint64_t sequence{};
     {
         std::scoped_lock lock(mutex_);
         handler = message_handler_;
+        stream_handler = stream_event_handler_;
+        sequence = next_stream_sequence_++;
         ++diagnostics_.native_callbacks;
         ++diagnostics_.delivered_messages;
     }
+    if (stream_handler) stream_handler({sequence, message});
     if (handler) handler(message);
+}
+
+void FakeMidiTransport::emit_data_loss(MidiDataLossEvent event) {
+    MidiStreamEventHandler handler;
+    std::uint64_t sequence{};
+    {
+        std::scoped_lock lock(mutex_);
+        handler = stream_event_handler_;
+        sequence = next_stream_sequence_++;
+        diagnostics_.dropped_events += 1;
+    }
+    if (handler) handler({sequence, std::move(event)});
 }
 
 void FakeMidiTransport::report_dropped_events(const std::uint64_t count) {

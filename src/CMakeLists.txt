@@ -5,6 +5,7 @@ add_library(taureon_midi_core STATIC
     core/midi/RouteResolver.cpp
     core/midi/TransportState.cpp
     core/sysex/SysEx7.cpp
+    core/sysex/SysExCaptureSession.cpp
     core/sysex/SysExStreamParser.cpp
     core/sysex/SyxFile.cpp
     core/transfer/TransferEngine.cpp

@@ -1,8 +1,9 @@
 #include "SyxFile.hpp"
 
-#include <algorithm>
 #include "SysExStreamParser.hpp"
 
+#include <algorithm>
+#include <cerrno>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -14,8 +15,21 @@
 namespace taureon::sysex {
 namespace {
 
-midi::MidiError io_error(std::string message) {
-    return {midi::MidiErrorCode::io_error, std::move(message), "filesystem", std::nullopt};
+std::string path_text(const std::filesystem::path& path) {
+    const auto utf8 = path.generic_u8string();
+    return {utf8.begin(), utf8.end()};
+}
+
+midi::MidiError io_error(std::string operation, const std::filesystem::path& path,
+                         const std::error_code& error = {}) {
+    std::string message = operation + " [" + path_text(path) + "]";
+    if (error) message += ": " + error.message();
+    return {midi::MidiErrorCode::io_error, std::move(message), "filesystem." + operation,
+            error ? std::optional<std::int64_t>(error.value()) : std::nullopt};
+}
+
+std::error_code current_stream_error() {
+    return errno == 0 ? std::error_code{} : std::error_code(errno, std::generic_category());
 }
 
 midi::Result<void> write_atomic(const std::filesystem::path& path,
@@ -23,41 +37,60 @@ midi::Result<void> write_atomic(const std::filesystem::path& path,
                                 const bool replace_existing) {
     std::error_code error;
     if (!replace_existing && std::filesystem::exists(path, error)) {
-        return midi::Result<void>::failure(io_error("destination already exists"));
+        return midi::Result<void>::failure(io_error("destination already exists", path));
     }
-    if (error) return midi::Result<void>::failure(io_error("cannot inspect destination"));
+    if (error) {
+        return midi::Result<void>::failure(io_error("cannot inspect destination", path, error));
+    }
 
     auto temporary = path;
     temporary += ".taureon.tmp";
     std::filesystem::remove(temporary, error);
+    if (error) {
+        return midi::Result<void>::failure(
+            io_error("cannot remove stale temporary file", temporary, error));
+    }
     error.clear();
     {
+        errno = 0;
         std::ofstream stream(temporary, std::ios::binary | std::ios::trunc);
-        if (!stream) return midi::Result<void>::failure(io_error("cannot create temporary .syx file"));
+        if (!stream) {
+            return midi::Result<void>::failure(
+                io_error("cannot create temporary file", temporary, current_stream_error()));
+        }
         stream.write(reinterpret_cast<const char*>(bytes.data()),
                      static_cast<std::streamsize>(bytes.size()));
         stream.flush();
         if (!stream) {
+            const auto stream_error = current_stream_error();
             stream.close();
             std::filesystem::remove(temporary, error);
-            return midi::Result<void>::failure(io_error("failed to write temporary .syx file"));
+            return midi::Result<void>::failure(
+                io_error("failed to write temporary file", temporary, stream_error));
         }
     }
 
 #ifdef _WIN32
     const DWORD flags = MOVEFILE_WRITE_THROUGH | (replace_existing ? MOVEFILE_REPLACE_EXISTING : 0);
     if (!MoveFileExW(temporary.c_str(), path.c_str(), flags)) {
-        const auto native = static_cast<std::int64_t>(GetLastError());
+        const auto native = GetLastError();
+        const std::error_code move_error(static_cast<int>(native), std::system_category());
         std::filesystem::remove(temporary, error);
-        return midi::Result<void>::failure(
-            {midi::MidiErrorCode::io_error, "atomic .syx replacement failed", "MoveFileExW", native});
+        auto result = io_error("cannot replace destination from temporary file " +
+                                   path_text(temporary),
+                               path, move_error);
+        result.native_api = "MoveFileExW";
+        return midi::Result<void>::failure(std::move(result));
     }
 #else
     if (replace_existing) std::filesystem::remove(path, error);
     std::filesystem::rename(temporary, path, error);
     if (error) {
+        const auto rename_error = error;
         std::filesystem::remove(temporary, error);
-        return midi::Result<void>::failure(io_error("atomic .syx replacement failed"));
+        return midi::Result<void>::failure(
+            io_error("cannot replace destination from temporary file " + path_text(temporary),
+                     path, rename_error));
     }
 #endif
     return midi::Result<void>::success();
@@ -79,14 +112,37 @@ std::size_t SyxDocument::complete_frame_count() const noexcept {
 }
 
 midi::Result<SyxDocument> load_syx_file(const std::filesystem::path& path) {
+    std::error_code error;
+    const bool exists = std::filesystem::exists(path, error);
+    if (error) {
+        return midi::Result<SyxDocument>::failure(
+            io_error("cannot inspect input file", path, error));
+    }
+    if (!exists) {
+        return midi::Result<SyxDocument>::failure(
+            io_error("cannot open input file", path,
+                     std::make_error_code(std::errc::no_such_file_or_directory)));
+    }
+    if (std::filesystem::is_directory(path, error)) {
+        return midi::Result<SyxDocument>::failure(
+            io_error("cannot open input file", path,
+                     std::make_error_code(std::errc::is_a_directory)));
+    }
+    if (error) {
+        return midi::Result<SyxDocument>::failure(
+            io_error("cannot inspect input file type", path, error));
+    }
+    errno = 0;
     std::ifstream stream(path, std::ios::binary);
     if (!stream) {
-        return midi::Result<SyxDocument>::failure(io_error("cannot open .syx file"));
+        return midi::Result<SyxDocument>::failure(
+            io_error("cannot open input file", path, current_stream_error()));
     }
     std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(stream)),
                                     std::istreambuf_iterator<char>());
     if (!stream.eof() && stream.fail()) {
-        return midi::Result<SyxDocument>::failure(io_error("failed to read .syx file"));
+        return midi::Result<SyxDocument>::failure(
+            io_error("failed to read input file", path, current_stream_error()));
     }
     SysExStreamParser parser;
     auto batch = parser.consume(bytes);

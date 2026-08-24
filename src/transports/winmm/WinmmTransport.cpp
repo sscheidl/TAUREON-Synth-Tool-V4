@@ -65,9 +65,15 @@ WinmmTransportApiPtr require_native_api(WinmmTransportApiPtr native_api) {
 
 struct WinmmTransport::Impl {
     struct CallbackEvent {
+        enum class Kind { native, data_loss };
+
+        std::uint64_t sequence{};
+        Kind kind{Kind::native};
         UINT message{};
         DWORD_PTR parameter{};
         DWORD_PTR timestamp{};
+        bool accepted_for_delivery{};
+        MidiDataLossEvent loss;
     };
 
     WinmmTransportApiPtr native_api;
@@ -82,6 +88,7 @@ struct WinmmTransport::Impl {
     std::atomic<std::uint64_t> dropped_callbacks{0};
     std::atomic<std::uint64_t> callbacks_after_acceptance_closed{0};
     std::atomic<std::uint64_t> queue_high_water_mark{0};
+    std::atomic<std::uint64_t> next_stream_sequence{0};
 
     std::mutex queue_mutex;
     std::condition_variable queue_changed;
@@ -93,7 +100,32 @@ struct WinmmTransport::Impl {
 
     std::mutex handler_mutex;
     MidiMessageHandler message_handler;
+    MidiStreamEventHandler stream_event_handler;
     EndpointChangeHandler endpoint_handler;
+
+    void insert_callback_locked(CallbackEvent event) {
+        const auto position = std::upper_bound(
+            callbacks.begin(), callbacks.end(), event.sequence,
+            [](const std::uint64_t sequence, const CallbackEvent& queued) {
+                return sequence < queued.sequence;
+            });
+        callbacks.insert(position, std::move(event));
+        const auto depth = static_cast<std::uint64_t>(callbacks.size());
+        auto high_water = queue_high_water_mark.load(std::memory_order_relaxed);
+        while (depth > high_water &&
+               !queue_high_water_mark.compare_exchange_weak(
+                   high_water, depth, std::memory_order_relaxed)) {}
+    }
+
+    void enqueue_loss(MidiDataLossEvent loss) {
+        {
+            std::scoped_lock lock(queue_mutex);
+            insert_callback_locked(
+                {next_stream_sequence.fetch_add(1, std::memory_order_relaxed),
+                 CallbackEvent::Kind::data_loss, 0, 0, 0, true, std::move(loss)});
+        }
+        queue_changed.notify_one();
+    }
 
     explicit Impl(WinmmTransportApiPtr api)
         : native_api(std::move(api)), worker([this] { worker_main(); }) {}
@@ -130,37 +162,36 @@ struct WinmmTransport::Impl {
         }
         ++self->native_callbacks;
         const bool header_completion = message == MIM_LONGDATA || message == MIM_LONGERROR;
-        if (!self->accepting_callbacks.load(std::memory_order_acquire) && !header_completion) {
+        const bool accepted = self->accepting_callbacks.load(std::memory_order_acquire);
+        if (!accepted && !header_completion) {
             ++self->callbacks_after_acceptance_closed;
             return;
         }
+        const auto sequence =
+            self->next_stream_sequence.fetch_add(1, std::memory_order_relaxed);
         {
             std::scoped_lock lock(self->queue_mutex);
             constexpr std::size_t callback_capacity = 1024;
-            if (self->callbacks.size() >= callback_capacity) {
-                if (header_completion) {
-                    const auto short_event = std::find_if(
-                        self->callbacks.begin(), self->callbacks.end(), [](const CallbackEvent& event) {
-                            return event.message == MIM_DATA || event.message == MIM_ERROR;
-                        });
-                    if (short_event != self->callbacks.end()) {
-                        self->callbacks.erase(short_event);
-                        ++self->dropped_callbacks;
-                    } else {
-                        ++self->dropped_callbacks;
-                        return;
-                    }
-                } else {
-                    ++self->dropped_callbacks;
-                    return;
+            const bool non_droppable = header_completion || message == MIM_ERROR;
+            if (!non_droppable && self->callbacks.size() >= callback_capacity) {
+                ++self->dropped_callbacks;
+                const bool loss_already_queued = std::any_of(
+                    self->callbacks.begin(), self->callbacks.end(), [](const CallbackEvent& event) {
+                        return event.kind == CallbackEvent::Kind::data_loss &&
+                               event.loss.reason == MidiDataLossReason::queue_overflow;
+                    });
+                if (!loss_already_queued) {
+                    self->insert_callback_locked(
+                        {sequence, CallbackEvent::Kind::data_loss, 0, 0, 0, true,
+                         {MidiBackend::winmm, MidiDataLossReason::queue_overflow, true,
+                          std::nullopt, "WinMM callback queue overflow", std::nullopt}});
                 }
+                self->queue_changed.notify_one();
+                return;
             }
-            self->callbacks.push_back({message, parameter, timestamp});
-            const auto depth = static_cast<std::uint64_t>(self->callbacks.size());
-            auto high_water = self->queue_high_water_mark.load(std::memory_order_relaxed);
-            while (depth > high_water &&
-                   !self->queue_high_water_mark.compare_exchange_weak(
-                       high_water, depth, std::memory_order_relaxed)) {}
+            self->insert_callback_locked(
+                {sequence, CallbackEvent::Kind::native, message, parameter, timestamp, accepted,
+                 {}});
         }
         self->queue_changed.notify_one();
     }
@@ -200,7 +231,7 @@ struct WinmmTransport::Impl {
                     output_completion = output_completions.front();
                     output_completions.pop_front();
                 } else if (!callbacks.empty()) {
-                    callback = callbacks.front();
+                    callback = std::move(callbacks.front());
                     callbacks.pop_front();
                 } else if (stopping) {
                     break;
@@ -239,38 +270,68 @@ struct WinmmTransport::Impl {
         }
     }
 
-    void deliver(std::vector<std::uint8_t> bytes, const DWORD_PTR timestamp) {
+    void dispatch_loss(const std::uint64_t sequence, const MidiDataLossEvent& loss) {
+        MidiStreamEventHandler handler;
+        {
+            std::scoped_lock lock(handler_mutex);
+            handler = stream_event_handler;
+        }
+        if (handler) handler({sequence, loss});
+    }
+
+    void deliver(const std::uint64_t sequence, std::vector<std::uint8_t> bytes,
+                 const DWORD_PTR timestamp) {
         MidiMessageHandler handler;
+        MidiStreamEventHandler stream_handler;
         {
             std::scoped_lock lock(handler_mutex);
             handler = message_handler;
+            stream_handler = stream_event_handler;
         }
-        if (handler && !bytes.empty()) {
-            handler({MidiBackend::winmm, Midi1NativeMessage{std::move(bytes)},
-                     MidiTimestamp{static_cast<std::uint64_t>(timestamp),
-                                   "winmm-milliseconds"}});
-            ++delivered_messages;
-        }
+        if (bytes.empty()) return;
+        NativeMidiMessage message{
+            MidiBackend::winmm, Midi1NativeMessage{std::move(bytes)},
+            MidiTimestamp{static_cast<std::uint64_t>(timestamp), "winmm-milliseconds"}};
+        if (stream_handler) stream_handler({sequence, message});
+        if (handler) handler(message);
+        if (stream_handler || handler) ++delivered_messages;
+    }
+
+    void report_native_loss(const CallbackEvent& event, const MidiDataLossReason reason,
+                            const bool affects_sysex, std::string detail,
+                            const std::optional<std::int64_t> native_code = std::nullopt) {
+        ++dropped_callbacks;
+        dispatch_loss(event.sequence,
+                      {MidiBackend::winmm, reason, affects_sysex, std::nullopt,
+                       std::move(detail), native_code});
     }
 
     void process_callback(const CallbackEvent& event) {
+        if (event.kind == CallbackEvent::Kind::data_loss) {
+            dispatch_loss(event.sequence, event.loss);
+            return;
+        }
         if (event.message == MIM_DATA || event.message == MIM_ERROR) {
             if (event.message == MIM_ERROR) {
-                ++dropped_callbacks;
+                report_native_loss(event, MidiDataLossReason::native_short_error, false,
+                                   "WinMM reported an invalid short MIDI message");
                 return;
             }
             const auto packed = static_cast<DWORD>(event.parameter);
             const auto status = static_cast<std::uint8_t>(packed & 0xFFu);
             const auto size = short_message_size(status);
             if (size == 0) {
-                ++dropped_callbacks;
+                report_native_loss(event, MidiDataLossReason::native_short_error, false,
+                                   "WinMM delivered an invalid packed short MIDI message");
                 return;
             }
             std::vector<std::uint8_t> bytes(size);
             for (std::size_t index = 0; index < size; ++index) {
                 bytes[index] = static_cast<std::uint8_t>((packed >> (index * 8u)) & 0xFFu);
             }
-            deliver(std::move(bytes), event.timestamp);
+            if (event.accepted_for_delivery) {
+                deliver(event.sequence, std::move(bytes), event.timestamp);
+            }
             return;
         }
         if (event.message != MIM_LONGDATA && event.message != MIM_LONGERROR) return;
@@ -278,14 +339,25 @@ struct WinmmTransport::Impl {
         for (auto& buffer : input_buffers) {
             if (buffer->native_header() != header) continue;
             buffer->mark_returned();
+            const auto bytes = buffer->recorded_bytes();
+            if (event.message == MIM_LONGERROR) {
+                report_native_loss(event, MidiDataLossReason::native_long_error, true,
+                                   "WinMM reported invalid or incomplete long-message data");
+            } else if (event.accepted_for_delivery) {
+                deliver(event.sequence, bytes, event.timestamp);
+            } else if (!bytes.empty()) {
+                report_native_loss(event, MidiDataLossReason::shutdown_discarded_data, true,
+                                   "WinMM returned undelivered long-message bytes during shutdown");
+            }
             if (accepting_callbacks.load(std::memory_order_acquire)) {
-                if (event.message == MIM_LONGDATA) {
-                    const auto bytes = buffer->recorded_bytes();
-                    deliver(bytes, event.timestamp);
-                } else {
+                const auto submitted = buffer->submit();
+                if (!submitted) {
                     ++dropped_callbacks;
+                    enqueue_loss({MidiBackend::winmm,
+                                  MidiDataLossReason::input_requeue_failure, true, std::nullopt,
+                                  "WinMM failed to requeue an input MIDIHDR",
+                                  submitted.error().native_code});
                 }
-                if (!buffer->submit()) ++dropped_callbacks;
             }
             queue_changed.notify_all();
             return;
@@ -427,11 +499,24 @@ struct WinmmTransport::Impl {
     }
 
     void drain_one_callback(std::unique_lock<std::mutex>& lock) {
-        const auto event = callbacks.front();
+        auto event = std::move(callbacks.front());
         callbacks.pop_front();
         lock.unlock();
         process_callback(event);
         lock.lock();
+    }
+
+    void drain_pending_callbacks() {
+        for (;;) {
+            std::optional<CallbackEvent> event;
+            {
+                std::scoped_lock lock(queue_mutex);
+                if (callbacks.empty()) break;
+                event = std::move(callbacks.front());
+                callbacks.pop_front();
+            }
+            process_callback(*event);
+        }
     }
 
     Result<void> wait_for_returned_buffers() {
@@ -550,17 +635,7 @@ struct WinmmTransport::Impl {
     Result<void> close_on_worker() {
         std::optional<MidiError> first_error;
         accepting_callbacks.store(false, std::memory_order_release);
-        {
-            std::scoped_lock lock(queue_mutex);
-            for (auto event = callbacks.begin(); event != callbacks.end();) {
-                if (event->message == MIM_LONGDATA || event->message == MIM_LONGERROR) {
-                    ++event;
-                } else {
-                    event = callbacks.erase(event);
-                    ++dropped_callbacks;
-                }
-            }
-        }
+        drain_pending_callbacks();
 
         if (input_handle) {
             const auto stopped = native_api->stop_input(input_handle);
@@ -574,6 +649,7 @@ struct WinmmTransport::Impl {
             const auto returned = wait_for_returned_buffers();
             if (!returned && !first_error) first_error = returned.error();
             if (returned) {
+                drain_pending_callbacks();
                 for (auto& buffer : input_buffers) {
                     const auto result = buffer->unprepare();
                     if (!result && !first_error) first_error = result.error();
@@ -697,6 +773,11 @@ Result<void> WinmmTransport::send(const NativeMidiMessage& message) {
 void WinmmTransport::set_message_handler(MidiMessageHandler handler) {
     std::scoped_lock lock(impl_->handler_mutex);
     impl_->message_handler = std::move(handler);
+}
+
+void WinmmTransport::set_stream_event_handler(MidiStreamEventHandler handler) {
+    std::scoped_lock lock(impl_->handler_mutex);
+    impl_->stream_event_handler = std::move(handler);
 }
 
 void WinmmTransport::set_endpoint_change_handler(EndpointChangeHandler handler) {

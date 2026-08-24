@@ -1,4 +1,5 @@
 #include "transports/wms/WmsTransport.hpp"
+#include "../HandleGrowth.hpp"
 
 #include <windows.h>
 
@@ -76,6 +77,8 @@ int main(int argc, char** argv) {
     DWORD steady_maximum = 0;
     DWORD handles_after_first = 0;
     DWORD handles_after_final = 0;
+    std::vector<std::uint32_t> handle_samples;
+    handle_samples.reserve(cycles);
     const unsigned steady_start = cycles >= 20 ? (cycles / 2) + 1 : 1;
     for (unsigned cycle = 1; cycle <= cycles; ++cycle) {
         const auto opened = transport.open({inputs.front().identity, outputs.front().identity});
@@ -90,6 +93,7 @@ int main(int argc, char** argv) {
         }
         DWORD handles = 0;
         if (!GetProcessHandleCount(GetCurrentProcess(), &handles)) return EXIT_FAILURE;
+        handle_samples.push_back(static_cast<std::uint32_t>(handles));
         if (cycle == 1) handles_after_first = handles;
         handles_after_final = handles;
         if (cycle >= steady_start) {
@@ -97,9 +101,9 @@ int main(int argc, char** argv) {
             steady_maximum = (std::max)(steady_maximum, handles);
         }
     }
+    const auto growth = taureon::test::analyze_handle_growth(handle_samples, steady_start - 1);
     const auto steady_span = steady_maximum - steady_minimum;
-    const bool pass = steady_span <= 1 &&
-                      transport.state() == TransportState::closed;
+    const bool pass = !growth.sustained_growth && transport.state() == TransportState::closed;
     std::cout << "{\"event\":\"stage2_wms_lifecycle\",\"cycles\":" << cycles
               << ",\"handles_after_first\":" << handles_after_first
               << ",\"handles_after_final\":" << handles_after_final
@@ -107,6 +111,18 @@ int main(int argc, char** argv) {
               << ",\"steady_minimum\":" << steady_minimum
               << ",\"steady_maximum\":" << steady_maximum
               << ",\"steady_span\":" << steady_span
+              << ",\"reference_maximum\":" << growth.reference_maximum
+              << ",\"steady_slope\":" << static_cast<double>(growth.steady_slope)
+              << ",\"leading_median\":" << static_cast<double>(growth.leading_median)
+              << ",\"trailing_median\":" << static_cast<double>(growth.trailing_median)
+              << ",\"new_steady_high\":" << (growth.new_steady_high ? "true" : "false")
+              << ",\"sustained_growth\":" << (growth.sustained_growth ? "true" : "false")
+              << ",\"handle_samples\":[";
+    for (std::size_t index = 0; index < handle_samples.size(); ++index) {
+        if (index != 0) std::cout << ',';
+        std::cout << handle_samples[index];
+    }
+    std::cout << ']'
               << ",\"pass\":" << (pass ? "true" : "false") << "}" << std::endl;
     return pass ? EXIT_SUCCESS : EXIT_FAILURE;
 }

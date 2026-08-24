@@ -9,6 +9,7 @@
 #include "winmidi/init/Microsoft.Windows.Devices.Midi2.Initialization.hpp"
 
 #include <algorithm>
+#include <bitset>
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
@@ -66,7 +67,9 @@ struct WmsTransport::Impl {
     std::mutex queue_mutex;
     std::condition_variable queue_changed;
     std::deque<std::function<void()>> commands;
-    std::deque<NativeMidiMessage> received_messages;
+    std::deque<MidiStreamEvent> received_messages;
+    std::bitset<16> queued_group_overflow_markers;
+    bool queued_ungrouped_overflow_marker{};
     bool stopping{};
     bool startup_complete{};
     std::thread worker;
@@ -83,9 +86,11 @@ struct WmsTransport::Impl {
     std::atomic<std::uint64_t> transmitted_messages{0};
     std::atomic<std::uint64_t> dropped_messages{0};
     std::atomic<std::uint64_t> queue_high_water_mark{0};
+    std::atomic<std::uint64_t> next_stream_sequence{0};
 
     std::mutex handler_mutex;
     MidiMessageHandler message_handler;
+    MidiStreamEventHandler stream_event_handler;
     EndpointChangeHandler endpoint_handler;
 
     Impl() : worker([this] { worker_main(); }) {
@@ -113,9 +118,26 @@ struct WmsTransport::Impl {
         constexpr std::size_t receive_capacity = 1024;
         if (received_messages.size() >= receive_capacity) {
             ++dropped_messages;
+            std::optional<std::uint8_t> group;
+            if (const auto* ump = std::get_if<UmpNativeMessage>(&message.data);
+                ump != nullptr && !ump->words.empty()) {
+                group = static_cast<std::uint8_t>((ump->words.front() >> 24u) & 0x0fu);
+            }
+            const bool already_marked = group ? queued_group_overflow_markers.test(*group) :
+                                                queued_ungrouped_overflow_marker;
+            if (!already_marked) {
+                if (group) queued_group_overflow_markers.set(*group);
+                else queued_ungrouped_overflow_marker = true;
+                received_messages.push_back(
+                    {next_stream_sequence.fetch_add(1, std::memory_order_relaxed),
+                     MidiDataLossEvent{MidiBackend::windows_midi_services,
+                                       MidiDataLossReason::queue_overflow, true, group,
+                                       "WMS receive queue overflow", std::nullopt}});
+            }
             return;
         }
-        received_messages.push_back(std::move(message));
+        received_messages.push_back(
+            {next_stream_sequence.fetch_add(1, std::memory_order_relaxed), std::move(message)});
         const auto depth = static_cast<std::uint64_t>(received_messages.size());
         auto high_water = queue_high_water_mark.load(std::memory_order_relaxed);
         while (depth > high_water &&
@@ -124,15 +146,26 @@ struct WmsTransport::Impl {
         queue_changed.notify_one();
     }
 
-    void process_received(NativeMidiMessage message) {
+    void record_dequeued_loss_marker(const MidiStreamEvent& event) {
+        const auto* loss = std::get_if<MidiDataLossEvent>(&event.payload);
+        if (loss == nullptr || loss->reason != MidiDataLossReason::queue_overflow) return;
+        if (loss->group) queued_group_overflow_markers.reset(*loss->group);
+        else queued_ungrouped_overflow_marker = false;
+    }
+
+    void process_received(MidiStreamEvent event) {
         MidiMessageHandler handler;
+        MidiStreamEventHandler stream_handler;
         {
             std::scoped_lock lock(handler_mutex);
             handler = message_handler;
+            stream_handler = stream_event_handler;
         }
-        if (handler) {
-            handler(message);
-            ++delivered_messages;
+        if (stream_handler) stream_handler(event);
+        if (const auto* message = std::get_if<NativeMidiMessage>(&event.payload);
+            message != nullptr) {
+            if (handler) handler(*message);
+            if (stream_handler || handler) ++delivered_messages;
         }
     }
 
@@ -189,7 +222,7 @@ struct WmsTransport::Impl {
 
         for (;;) {
             std::function<void()> command;
-            std::optional<NativeMidiMessage> received;
+            std::optional<MidiStreamEvent> received;
             {
                 std::unique_lock lock(queue_mutex);
                 queue_changed.wait(lock, [this] {
@@ -201,6 +234,7 @@ struct WmsTransport::Impl {
                 } else if (!received_messages.empty()) {
                     received = std::move(received_messages.front());
                     received_messages.pop_front();
+                    record_dequeued_loss_marker(*received);
                 } else if (stopping) {
                     break;
                 }
@@ -390,10 +424,16 @@ struct WmsTransport::Impl {
 
     Result<void> close_on_worker() {
         callback_gate->accepting.store(false, std::memory_order_release);
-        {
-            std::scoped_lock lock(queue_mutex);
-            dropped_messages += static_cast<std::uint64_t>(received_messages.size());
-            received_messages.clear();
+        for (;;) {
+            std::optional<MidiStreamEvent> event;
+            {
+                std::scoped_lock lock(queue_mutex);
+                if (received_messages.empty()) break;
+                event = std::move(received_messages.front());
+                received_messages.pop_front();
+                record_dequeued_loss_marker(*event);
+            }
+            process_received(std::move(*event));
         }
         try {
             if (session) {
@@ -549,6 +589,11 @@ Result<void> WmsTransport::send(const NativeMidiMessage& message) {
 void WmsTransport::set_message_handler(MidiMessageHandler handler) {
     std::scoped_lock lock(impl_->handler_mutex);
     impl_->message_handler = std::move(handler);
+}
+
+void WmsTransport::set_stream_event_handler(MidiStreamEventHandler handler) {
+    std::scoped_lock lock(impl_->handler_mutex);
+    impl_->stream_event_handler = std::move(handler);
 }
 
 void WmsTransport::set_endpoint_change_handler(EndpointChangeHandler handler) {

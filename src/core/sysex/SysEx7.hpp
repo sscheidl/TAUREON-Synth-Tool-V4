@@ -39,11 +39,14 @@ class SysEx7Assembler {
 public:
     [[nodiscard]] std::vector<SysExFrame> consume(const UmpSysEx7Packet& packet);
     [[nodiscard]] std::vector<SysExFrame> finish();
+    void notify_data_loss(std::uint8_t group) noexcept;
     void reset() noexcept;
 
 private:
     struct GroupState {
         bool active{};
+        bool affected_by_data_loss{};
+        bool pending_data_loss{};
         std::vector<std::uint8_t> bytes;
     };
 

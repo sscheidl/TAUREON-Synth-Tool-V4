@@ -26,6 +26,7 @@ taureon_add_stage3_unit(stage3_midi_sysex_unit unit/Stage3MidiSysexTests.cpp)
 taureon_add_stage3_unit(stage3_syx_file_unit unit/Stage3SyxFileTests.cpp)
 taureon_add_stage3_unit(stage3_transfer_unit unit/Stage3TransferTests.cpp)
 taureon_add_stage3_unit(stage3_large_sysex_unit unit/Stage3LargeSysexTests.cpp)
+taureon_add_stage3_unit(stage3_handle_growth_unit unit/Stage3HandleGrowthTests.cpp)
 set_tests_properties(stage3_large_sysex_unit PROPERTIES LABELS "stage3;unit;ci;large-data")
 
 if(WIN32)

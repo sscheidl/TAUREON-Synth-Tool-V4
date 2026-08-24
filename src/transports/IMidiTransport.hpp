@@ -33,6 +33,7 @@ struct MidiTransportDiagnostics {
 };
 
 using MidiMessageHandler = std::function<void(const NativeMidiMessage&)>;
+using MidiStreamEventHandler = std::function<void(const MidiStreamEvent&)>;
 using EndpointChangeHandler = std::function<void(const EndpointChange&)>;
 
 class IMidiTransport {
@@ -48,6 +49,7 @@ public:
     [[nodiscard]] virtual Result<void> close() = 0;
     [[nodiscard]] virtual Result<void> send(const NativeMidiMessage& message) = 0;
     virtual void set_message_handler(MidiMessageHandler handler) = 0;
+    virtual void set_stream_event_handler(MidiStreamEventHandler handler) = 0;
     virtual void set_endpoint_change_handler(EndpointChangeHandler handler) = 0;
 };
 

@@ -164,6 +164,13 @@ The production transport did not fail. The final criterion records cold/final co
 transport plus a bounded second-half plateau; the repeated final run passed. No sleep was added to mask the
 observation.
 
+The retained regression's test contract was corrected during the authorized Stage-3 HOLD investigation after
+full 100- and 500-cycle sample series proved that second-half min/max span measures reversible whole-process
+WMS/WinRT handle dispersion rather than ownership growth. The harness now records every sample and rejects only
+a positive steady trend that also creates a new post-warm-up peak and raises the trailing median. Synthetic
+tests reject fast and slow monotonic leaks. No span limit increase, sleep, resampling, or window shift was used;
+the original Stage-2 evidence above remains historical and unchanged.
+
 ## Architecture impact
 
 - [ADR-0001](../architecture/adr/ADR-0001-backend-specific-route-identity.md): accepted backend-specific,

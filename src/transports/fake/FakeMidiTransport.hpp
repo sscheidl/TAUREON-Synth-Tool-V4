@@ -21,12 +21,14 @@ public:
     [[nodiscard]] Result<void> close() override;
     [[nodiscard]] Result<void> send(const NativeMidiMessage& message) override;
     void set_message_handler(MidiMessageHandler handler) override;
+    void set_stream_event_handler(MidiStreamEventHandler handler) override;
     void set_endpoint_change_handler(EndpointChangeHandler handler) override;
 
     void set_endpoints(std::vector<MidiEndpointDescriptor> endpoints);
     void remove_endpoint(const MidiRouteIdentity& identity);
     void set_send_hook(std::function<Result<void>(const NativeMidiMessage&)> hook);
     void emit_received(const NativeMidiMessage& message);
+    void emit_data_loss(MidiDataLossEvent event);
     void report_dropped_events(std::uint64_t count = 1);
 
 private:
@@ -40,9 +42,11 @@ private:
     std::vector<MidiEndpointDescriptor> endpoints_;
     MidiConnectionRequest connection_;
     MidiMessageHandler message_handler_;
+    MidiStreamEventHandler stream_event_handler_;
     EndpointChangeHandler endpoint_handler_;
     std::function<Result<void>(const NativeMidiMessage&)> send_hook_;
     MidiTransportDiagnostics diagnostics_;
+    std::uint64_t next_stream_sequence_{};
 };
 
 } // namespace taureon::midi

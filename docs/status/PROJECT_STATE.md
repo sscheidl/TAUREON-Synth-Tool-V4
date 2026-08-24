@@ -19,7 +19,8 @@ Status: PASS / CLOSED after targeted-review P1 remediation and User gate
 Implementation lead: Codex
 
 Stage 3 – Realtime MIDI + SysEx engine
-Status: IMPLEMENTATION COMPLETE / PASS RECOMMENDED / awaiting User gate
+Status: PASS / CLOSED after targeted HOLD remediation and User/Project Manager gate
+Gate: PASS WITH NON-BLOCKING FOLLOW-UPS (targeted Claude Code re-review; no P0/P1 findings)
 Implementation lead: Codex
 
 Stage 4 – Device/profile isolation proof
@@ -117,9 +118,14 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-No Stage-3 implementation blocker or unresolved P0/P1 is known. The Stage-2 partial-open P1 remains closed by
-its transport-level regression. Stage-3 exact conversion, large-data, failure-path, clean-CI, and 100-cycle
-local WMS/WinMM evidence are recorded in [`STAGE_3_REPORT.md`](../stages/STAGE_3_REPORT.md).
+No Stage-3 blocker or unresolved P0/P1 remains. The historical review P1 ordered-loss gap and both P2 findings
+were corrected without an architecture deviation and accepted by targeted Claude Code re-review. The authorized
+WMS investigation recorded complete 100- and 500-cycle handle series and confirmed reversible whole-process
+runtime plateaus rather than cumulative ownership growth. The retained harnesses now test directional sustained
+growth, not min/max dispersion; synthetic fast/slow leaks fail and all final local and clean-CI suites pass. The
+Stage-2 partial-open P1 remains closed by its transport-level regression. Stage-3
+ordered-loss, exact conversion, grouped decode-failure, `.syx` I/O-diagnostic, large-data, clean-CI, and local
+WMS/WinMM evidence are recorded in [`STAGE_3_REPORT.md`](../stages/STAGE_3_REPORT.md).
 
 Pinned RC4 limitations remain visible but are not transport assumptions: the newer API-mode query is absent
 from the pinned metadata, and the isolated WinMM/WMS correlation helpers fail-fast and are not used for
@@ -130,9 +136,15 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
 - **Stage 2 PASS / CLOSED:** Backend-specific persistence/resolution, WinMM worker
   requeue/RAII, WMS MTA lifetime, P1 closure regression, and opt-in local regressions are implemented and
   recorded in [`STAGE_2_REPORT.md`](../stages/STAGE_2_REPORT.md).
-- **Stage 3 gate:** User/Project Manager accepts or rejects the PASS recommendation. R-003 is closed for the
-  generic software layer; physical-device behavior remains explicitly unvalidated.
-- **Stage 4:** Begin only after a separate User gate and approved brief.
+- **Stage 3 PASS / CLOSED:** Claude Code returned PASS WITH NON-BLOCKING FOLLOW-UPS with no P0/P1 findings;
+  the two reviewer follow-ups are mandatory Stage-4-brief inputs and R-003 remains mitigated, not closed.
+- **Stage-4 brief input FU-1 (P2):** refine WinMM overflow-episode signaling so marker coalescing cannot
+  under-report loss across later frame boundaries while the worker remains blocked; require a deterministic
+  blocked-worker, sustained-overflow, multiple-frame regression.
+- **Stage-4 brief input FU-2 (P3):** define handle-growth analysis as not applicable without a separate warm-up
+  segment, or force `new_steady_high=false` for `start == 0`; require a short-series regression.
+- **Stage 4:** Prepare/review its brief with the two Stage-3 follow-ups, then begin only after a separate User
+  authorization.
 - **Stage 5:** Repeat apartment/lifetime/close-active/shutdown validation in the actual `QApplication` host
   and measure actual active state at close.
 
@@ -146,8 +158,8 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-User/Project Manager resolves the Stage-3 gate from [`STAGE_3_REPORT.md`](../stages/STAGE_3_REPORT.md) and its
-PASS recommendation. Do not begin Stage 4.
+Record the two non-blocking Claude Code follow-ups in the future Stage-4 brief and submit that brief for
+Project Manager/User review. Do not begin Stage 4 without separate authorization.
 
 ## Hardware validation
 
