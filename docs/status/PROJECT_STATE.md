@@ -28,6 +28,11 @@ Status: PASS / CLOSED at revision 986115d
 Gate: PASS WITH NON-BLOCKING FOLLOW-UP (mandatory Claude Code review; FU-3 is a Stage-5 brief input)
 Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
+
+Stage 5 – Qt 6 Product GUI
+Status: ACTIVE / USER-AUTHORIZED
+Gate: implementation in progress under the approved Stage-5 brief
+Implementation lead: Codex
 ```
 
 ## Project location
@@ -165,8 +170,8 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Review and authorize the complete Stage-5 brief. FU-3 is already recorded there as a mandatory input. Do not
-begin Stage-5 implementation before that authorization.
+Implement the approved Stage-5 vertical slices. Preserve FU-3 and all accepted route, taint, lifetime, and
+capability contracts. Do not begin Stage 6.
 
 ## Hardware validation
 
