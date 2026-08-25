@@ -117,6 +117,8 @@ void bounded_application_stream_queue() {
     const auto snapshot = worker.sysex_snapshot().get();
     TAUREON_REQUIRE(snapshot);
     TAUREON_REQUIRE(snapshot.value().application_dropped_events == injected - capacity);
+    TAUREON_REQUIRE(snapshot.value().application_last_loss_sequence ==
+                    std::optional<std::uint64_t>{injected - 1});
 }
 
 } // namespace

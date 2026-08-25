@@ -57,6 +57,10 @@ private:
 
     void enqueue(Command command);
     void enqueue_stream_event(const midi::MidiStreamEvent& event) noexcept;
+    void record_stream_drop_locked(const midi::MidiStreamEvent& event) noexcept;
+    [[nodiscard]] midi::MidiStreamEvent pending_loss_marker_locked() const;
+    void consume_pending_loss_marker_locked() noexcept;
+    [[nodiscard]] std::optional<std::uint64_t> last_synthetic_loss_sequence() const noexcept;
     void drain_stream_events(State& state);
     void run();
 
@@ -68,9 +72,11 @@ private:
     std::queue<Command> commands_;
     std::deque<midi::MidiStreamEvent> stream_events_;
     std::uint64_t pending_stream_loss_markers_{};
+    std::uint64_t pending_stream_loss_sequence_{};
     midi::MidiBackend pending_stream_loss_backend_{midi::MidiBackend::winmm};
     std::optional<std::uint8_t> pending_stream_loss_group_;
     std::atomic<std::uint64_t> dropped_stream_events_{};
+    std::optional<std::uint64_t> last_synthetic_loss_sequence_;
     bool stopping_{};
     std::thread worker_;
 };

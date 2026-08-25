@@ -60,10 +60,13 @@ struct ConnectionWorker::State {
         if (sysex.receiving()) static_cast<void>(sysex.finish_receive());
     }
 
-    SysExTransferSnapshot sysex_snapshot(const std::uint64_t dropped_events) {
+    SysExTransferSnapshot sysex_snapshot(
+        const std::uint64_t dropped_events,
+        const std::optional<std::uint64_t> last_loss_sequence) {
         synchronize_transfer();
         auto result = sysex.snapshot();
         result.application_dropped_events = dropped_events;
+        result.application_last_loss_sequence = last_loss_sequence;
         if (controller) result.transmit_route = controller->snapshot().transmit_route;
         return result;
     }
@@ -102,40 +105,57 @@ void ConnectionWorker::enqueue_stream_event(const midi::MidiStreamEvent& event) 
         if (stopping_) return;
         constexpr std::size_t stream_capacity = 8192;
         while (pending_stream_loss_markers_ > 0 && stream_events_.size() < stream_capacity) {
-            stream_events_.push_back(
-                {0, midi::MidiDataLossEvent{pending_stream_loss_backend_,
-                                            midi::MidiDataLossReason::queue_overflow, true,
-                                            pending_stream_loss_group_,
-                                            "Stage 5 application stream queue overflow",
-                                            std::nullopt}});
-            --pending_stream_loss_markers_;
+            stream_events_.push_back(pending_loss_marker_locked());
+            consume_pending_loss_marker_locked();
         }
         if (stream_events_.size() == stream_capacity) {
-            if (const auto* loss = std::get_if<midi::MidiDataLossEvent>(&event.payload)) {
-                pending_stream_loss_backend_ = loss->backend;
-                pending_stream_loss_group_ = loss->group;
-            } else {
-                const auto& message = std::get<midi::NativeMidiMessage>(event.payload);
-                pending_stream_loss_backend_ = message.backend;
-                pending_stream_loss_group_.reset();
-                if (const auto* ump = std::get_if<midi::UmpNativeMessage>(&message.data);
-                    ump != nullptr && !ump->words.empty()) {
-                    pending_stream_loss_group_ =
-                        static_cast<std::uint8_t>((ump->words.front() >> 24u) & 0x0fu);
-                }
-            }
-            ++pending_stream_loss_markers_;
-            dropped_stream_events_.fetch_add(1, std::memory_order_relaxed);
+            record_stream_drop_locked(event);
         } else {
             stream_events_.push_back(event);
         }
         changed_.notify_one();
     } catch (...) {
         std::scoped_lock lock(mutex_);
-        ++pending_stream_loss_markers_;
-        dropped_stream_events_.fetch_add(1, std::memory_order_relaxed);
+        record_stream_drop_locked(event);
         changed_.notify_one();
     }
+}
+
+void ConnectionWorker::record_stream_drop_locked(const midi::MidiStreamEvent& event) noexcept {
+    pending_stream_loss_sequence_ = event.sequence;
+    if (const auto* loss = std::get_if<midi::MidiDataLossEvent>(&event.payload)) {
+        pending_stream_loss_backend_ = loss->backend;
+        pending_stream_loss_group_ = loss->group;
+    } else {
+        const auto& message = std::get<midi::NativeMidiMessage>(event.payload);
+        pending_stream_loss_backend_ = message.backend;
+        pending_stream_loss_group_.reset();
+        if (const auto* ump = std::get_if<midi::UmpNativeMessage>(&message.data);
+            ump != nullptr && !ump->words.empty()) {
+            pending_stream_loss_group_ =
+                static_cast<std::uint8_t>((ump->words.front() >> 24u) & 0x0fu);
+        }
+    }
+    ++pending_stream_loss_markers_;
+    dropped_stream_events_.fetch_add(1, std::memory_order_relaxed);
+}
+
+midi::MidiStreamEvent ConnectionWorker::pending_loss_marker_locked() const {
+    return {pending_stream_loss_sequence_,
+            midi::MidiDataLossEvent{pending_stream_loss_backend_,
+                                    midi::MidiDataLossReason::queue_overflow, true,
+                                    pending_stream_loss_group_,
+                                    "Stage 5 application stream queue overflow",
+                                    std::nullopt}};
+}
+
+void ConnectionWorker::consume_pending_loss_marker_locked() noexcept {
+    last_synthetic_loss_sequence_ = pending_stream_loss_sequence_;
+    --pending_stream_loss_markers_;
+}
+
+std::optional<std::uint64_t> ConnectionWorker::last_synthetic_loss_sequence() const noexcept {
+    return last_synthetic_loss_sequence_;
 }
 
 void ConnectionWorker::drain_stream_events(State& state) {
@@ -147,13 +167,8 @@ void ConnectionWorker::drain_stream_events(State& state) {
                 event = std::move(stream_events_.front());
                 stream_events_.pop_front();
             } else if (pending_stream_loss_markers_ > 0) {
-                --pending_stream_loss_markers_;
-                event = midi::MidiStreamEvent{
-                    0, midi::MidiDataLossEvent{pending_stream_loss_backend_,
-                                               midi::MidiDataLossReason::queue_overflow, true,
-                                               pending_stream_loss_group_,
-                                               "Stage 5 application stream queue overflow",
-                                               std::nullopt}};
+                event = pending_loss_marker_locked();
+                consume_pending_loss_marker_locked();
             } else {
                 break;
             }
@@ -277,7 +292,8 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::load_sysex(
             return;
         }
         promise->set_value(midi::Result<SysExTransferSnapshot>::success(
-            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed))));
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
     });
     return future;
 }
@@ -311,7 +327,8 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::begin_sysex_r
             return;
         }
         promise->set_value(midi::Result<SysExTransferSnapshot>::success(
-            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed))));
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
     });
     return future;
 }
@@ -327,7 +344,8 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::finish_sysex_
             return;
         }
         promise->set_value(midi::Result<SysExTransferSnapshot>::success(
-            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed))));
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
     });
     return future;
 }
@@ -348,7 +366,8 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::clear_sysex()
             return;
         }
         promise->set_value(midi::Result<SysExTransferSnapshot>::success(
-            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed))));
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
     });
     return future;
 }
@@ -371,7 +390,8 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::save_received
         }
         state.sysex.record_log("Saved verified received data to a new file");
         promise->set_value(midi::Result<SysExTransferSnapshot>::success(
-            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed))));
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
     });
     return future;
 }
@@ -420,7 +440,8 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::start_raw_sys
         state.sysex.record_log("Raw Send started by explicit user action");
         state.sysex.set_transfer_progress(state.transfer->progress());
         promise->set_value(midi::Result<SysExTransferSnapshot>::success(
-            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed))));
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
     });
     return future;
 }
@@ -432,13 +453,15 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::cancel_sysex_
         state.synchronize_transfer();
         if (!state.transfer) {
             promise->set_value(midi::Result<SysExTransferSnapshot>::success(
-                state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed))));
+                state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                     last_synthetic_loss_sequence())));
             return;
         }
         state.transfer->request_cancel();
         state.sysex.set_transfer_progress(state.transfer->progress());
         promise->set_value(midi::Result<SysExTransferSnapshot>::success(
-            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed))));
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
     });
     return future;
 }
@@ -449,7 +472,8 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::sysex_snapsho
     enqueue([promise, this](State& state) {
         drain_stream_events(state);
         promise->set_value(midi::Result<SysExTransferSnapshot>::success(
-            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed))));
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
     });
     return future;
 }
@@ -486,13 +510,8 @@ void ConnectionWorker::run() {
                 stream_event = std::move(stream_events_.front());
                 stream_events_.pop_front();
             } else if (pending_stream_loss_markers_ > 0) {
-                --pending_stream_loss_markers_;
-                stream_event = midi::MidiStreamEvent{
-                    0, midi::MidiDataLossEvent{pending_stream_loss_backend_,
-                                               midi::MidiDataLossReason::queue_overflow, true,
-                                               pending_stream_loss_group_,
-                                               "Stage 5 application stream queue overflow",
-                                               std::nullopt}};
+                stream_event = pending_loss_marker_locked();
+                consume_pending_loss_marker_locked();
             } else if (stopping_) {
                 break;
             }

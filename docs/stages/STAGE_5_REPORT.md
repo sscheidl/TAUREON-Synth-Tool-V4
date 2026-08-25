@@ -247,3 +247,18 @@ Stage-5 tests and the retained Stage-2 partial-open/WinMM and Stage-3 regression
 build, and CI run over this completed SysEx slice also passes **18/18**. `git diff --check` passes. The disposable
 clean-build output was removed. Product-host native WMS/WinMM close-while-active evidence and the remaining Stage-5
 workspaces are still pending; Stage 5 remains **ACTIVE** and Stage 6 remains unstarted.
+
+### Targeted P3 follow-up — application loss-marker sequence
+
+A targeted review found that synthetic loss markers created when the bounded Stage-5 application stream queue
+overflowed used `sequence = 0`, while transport-originated events carry their native callback sequence. The
+current FIFO consumer does not inspect or reorder by sequence, so this was not an observed capture defect, but a
+later sorting or deduplication layer could have moved the synthetic marker ahead of the affected stream range.
+
+The queue now retains the exact sequence of the most recently rejected transport event and assigns that value to
+each still-pending synthetic marker. Backend, group, drop accounting, bounded capacity, callback ownership, FIFO
+delivery, and DataLoss/Taint behavior are unchanged. Marker state is consumed only after its queue insertion has
+succeeded, preserving the existing exception-safe pending-loss accounting. The transport-level worker regression
+still injects 9,000 events into the blocked 8,192-event boundary, proves exactly 808 drops, and now additionally
+proves `application_last_loss_sequence == 8999`. No architecture deviation or Stage-6 work was required. Stage 5
+remains **ACTIVE**.

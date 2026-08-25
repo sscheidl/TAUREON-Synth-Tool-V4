@@ -34,6 +34,7 @@ struct SysExTransferSnapshot {
     std::chrono::milliseconds pacing_delay{};
     std::vector<std::string> log;
     std::uint64_t application_dropped_events{};
+    std::optional<std::uint64_t> application_last_loss_sequence;
     std::optional<std::string> profile_id;
     std::string profile_display_name;
     std::optional<std::string> manufacturer;
