@@ -179,3 +179,71 @@ The separately invoked local-MIDI suite passed its first two tests
 was then deliberately interrupted while the third test was active. This checkpoint therefore does **not** claim a
 complete local-MIDI rerun, separate clean build, product-host native lifecycle result, or Stage-5 gate result.
 Stage 5 remains **ACTIVE** and Stage 6 remains unstarted.
+
+### Resumed checkpoint validation — 2026-08-25
+
+The deliberately interrupted local run recorded above was resumed without changing its test contract. All five
+registered local-MIDI regressions passed: Stage-2 WinMM/WMS loopback, Stage-3 WinMM realtime, Stage-2 WMS
+lifecycle, Stage-3 WMS realtime/trend, and retained WinMM byte-integrity evidence. Total local test time was
+223.89 seconds. Only the previously approved diagnostic loopback paths were used; no physical MIDI endpoint was
+selected.
+
+A first truly fresh configure correctly exposed that Qt was not discoverable from the ordinary process
+environment. No system PATH or Qt installation was changed. The failed disposable build directory was removed,
+and the clean configure was rerun with the exact existing SDK prefix
+`C:/Qt/6.10.3/msvc2022_64` supplied only as that CMake process's `CMAKE_PREFIX_PATH`. The separate build and its
+then-current CI suite passed 17/17. This records a clean-build invocation requirement, not a release deployment
+solution. The disposable clean-build directory was removed after verification.
+
+## SysEx Transfer receive/send slice
+
+`SysExTransferSession` is a Qt-independent application service over the accepted Stage-3 parser, capture session,
+SysEx7 encoder, `.syx` loader/writer, and transfer engine. It retains exact source bytes and frames, counts complete,
+incomplete, malformed, and data-loss-tainted frames separately, and allows verified received-data save only for a
+finished receive capture whose frames are all complete and unaffected. Saving uses the accepted atomic,
+no-replace-by-default writer. Imported sources remain read-only. No payload repair, normalization, checksum,
+conversion, retry, or device-specific codec was added.
+
+Raw-send preparation rejects empty, incomplete, malformed, or tainted documents. WinMM receives exact MIDI 1.0
+`F0...F7` frames. WMS receives the accepted SysEx7 representation built for the group carried by the exact selected
+TX route; one document frame remains one paced transfer-engine message. The UI labels the operation **Raw Send**,
+shows the actual backend-specific TX identity/group, and starts only from a direct button click. It never sends on
+startup, file load, profile match, route connection, or capture completion. **Validated Restore** remains disabled
+with an explanation because no profile/protocol declares and implements that capability.
+
+The `ConnectionWorker` owns the session and each active `TransferEngine` alongside its native transport. Backend
+switch, disconnect, and worker destruction request cancellation, join the transfer, finish capture, then close and
+destroy the transport in deterministic order. A second active transfer is rejected. Receive events enter through
+the native stream callback, which never touches Qt and copies only into a bounded 8,192-event application queue.
+When that queue is full, every rejected event increments diagnostics and is represented by a backend/group-aware
+SysEx-affecting loss marker; the Stage-3/4 taint contract therefore reaches the capture session rather than becoming
+silent GUI loss. Commands that finish capture or close a connection drain already accepted stream events before
+the terminal transition.
+
+The product SysEx Transfer workspace now shows source name, deterministic device/profile evidence, match status,
+frame/byte and integrity counts, application drops, exact TX route/group, explicit pacing, progress, bounded log,
+frame model, and selected-frame raw bytes. Receive/Stop Receive, Raw Send, Cancel, Save received data, Clear, and
+Open `.syx` are functional or state-disabled with an explanation. The accepted Stage-4 profile files are deployed
+beside the development executable. The approved Summit fixture is recognised by its deterministic fingerprint as
+a confident `Novation Summit` suggestion. Its `transfer=false` claim remains visible; the generic Raw Send control
+does not present that profile as supporting transfer or validated restore. Invalid/tainted evidence produces an
+invalid match with no selected device profile, so recognition cannot clear or hide taint.
+
+### SysEx Transfer evidence
+
+- `stage5_sysex_transfer_session_unit` proves byte-exact fixture import, WinMM bytes, WMS group encoding, complete
+  receive, explicit DataLoss/Taint propagation, Raw-Send/save rejection for tainted data, verified received-data
+  atomic save, Summit fingerprint recognition, and preservation of its negative capability claims.
+- `stage5_connection_worker_unit` proves fake WMS raw-send completion, exact one-message accounting, receive and
+  tainted receive through the production worker boundary, and deterministic application-queue overflow. With the
+  worker held inside enumeration, 9,000 injected events produce the exact bounded result: capacity 8,192 and 808
+  reported drops.
+- `stage5_connection_ui_unit` proves the production widget/worker/controller/fake-transport chain for Receive/Stop,
+  frame presentation, file load with zero automatic sends, visible WMS endpoint/group, visible Summit match and
+  negative transfer capability, explicit one-click Raw Send, and disabled Validated Restore.
+
+Current Debug build and the complete CI-labelled non-local suite pass **18/18**, including all eight current
+Stage-5 tests and the retained Stage-2 partial-open/WinMM and Stage-3 regressions. A second separate clean configure,
+build, and CI run over this completed SysEx slice also passes **18/18**. `git diff --check` passes. The disposable
+clean-build output was removed. Product-host native WMS/WinMM close-while-active evidence and the remaining Stage-5
+workspaces are still pending; Stage 5 remains **ACTIVE** and Stage 6 remains unstarted.

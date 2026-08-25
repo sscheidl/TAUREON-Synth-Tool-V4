@@ -3,14 +3,20 @@
 #include "app/ConnectionWorker.hpp"
 #include "app/MonitorEventQueue.hpp"
 #include "gui/MainWindow.hpp"
+#include "gui/SysExTransferPanel.hpp"
+#include "core/sysex/SysEx7.hpp"
 #include "transports/fake/FakeMidiTransport.hpp"
 
 #include <QApplication>
 #include <QComboBox>
 #include <QEventLoop>
+#include <QLabel>
 #include <QPushButton>
 #include <QStatusBar>
+#include <QTableView>
 
+#include <filesystem>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -51,6 +57,12 @@ int main(int argc, char* argv[]) {
         const auto transmit_endpoint = endpoint(midi::MidiDirection::output, "fake-tx-id");
         std::mutex transport_mutex;
         midi::FakeMidiTransport* transport_ptr = nullptr;
+        auto profile_registry = std::make_shared<profiles::ProfileRegistry>();
+        std::vector<profiles::ProfileLoadIssue> profile_issues;
+        TAUREON_REQUIRE(profile_registry->load_directory(
+            std::filesystem::path{TAUREON_SOURCE_DIR} / "resources" / "device_profiles",
+            profile_issues));
+        TAUREON_REQUIRE(profile_issues.empty());
         app::ConnectionWorker worker([&](const midi::MidiBackend backend) {
             TAUREON_REQUIRE(backend == midi::MidiBackend::windows_midi_services);
             auto transport = std::make_unique<midi::FakeMidiTransport>(
@@ -60,7 +72,7 @@ int main(int argc, char* argv[]) {
                 transport_ptr = transport.get();
             }
             return transport;
-        });
+        }, {}, profile_registry);
         app::MonitorEventQueue monitor_queue(32);
         gui::MainWindow window(monitor_queue, worker);
         window.show();
@@ -87,6 +99,47 @@ int main(int argc, char* argv[]) {
         connect->click();
         TAUREON_REQUIRE(process_until([&] { return connect->text() == "Disconnect"; }));
         TAUREON_REQUIRE(transmit->currentIndex() == 0);
+
+        auto* transfer_panel = dynamic_cast<gui::SysExTransferPanel*>(
+            window.findChild<QWidget*>("sysExTransferPanel"));
+        auto* receive_sysex = window.findChild<QPushButton*>("sysExReceive");
+        auto* raw_send = window.findChild<QPushButton*>("sysExRawSend");
+        auto* validated_restore = window.findChild<QPushButton*>("sysExValidatedRestore");
+        auto* frame_table = window.findChild<QTableView*>("sysExFrameTable");
+        auto* route_label = window.findChild<QLabel*>("sysExTxRoute");
+        auto* profile_label = window.findChild<QLabel*>("sysExProfileMatch");
+        TAUREON_REQUIRE(transfer_panel != nullptr);
+        TAUREON_REQUIRE(transfer_panel->has_required_controls());
+        TAUREON_REQUIRE(receive_sysex != nullptr);
+        TAUREON_REQUIRE(raw_send != nullptr);
+        TAUREON_REQUIRE(validated_restore != nullptr);
+        TAUREON_REQUIRE(frame_table != nullptr);
+        TAUREON_REQUIRE(route_label != nullptr);
+        TAUREON_REQUIRE(profile_label != nullptr);
+        TAUREON_REQUIRE(!validated_restore->isEnabled());
+
+        receive_sysex->click();
+        TAUREON_REQUIRE(process_until([&] { return receive_sysex->text() == "Stop Receive"; }));
+        const sysex::SysExFrame received_frame{sysex::SysExFrameStatus::complete,
+                                               {0xF0, 0x7D, 0x22, 0xF7}, {},
+                                               std::optional<std::uint8_t>{3}, false};
+        const auto encoded = sysex::encode_sysex7(received_frame, 3);
+        TAUREON_REQUIRE(encoded);
+        midi::UmpNativeMessage ump;
+        for (const auto& packet : encoded.value()) {
+            ump.words.push_back(packet.word0);
+            ump.words.push_back(packet.word1);
+        }
+        {
+            std::scoped_lock lock(transport_mutex);
+            transport_ptr->emit_received(
+                {midi::MidiBackend::windows_midi_services, ump, std::nullopt});
+        }
+        receive_sysex->click();
+        TAUREON_REQUIRE(process_until([&] {
+            return receive_sysex->text() == "Receive" && frame_table->model()->rowCount() == 1;
+        }));
+
         connect->click();
         TAUREON_REQUIRE(process_until([&] { return connect->text() == "Connect"; }));
 
@@ -95,6 +148,27 @@ int main(int argc, char* argv[]) {
         connect->click();
         TAUREON_REQUIRE(process_until([&] { return connect->text() == "Disconnect"; }));
         TAUREON_REQUIRE(receive->currentIndex() == 0);
+
+        const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
+                             "novation_summit_crazy_sine.syx";
+        transfer_panel->request_load(fixture);
+        TAUREON_REQUIRE(process_until([&] {
+            return frame_table->model()->rowCount() == 1 && raw_send->isEnabled();
+        }));
+        {
+            std::scoped_lock lock(transport_mutex);
+            TAUREON_REQUIRE(transport_ptr->diagnostics().transmitted_messages == 0);
+        }
+        TAUREON_REQUIRE(route_label->text().contains("fake-tx-id"));
+        TAUREON_REQUIRE(route_label->text().contains("group 4"));
+        TAUREON_REQUIRE(profile_label->text().contains("Novation Summit"));
+        TAUREON_REQUIRE(profile_label->text().contains("confident suggestion"));
+        TAUREON_REQUIRE(profile_label->text().contains("not declared"));
+        raw_send->click();
+        TAUREON_REQUIRE(process_until([&] {
+            std::scoped_lock lock(transport_mutex);
+            return transport_ptr->diagnostics().transmitted_messages == 1;
+        }));
 
         {
             std::scoped_lock lock(transport_mutex);

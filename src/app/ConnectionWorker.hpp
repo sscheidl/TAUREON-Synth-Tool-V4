@@ -1,8 +1,13 @@
 #pragma once
 
 #include "app/ConnectionController.hpp"
+#include "app/SysExTransferSession.hpp"
 
+#include <atomic>
+#include <chrono>
 #include <condition_variable>
+#include <deque>
+#include <filesystem>
 #include <functional>
 #include <future>
 #include <memory>
@@ -19,7 +24,8 @@ using TransportFactory =
 class ConnectionWorker {
 public:
     explicit ConnectionWorker(TransportFactory factory,
-                              midi::MidiMessageHandler message_handler = {});
+                              midi::MidiMessageHandler message_handler = {},
+                              std::shared_ptr<const profiles::ProfileRegistry> profile_registry = {});
     ~ConnectionWorker();
 
     ConnectionWorker(const ConnectionWorker&) = delete;
@@ -33,18 +39,38 @@ public:
     [[nodiscard]] std::future<midi::Result<ConnectionSnapshot>> disconnect();
     [[nodiscard]] std::future<midi::Result<ConnectionSnapshot>> snapshot();
 
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> load_sysex(
+        std::filesystem::path path);
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> begin_sysex_receive();
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> finish_sysex_receive();
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> clear_sysex();
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> save_received_sysex(
+        std::filesystem::path path);
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> start_raw_sysex_send(
+        std::chrono::milliseconds inter_frame_delay);
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> cancel_sysex_transfer();
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> sysex_snapshot();
+
 private:
     struct State;
     using Command = std::function<void(State&)>;
 
     void enqueue(Command command);
+    void enqueue_stream_event(const midi::MidiStreamEvent& event) noexcept;
+    void drain_stream_events(State& state);
     void run();
 
     TransportFactory factory_;
     midi::MidiMessageHandler message_handler_;
+    std::shared_ptr<const profiles::ProfileRegistry> profile_registry_;
     std::mutex mutex_;
     std::condition_variable changed_;
     std::queue<Command> commands_;
+    std::deque<midi::MidiStreamEvent> stream_events_;
+    std::uint64_t pending_stream_loss_markers_{};
+    midi::MidiBackend pending_stream_loss_backend_{midi::MidiBackend::winmm};
+    std::optional<std::uint8_t> pending_stream_loss_group_;
+    std::atomic<std::uint64_t> dropped_stream_events_{};
     bool stopping_{};
     std::thread worker_;
 };

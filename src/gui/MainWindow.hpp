@@ -21,6 +21,7 @@ namespace taureon::gui {
 class MidiMonitorModel;
 class MonitorEventBridge;
 class ProfileMatchPanel;
+class SysExTransferPanel;
 
 class MainWindow final : public QMainWindow {
 public:
@@ -45,6 +46,7 @@ private:
     MidiMonitorModel* monitor_model_{};
     MonitorEventBridge* monitor_bridge_{};
     ProfileMatchPanel* profile_panel_{};
+    SysExTransferPanel* sysex_transfer_panel_{};
     app::ConnectionWorker& connection_worker_;
     QComboBox* backend_selector_{};
     QComboBox* receive_selector_{};

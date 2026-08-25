@@ -2,6 +2,7 @@ add_library(taureon_midi_core STATIC
     app/ConnectionController.cpp
     app/MonitorEventQueue.cpp
     app/ProfileSelectionService.cpp
+    app/SysExTransferSession.cpp
     core/midi/MidiMessage.cpp
     core/midi/MidiTypes.cpp
     core/midi/RoutePersistence.cpp
@@ -42,9 +43,16 @@ add_executable(taureon_app
     gui/MidiMonitorModel.cpp
     gui/MidiMonitorModel.hpp
     gui/ProfileMatchPanel.cpp
-    gui/ProfileMatchPanel.hpp)
+    gui/ProfileMatchPanel.hpp
+    gui/SysExTransferPanel.cpp
+    gui/SysExTransferPanel.hpp)
 target_link_libraries(taureon_app PRIVATE taureon_midi_core Qt6::Widgets)
 target_compile_features(taureon_app PRIVATE cxx_std_20)
+add_custom_command(TARGET taureon_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${PROJECT_SOURCE_DIR}/resources/device_profiles"
+        "$<TARGET_FILE_DIR:taureon_app>/resources/device_profiles"
+    COMMENT "Deploying Stage 4 device profiles beside taureon_app")
 if(MSVC)
     target_compile_options(taureon_app PRIVATE /W4 /permissive- /EHsc)
 else()
