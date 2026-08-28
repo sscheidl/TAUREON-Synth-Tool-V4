@@ -4,6 +4,7 @@
 #include "app/MonitorEventQueue.hpp"
 #include "gui/MainWindow.hpp"
 #include "gui/SysExTransferPanel.hpp"
+#include "gui/SysExManagerPanel.hpp"
 #include "core/sysex/SysEx7.hpp"
 #include "transports/fake/FakeMidiTransport.hpp"
 
@@ -74,7 +75,7 @@ int main(int argc, char* argv[]) {
             return transport;
         }, {}, profile_registry);
         app::MonitorEventQueue monitor_queue(32);
-        gui::MainWindow window(monitor_queue, worker);
+        gui::MainWindow window(monitor_queue, worker, profile_registry);
         window.show();
 
         auto* backend = window.findChild<QComboBox*>("backendSelector");
@@ -117,6 +118,10 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(route_label != nullptr);
         TAUREON_REQUIRE(profile_label != nullptr);
         TAUREON_REQUIRE(!validated_restore->isEnabled());
+        auto* manager_panel = dynamic_cast<gui::SysExManagerPanel*>(
+            window.findChild<QWidget*>("sysExManagerPanel"));
+        TAUREON_REQUIRE(manager_panel != nullptr);
+        TAUREON_REQUIRE(manager_panel->has_required_controls());
 
         receive_sysex->click();
         TAUREON_REQUIRE(process_until([&] { return receive_sysex->text() == "Stop Receive"; }));

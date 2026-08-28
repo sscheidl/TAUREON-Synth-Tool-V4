@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
                 {monitor_sequence.fetch_add(1, std::memory_order_relaxed),
                  taureon::midi::MidiDirection::input, message}));
         }, profile_registry);
-    taureon::gui::MainWindow window(monitor_queue, connection_worker);
+    taureon::gui::MainWindow window(monitor_queue, connection_worker, profile_registry);
     const bool smoke_test = std::any_of(argv + 1, argv + argc, [](const char* argument) {
         return std::string_view(argument) == "--smoke-test";
     });
