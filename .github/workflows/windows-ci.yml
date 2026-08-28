@@ -4,18 +4,81 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  bootstrap:
-    runs-on: windows-latest
+  software:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    env:
+      QT_VERSION: 6.10.3
+      QT_ARCH: win64_msvc2022_64
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Python for aqtinstall
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.3'
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action/action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730 # v4.3.1
+        with:
+          version: '${{ env.QT_VERSION }}'
+          host: windows
+          target: desktop
+          arch: '${{ env.QT_ARCH }}'
+          dir: '${{ runner.temp }}/taureon-qt'
+          cache: 'false'
+          set-env: 'true'
+          add-tools-to-path: 'false'
+          aqtversion: '==3.3.0'
+          py7zrversion: '==1.0.0'
+
+      - name: Report toolchain versions
+        shell: pwsh
+        run: |
+          cmake --version
+          qmake --version
+          python --version
+          Write-Host "QT_ROOT_DIR=$env:QT_ROOT_DIR"
+
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsInstall = & $vswhere -latest -products * -version "[17.0,18.0)" -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $vsInstall) { throw "Visual Studio 2022 with the v143 C++ toolset was not found." }
+
+          $toolset = Get-ChildItem (Join-Path $vsInstall "VC\Tools\MSVC") -Directory |
+            Sort-Object { [version]$_.Name } -Descending |
+            Select-Object -First 1
+          $compiler = Join-Path $toolset.FullName "bin\Hostx64\x64\cl.exe"
+          if (-not (Test-Path $compiler)) { throw "The x64 MSVC compiler was not found at $compiler." }
+
+          $compilerInfo = (Get-Item $compiler).VersionInfo
+          Write-Host "Visual Studio installation: $vsInstall"
+          Write-Host "MSVC v143 toolset directory: $($toolset.Name)"
+          Write-Host "cl.exe product version: $($compilerInfo.ProductVersion)"
+          Write-Host "cl.exe file version: $($compilerInfo.FileVersion)"
+
       - name: Configure
-        run: >-
-          cmake -S . -B build/ci -A x64
-          -DTAUREON_BUILD_STAGE1_SPIKES=OFF
-          -DTAUREON_ENABLE_WMS_TRANSPORT=OFF
-          -DTAUREON_ENABLE_LOCAL_MIDI_INTEGRATION_TESTS=OFF
-      - name: Build
+        shell: pwsh
+        run: |
+          cmake -S . -B build/ci -G "Visual Studio 17 2022" -A x64 -T v143 `
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
+            -DBUILD_TESTING=ON `
+            -DTAUREON_BUILD_STAGE1_SPIKES=OFF `
+            -DTAUREON_ENABLE_WMS_TRANSPORT=OFF `
+            -DTAUREON_ENABLE_LOCAL_MIDI_INTEGRATION_TESTS=OFF
+
+      - name: Build complete software configuration
         run: cmake --build build/ci --config Debug --parallel
-      - name: Test environment-independent Stage 2 and Stage 3 suite
-        run: ctest --test-dir build/ci -C Debug -L ci --output-on-failure
+
+      - name: Enumerate configured tests
+        shell: pwsh
+        run: |
+          ctest --test-dir build/ci -C Debug -N
+          ctest --test-dir build/ci -C Debug -N -L local-midi
+
+      - name: Test all cloud-capable software
+        run: ctest --test-dir build/ci -C Debug -LE local-midi --output-on-failure
