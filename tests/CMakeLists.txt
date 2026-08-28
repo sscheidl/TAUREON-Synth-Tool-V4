@@ -134,7 +134,8 @@ add_executable(stage5_connection_ui_tests
     "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/ProfileMatchPanel.cpp"
-    "${PROJECT_SOURCE_DIR}/src/gui/SysExTransferPanel.cpp")
+    "${PROJECT_SOURCE_DIR}/src/gui/SysExTransferPanel.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/SysExManagerPanel.cpp")
 target_include_directories(stage5_connection_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(stage5_connection_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
 target_compile_definitions(stage5_connection_ui_tests PRIVATE
