@@ -60,8 +60,7 @@ QString bytes_hex_preview(const std::vector<std::uint8_t>& bytes, const std::siz
                          .arg(shown)
                          .arg(bytes.size());
     if (shown < bytes.size()) result += QStringLiteral("; remaining bytes are not displayed.");
-    result += QStringLiteral("
-") + QString::fromLatin1(raw.toHex(' ').toUpper());
+    result += QStringLiteral("\n") + QString::fromLatin1(raw.toHex(' ').toUpper());
     return result;
 }
 
