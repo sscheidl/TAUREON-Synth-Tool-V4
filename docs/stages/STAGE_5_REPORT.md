@@ -286,25 +286,31 @@ within matching buckets. Claude Code reviewed the exact original revision with
 
 ### Targeted follow-up status
 
-- **M-1 — implemented; fresh CI verification pending:** the Transfer panel now explicitly accepts/rejects a
-  Manager handoff, reports its eventual worker result, and navigation occurs only after successful document load.
-  A rejected request preserves the active capture/document state and does not send.
-- **M-2 — implemented; fresh CI verification pending:** targeted negative evidence covers non-duplicates,
-  tainted Manager documents, malformed versus incomplete input, invalid selection/error codes, failed-output
-  cleanup, immutable source bytes, merge ordering, and no automatic fake-transport send.
-- **L-1 — implemented; fresh CI verification pending:** refresh snapshots contain summary metadata rather than
-  raw/frame byte vectors; selected inspection copies only one frame. The raw inspector is explicitly limited to
-  256 displayed bytes and names both shown and total byte counts; stored/exported/transferred data remains complete.
-- **L-2 — implemented; fresh CI verification pending:** native Save dialog confirmation is propagated as
-  `replace_existing` to the existing `save_syx_frames` / atomic-write path. Unconfirmed targets retain the
-  no-replace default.
-- **L-3 — OPEN Product Owner decision:** the Manager workspace is user-initiated and currently has no fixed
-  total file/frame/byte capacity limit. No ad-hoc cap was introduced because large SysEx support remains required.
-  A concrete capacity/memory policy must be decided before the final Stage-5 gate.
-- **L-4 — implemented; fresh CI verification pending:** Manager item absence uses `not_found`; empty or invalid
-  frame selection uses `invalid_argument`, with direct code assertions.
-- **L-5 — in progress:** this report records the original reviewed revision and historical CI. The exact follow-up
-  PR HEAD, Windows CI run, and CTest total will be appended only after the new run is actually successful.
+The repair implementation revision
+`e870611b7d854a23e5464c12ce2526c7a2bc9a17` passed
+[Windows CI #67](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33235022070):
+`windows-2022`, MSVC v143 toolset 14.44.35207 / `cl.exe 19.44.35228.0`, CMake 3.31.6, and
+Qt 6.10.3 `msvc2022_64`. Configure and the complete Debug build passed; all 21 registered
+cloud-capable CTest tests passed with zero failures.
+
+- **M-1 — verified:** the Transfer panel explicitly accepts or rejects a Manager handoff, reports its eventual
+  worker result, and navigation occurs only after successful document load. A rejected request preserves the active
+  capture/document state and does not send.
+- **M-2 — verified:** targeted negative evidence covers non-duplicates, tainted Manager documents, malformed
+  versus incomplete input, invalid selection/error codes, failed-output cleanup, immutable source bytes, merge
+  ordering, and no automatic fake-transport send.
+- **L-1 — verified:** refresh snapshots contain summary metadata rather than raw/frame byte vectors; selected
+  inspection copies only one frame. The raw inspector is explicitly limited to 256 displayed bytes and names both
+  shown and total byte counts; stored/exported/transferred data remains complete.
+- **L-2 — verified:** native Save dialog confirmation is propagated as `replace_existing` to the existing
+  `save_syx_frames` / atomic-write path. Unconfirmed targets retain the no-replace default.
+- **L-3 — OPEN Product Owner decision:** the Manager workspace is user-initiated and currently has no fixed total
+  file/frame/byte capacity limit. No ad-hoc cap was introduced because large SysEx support remains required. A
+  concrete capacity/memory policy must be decided before the final Stage-5 gate.
+- **L-4 — verified:** Manager item absence uses `not_found`; empty or invalid frame selection uses
+  `invalid_argument`, with direct code assertions.
+- **L-5 — completed:** this report records both the original reviewed revision and its historical CI, plus the exact
+  successful follow-up implementation revision and CI evidence above.
 
 This remains automated Windows software evidence only. Offscreen GUI tests do not establish a visual Windows GUI
 review. Real MIDI/SysEx device, port, WMS lifecycle, timing, and hardware validation remain pending after
