@@ -47,10 +47,11 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(frames != nullptr && frames->model()->rowCount() == 1);
         frames->setCurrentIndex(frames->model()->index(0, 0));
         QApplication::processEvents();
+        const auto frame_bytes = frames->model()->index(0, 2).data().toULongLong();
         TAUREON_REQUIRE(summary != nullptr && summary->text().contains("workspace file"));
         TAUREON_REQUIRE(raw != nullptr);
         TAUREON_REQUIRE(raw->toPlainText().contains(
-            QStringLiteral("Showing 256 of %1 bytes").arg(total_bytes)));
+            QStringLiteral("Showing 256 of %1 bytes").arg(frame_bytes)));
         TAUREON_REQUIRE(raw->toPlainText().contains("remaining bytes are not displayed"));
         TAUREON_REQUIRE(open != nullptr && open->isEnabled());
         open->click();
