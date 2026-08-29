@@ -1,19 +1,27 @@
 #include "gui/SysExManagerPanel.hpp"
 
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QItemSelectionModel>
 #include <QLabel>
 #include <QPlainTextEdit>
+#include <QPointer>
 #include <QPushButton>
 #include <QTableView>
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <utility>
 
 namespace taureon::gui {
 namespace {
+
+struct ConfirmedSaveDestination {
+    std::filesystem::path path;
+    bool replace_existing{};
+};
 
 QString integrity_status(const app::SysExManagerItemSnapshot& item) {
     QString status = QStringLiteral("complete %1 · incomplete %2 · malformed %3 · tainted %4")
@@ -35,7 +43,7 @@ QString device_text(const app::SysExManagerItemSnapshot& item) {
              item.model ? QString::fromStdString(*item.model) : QString{});
 }
 
-QString frame_status(const sysex::SysExFrame& frame) {
+QString frame_status(const app::SysExManagerFrameSnapshot& frame) {
     if (frame.affected_by_data_loss) return QStringLiteral("Tainted / malformed");
     switch (frame.status) {
     case sysex::SysExFrameStatus::complete: return QStringLiteral("Complete");
@@ -45,10 +53,29 @@ QString frame_status(const sysex::SysExFrame& frame) {
     return QStringLiteral("Unknown");
 }
 
-QString bytes_hex(const std::vector<std::uint8_t>& bytes) {
-    const QByteArray raw(reinterpret_cast<const char*>(bytes.data()),
-                         static_cast<qsizetype>(bytes.size()));
-    return QString::fromLatin1(raw.toHex(' ').toUpper());
+QString bytes_hex_preview(const std::vector<std::uint8_t>& bytes, const std::size_t limit) {
+    const auto shown = (std::min)(bytes.size(), limit);
+    const QByteArray raw(reinterpret_cast<const char*>(bytes.data()), static_cast<qsizetype>(shown));
+    QString result = QStringLiteral("Showing %1 of %2 bytes")
+                         .arg(shown)
+                         .arg(bytes.size());
+    if (shown < bytes.size()) result += QStringLiteral("; remaining bytes are not displayed.");
+    result += QStringLiteral("
+") + QString::fromLatin1(raw.toHex(' ').toUpper());
+    return result;
+}
+
+std::optional<ConfirmedSaveDestination> choose_save_destination(QWidget* parent,
+                                                                 const QString& title) {
+    QFileDialog dialog(parent, title);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    dialog.setNameFilter(QStringLiteral("SysEx files (*.syx)"));
+    dialog.setDefaultSuffix(QStringLiteral("syx"));
+    // Qt's native save dialog asks before replacing an existing target.
+    dialog.setOption(QFileDialog::DontConfirmOverwrite, false);
+    if (dialog.exec() != QDialog::Accepted || dialog.selectedFiles().empty()) return std::nullopt;
+    const auto selected = dialog.selectedFiles().front();
+    return ConfirmedSaveDestination{selected.toStdWString(), QFileInfo::exists(selected)};
 }
 
 } // namespace
@@ -71,7 +98,7 @@ QVariant SysExManagerItemModel::data(const QModelIndex& index, const int role) c
     case 0: return QString::fromStdString(item.source_name);
     case 1: return device_text(item);
     case 2: return QString::number(item.frames.size());
-    case 3: return QString::number(item.raw_bytes.size());
+    case 3: return QString::number(item.byte_count);
     case 4: return integrity_status(item);
     case 5: return QString::fromStdString(item.file_hash);
     default: return {};
@@ -113,8 +140,8 @@ QVariant SysExManagerFrameModel::data(const QModelIndex& index, const int role) 
     const auto& frame = frames_.at(static_cast<std::size_t>(index.row()));
     switch (index.column()) {
     case 0: return index.row() + 1;
-    case 1: return frame_status(frame.frame);
-    case 2: return QString::number(frame.frame.bytes.size());
+    case 1: return frame_status(frame);
+    case 2: return QString::number(frame.byte_count);
     case 3: return QString::fromStdString(frame.hash);
     case 4: return QString::fromStdString(frame.payload_hash);
     case 5: return QStringLiteral("exact frame %1 · payload %2")
@@ -231,28 +258,28 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
             }
             indices.push_back(reference.frame_index);
         }
-        const auto destination = QFileDialog::getSaveFileName(
-            this, "Export selected verified frames", {}, "SysEx files (*.syx)");
-        if (destination.isEmpty()) return;
-        const auto result = manager_.export_frames(item_id, indices, destination.toStdWString());
+        const auto destination = choose_save_destination(this, "Export selected verified frames");
+        if (!destination) return;
+        const auto result = manager_.export_frames(item_id, indices, destination->path,
+                                                   destination->replace_existing);
         if (!result) {
             show_error(result.error());
             return;
         }
-        status_label_->setText("Exported selected verified frames to a new file. Source unchanged.");
+        status_label_->setText("Exported selected verified frames atomically. Source unchanged.");
     });
     connect(merge_button_, &QPushButton::clicked, this, [this] {
         const auto references = selected_frame_references();
         if (references.empty()) return;
-        const auto destination = QFileDialog::getSaveFileName(
-            this, "Merge selected verified frames", {}, "SysEx files (*.syx)");
-        if (destination.isEmpty()) return;
-        const auto result = manager_.merge_frames(references, destination.toStdWString());
+        const auto destination = choose_save_destination(this, "Merge selected verified frames");
+        if (!destination) return;
+        const auto result = manager_.merge_frames(references, destination->path,
+                                                  destination->replace_existing);
         if (!result) {
             show_error(result.error());
             return;
         }
-        status_label_->setText("Merged selected verified frames to a new file. Source unchanged.");
+        status_label_->setText("Merged selected verified frames atomically. Source unchanged.");
     });
     connect(open_transfer_button_, &QPushButton::clicked, this, [this] {
         auto item = manager_.transferable_item(selected_item_id_);
@@ -261,8 +288,15 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
                 "Open in Transfer is unavailable until one complete, untainted workspace item is selected.");
             return;
         }
-        open_in_transfer_(std::move(*item));
-        status_label_->setText("Opened inspected Manager bytes in SysEx Transfer; no send was started.");
+        const QPointer<SysExManagerPanel> guard(this);
+        const bool accepted = open_in_transfer_(
+            std::move(*item), [guard](const bool loaded) {
+                if (guard) guard->on_transfer_handoff_result(loaded);
+            });
+        if (!accepted) {
+            status_label_->setText(
+                "Transfer handoff rejected: the Transfer workspace is busy; no document changed and no send started.");
+        }
     });
     connect(item_table_->selectionModel(), &QItemSelectionModel::selectionChanged, this,
             [this] { refresh_selection(); });
@@ -291,7 +325,8 @@ void SysExManagerPanel::refresh() {
     const auto snapshot = manager_.snapshot();
     item_model_->set_items(snapshot.items);
     summary_label_->setText(
-        QStringLiteral("%1 file(s) in this read-only workspace. Hashes use deterministic FNV-1a 64.")
+        QStringLiteral("%1 file(s) in this user-initiated read-only workspace. "
+                       "No total workspace capacity limit is configured. Hashes use deterministic FNV-1a 64.")
             .arg(snapshot.items.size()));
     int row = -1;
     for (int index = 0; index < item_model_->rowCount(); ++index) {
@@ -348,9 +383,25 @@ void SysExManagerPanel::refresh_selection() {
 }
 
 void SysExManagerPanel::update_raw_inspector(const int row) {
-    const auto* frame = frame_model_->frame(row);
-    raw_bytes_->setPlainText(frame ? bytes_hex(frame->frame.bytes) : QString{});
+    if (row < 0 || row >= static_cast<int>(visible_frame_references_.size())) {
+        raw_bytes_->clear();
+        update_controls();
+        return;
+    }
+    const auto bytes = manager_.frame_bytes(
+        visible_frame_references_.at(static_cast<std::size_t>(row)));
+    if (!bytes) {
+        raw_bytes_->setPlainText("Frame bytes are unavailable.");
+    } else {
+        raw_bytes_->setPlainText(bytes_hex_preview(bytes.value(), kRawInspectorPreviewBytes));
+    }
     update_controls();
+}
+
+void SysExManagerPanel::on_transfer_handoff_result(const bool loaded) {
+    status_label_->setText(
+        loaded ? "Opened inspected Manager bytes in SysEx Transfer; no send was started." :
+                 "Transfer handoff was rejected; no document changed and no send started.");
 }
 
 std::vector<app::SysExManagerFrameReference> SysExManagerPanel::selected_frame_references() const {
@@ -386,11 +437,11 @@ void SysExManagerPanel::update_controls() {
     export_button_->setEnabled(frames_selected && single_source);
     merge_button_->setEnabled(frames_selected);
     open_transfer_button_->setEnabled(item_table_->selectionModel()->selectedRows().size() == 1 &&
-                                      manager_.transferable_item(selected_item_id_).has_value());
+                                      manager_.can_transfer(selected_item_id_));
     export_button_->setToolTip(
-        "Writes selected complete, unaffected frames to a new destination; source files are unchanged.");
+        "Writes selected complete, unaffected frames atomically to a destination; source files are unchanged.");
     merge_button_->setToolTip(
-        "Merges selected complete, unaffected frames from one or more workspace files.");
+        "Merges selected complete, unaffected frames from one or more workspace files atomically.");
     open_transfer_button_->setToolTip(
         "Loads the inspected Manager bytes into SysEx Transfer. It does not send automatically.");
 }
