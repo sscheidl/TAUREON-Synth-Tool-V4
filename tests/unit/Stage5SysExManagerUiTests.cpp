@@ -36,8 +36,9 @@ int main(int argc, char* argv[]) {
         auto* open = panel.findChild<QPushButton*>("sysExManagerOpenTransfer");
         TAUREON_REQUIRE(panel.has_required_controls());
         TAUREON_REQUIRE(files != nullptr && files->model()->rowCount() == 1);
+        TAUREON_REQUIRE(files->model()->index(0, 1).data().toString().contains("Novation"));
         TAUREON_REQUIRE(frames != nullptr && frames->model()->rowCount() == 1);
-        TAUREON_REQUIRE(summary != nullptr && summary->text().contains("Novation"));
+        TAUREON_REQUIRE(summary != nullptr && summary->text().contains("workspace file"));
         TAUREON_REQUIRE(open != nullptr && open->isEnabled());
         open->click();
         TAUREON_REQUIRE(opened.has_value());
