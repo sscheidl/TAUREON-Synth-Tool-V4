@@ -12,6 +12,7 @@
 #include <QComboBox>
 #include <QEventLoop>
 #include <QLabel>
+#include <QListWidget>
 #include <QPushButton>
 #include <QStatusBar>
 #include <QTableView>
@@ -126,14 +127,41 @@ int main(int argc, char* argv[]) {
                                      "novation_summit_crazy_sine.syx";
         manager_panel->add_file(manager_fixture);
         auto* manager_open = window.findChild<QPushButton*>("sysExManagerOpenTransfer");
+        auto* manager_status = window.findChild<QLabel*>("sysExManagerStatus");
+        auto* navigation = window.findChild<QListWidget*>("workspaceNavigation");
+        auto* source_label = window.findChild<QLabel*>("sysExSource");
         TAUREON_REQUIRE(manager_open != nullptr && manager_open->isEnabled());
+        TAUREON_REQUIRE(manager_status != nullptr);
+        TAUREON_REQUIRE(navigation != nullptr);
+        TAUREON_REQUIRE(source_label != nullptr);
         manager_open->click();
         TAUREON_REQUIRE(process_until([&] {
-            return frame_table->model()->rowCount() == 1;
+            return frame_table->model()->rowCount() == 1 && navigation->currentRow() == 1;
         }));
+        {
+            std::scoped_lock lock(transport_mutex);
+            TAUREON_REQUIRE(transport_ptr->diagnostics().transmitted_messages == 0);
+        }
 
         receive_sysex->click();
-        TAUREON_REQUIRE(process_until([&] { return receive_sysex->text() == "Stop Receive"; }));
+        TAUREON_REQUIRE(process_until([&] {
+            return receive_sysex->text() == "Stop Receive" &&
+                   frame_table->model()->rowCount() == 0;
+        }));
+        TAUREON_REQUIRE(source_label->text() == "Live capture");
+        navigation->setCurrentRow(2);
+        manager_open->click();
+        TAUREON_REQUIRE(process_until([&] {
+            return manager_status->text().contains("rejected") && navigation->currentRow() == 2;
+        }));
+        TAUREON_REQUIRE(frame_table->model()->rowCount() == 0);
+        TAUREON_REQUIRE(source_label->text() == "Live capture");
+        TAUREON_REQUIRE(!raw_send->isEnabled());
+        {
+            std::scoped_lock lock(transport_mutex);
+            TAUREON_REQUIRE(transport_ptr->diagnostics().transmitted_messages == 0);
+        }
+        navigation->setCurrentRow(1);
         const sysex::SysExFrame received_frame{sysex::SysExFrameStatus::complete,
                                                {0xF0, 0x7D, 0x22, 0xF7}, {},
                                                std::optional<std::uint8_t>{3}, false};
