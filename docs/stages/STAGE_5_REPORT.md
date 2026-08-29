@@ -347,3 +347,70 @@ This is automated Windows software evidence only. The offscreen test does not es
 Real MIDI/SysEx devices, ports, WMS lifecycle, timing, and hardware validation, plus a visual Windows GUI review,
 remain pending after 09.09.2026. The five local hardware/loopback tests remain unregistered in cloud CI; none has
 been enabled or simulated. Stage 5 remains **ACTIVE**; no Stage-5 gate or merge is implied.
+
+
+## Slice 6 closure evidence repair (S6-1)
+
+The Devices & Profiles slice’s final evidence chain is recorded here without reopening that
+slice:
+
+- G-1 deterministic completion-lifetime correction: 28dc6dcaa5cefcdd3442e17619bb3d95ac92923b;
+- final Claude-reviewed Slice-6 HEAD: c90fdb700ca9dea134a9d810c3abbe87454334c2;
+- Windows CI #81: PASS;
+- Claude verdict: **PASS – STAGE 5 SLICE 6 READY TO MERGE**;
+- merge commit: e2719ee5f73bac79da781c539efc3cb9fdd733f6;
+- post-merge Windows CI #82: PASS.
+
+This closes S6-1 as a documentation/evidence-chain correction only. S6-2 (optional second
+queued-delivery destroy regression), S6-3 (synchronous cross-panel snapshot observer), and
+S6-4 (target-specific AUTOMOC) remain non-blocking observations for the final Stage-5 gate.
+
+## Slice 7 — Diagnostics + Settings (implementation evidence)
+
+Slice 7 replaces the Diagnostics and Settings placeholders with a bounded product minimum while
+preserving Stage-2 route semantics and the existing worker/transport boundary.
+
+- app::DiagnosticBundle builds a metadata-only snapshot from safe connection, transfer, and
+  monitor-queue snapshots. It never serializes raw MIDI/SysEx, source names, transfer logs,
+  manager contents, or user files. Values unavailable from a safe existing contract are
+  explicitly labeled **not observed**, not estimated.
+- app::SettingsStore is Qt-independent, versioned (schema v1), atomically written, and
+  handles missing, corrupt, partial, v0-migrated, and future settings with explicit safe
+  fallback. Persisted routes use the existing PersistedMidiRoute schema; no runtime index,
+  display-name matching, cross-backend matching, or reconnect action is introduced.
+- The Settings workspace can deliberately capture only currently observed exact routes as
+  preferences. Saving or opening Settings does not open, close, select, rebind, or send on a
+  route. Saved preferences are not automatically applied to an active connection.
+- BoundedLog provides a mutex-protected, capacity-bounded log with a configurable minimum
+  level. It has no network/telemetry path and is not used for synchronization.
+- stage5_settings_diagnostics_unit proves Settings save/reload semantic equality, v0 migration,
+  future/corrupt/partial fallback, invalid-route rejection without fuzzy binding, bounded logging,
+  and a diagnostic-bundle marker exclusion against a non-empty Transfer-session SysEx document.
+  The marker and raw frame representation are absent while allowed version/counter metadata is
+  present.
+- stage5_settings_diagnostics_ui_unit proves the real panels and controls exist, Settings can
+  deliberately capture and round-trip exact WMS RX/TX identities, and opening the panels does not
+  instantiate a backend transport, connect a route, or send MIDI.
+
+Functional implementation revision
+d5f10b3ddb90a9d4348f94ccf4757e63a7dfeba7 passed
+[Windows CI #86](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33267531579):
+Windows Server 2022 / windows-2022, MSVC v143 toolset 14.44.35207 /
+cl.exe 19.44.35228.0, CMake 3.31.6, Qt 6.10.3 msvc2022_64.
+Configure and the complete Debug build passed; **23/23** registered cloud-capable CTest tests
+passed with zero failures or skips, including stage5_gui_smoke,
+stage5_settings_diagnostics_unit, and stage5_settings_diagnostics_ui_unit.
+
+This is automated Windows software evidence only. Real MIDI/SysEx devices, port hotplug, WMS and
+WinMM runtime/API behavior, timing, hardware lifetime, visual Windows GUI quality, and High-DPI
+125/150/200% inspection remain pending after 09.09.2026. The five local hardware/loopback tests
+remain unregistered, unskipped, and unsimulated. Stage 5 remains **ACTIVE**; no Stage-5 gate is
+implied.
+
+### Remaining non-blocking follow-ups
+
+- L-3: Product Owner Capacity/Memory Policy decision before the final Stage-5 gate.
+- N-1: append future MidiErrorCode values as a compatibility convention.
+- N-2: duplicate is_valid_for_transfer() rule.
+- N-3: justify or remove currently test-only add_document() if still unused at gate.
+- S6-2, S6-3, S6-4 as recorded above.
