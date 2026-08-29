@@ -1,5 +1,8 @@
 add_library(taureon_midi_core STATIC
+    app/BoundedLog.cpp
     app/ConnectionController.cpp
+    app/Diagnostics.cpp
+    app/Settings.cpp
     app/MonitorEventQueue.cpp
     app/ProfileSelectionService.cpp
     app/SysExTransferSession.cpp

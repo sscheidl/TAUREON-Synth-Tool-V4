@@ -199,6 +199,20 @@ set_tests_properties(stage5_sysex_manager_ui_unit PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 
+
+add_executable(stage5_settings_diagnostics_tests unit/Stage5SettingsDiagnosticsTests.cpp)
+target_include_directories(stage5_settings_diagnostics_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_settings_diagnostics_tests PRIVATE taureon_midi_core)
+target_compile_definitions(stage5_settings_diagnostics_tests PRIVATE
+    TAUREON_TEST_OUTPUT_DIR="$<TARGET_FILE_DIR:stage5_settings_diagnostics_tests>")
+if(MSVC)
+    target_compile_options(stage5_settings_diagnostics_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_settings_diagnostics_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_settings_diagnostics_unit COMMAND stage5_settings_diagnostics_tests)
+set_tests_properties(stage5_settings_diagnostics_unit PROPERTIES LABELS "stage5;unit;ci")
+
 if(WIN32)
     add_executable(stage2_winmm_header_tests unit/Stage2WinmmHeaderTests.cpp)
     target_include_directories(stage2_winmm_header_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
