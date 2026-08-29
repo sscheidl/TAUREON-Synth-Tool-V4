@@ -5,7 +5,6 @@ project(TAUREON_Synth_Tool_V4 VERSION 0.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_AUTOMOC ON)
 
 add_executable(taureon_bootstrap src/bootstrap_main.cpp)
 
