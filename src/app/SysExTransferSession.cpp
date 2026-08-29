@@ -52,7 +52,7 @@ midi::Result<void> SysExTransferSession::load_document(sysex::SyxDocument docume
                                                        std::string source_name) {
     if (receiving_) {
         return midi::Result<void>::failure(
-            invalid_state("finish the active receive capture before loading a file"));
+            invalid_state("finish the active receive capture before loading a SysEx document"));
     }
     if (!document.all_complete()) {
         return midi::Result<void>::failure(
