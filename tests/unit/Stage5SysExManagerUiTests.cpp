@@ -3,6 +3,7 @@
 #include "gui/SysExManagerPanel.hpp"
 
 #include <QApplication>
+#include <QItemSelectionModel>
 #include <QLabel>
 #include <QPlainTextEdit>
 #include <QPushButton>
@@ -45,7 +46,9 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(files != nullptr && files->model()->rowCount() == 1);
         TAUREON_REQUIRE(files->model()->index(0, 1).data().toString().contains("Novation"));
         TAUREON_REQUIRE(frames != nullptr && frames->model()->rowCount() == 1);
-        frames->setCurrentIndex(frames->model()->index(0, 0));
+        const auto first_frame = frames->model()->index(0, 0);
+        frames->selectionModel()->setCurrentIndex(
+            first_frame, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
         QApplication::processEvents();
         const auto frame_bytes = frames->model()->index(0, 2).data().toULongLong();
         TAUREON_REQUIRE(summary != nullptr && summary->text().contains("workspace file"));
