@@ -99,10 +99,10 @@ void ProfileMatchPanel::set_select_temporary_action(std::function<void(std::stri
 
 void ProfileMatchPanel::set_remember_binding_action(std::function<void()> action) {
     remember_action_ = std::move(action);
-    remember_->setEnabled(override_->isVisible() && static_cast<bool>(remember_action_));
+    remember_->setEnabled(!override_->isHidden() && static_cast<bool>(remember_action_));
 }
 
-bool ProfileMatchPanel::override_is_visible() const { return override_->isVisible(); }
+bool ProfileMatchPanel::override_is_visible() const { return !override_->isHidden(); }
 bool ProfileMatchPanel::remember_binding_is_enabled() const { return remember_->isEnabled(); }
 void ProfileMatchPanel::trigger_remember_binding() { remember_->click(); }
 
