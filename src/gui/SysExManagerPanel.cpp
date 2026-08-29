@@ -219,7 +219,8 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
     raw_bytes_->setObjectName("sysExManagerRawBytes");
     raw_bytes_->setReadOnly(true);
     raw_bytes_->setPlaceholderText("Select a frame to inspect its exact raw bytes.");
-    raw_bytes_->setMaximumBlockCount(1);
+    // One block holds the explicit preview count and one holds the displayed hex bytes.
+    raw_bytes_->setMaximumBlockCount(2);
     root->addWidget(raw_bytes_, 1);
 
     status_label_ = new QLabel("No file has been opened and no transfer is active.", this);
