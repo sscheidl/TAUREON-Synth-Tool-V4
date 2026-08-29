@@ -35,25 +35,38 @@ bool SysExManagerItemSnapshot::is_valid_for_transfer() const noexcept {
            tainted_frames == 0 && complete_frames == frames.size();
 }
 
+bool SysExManager::StoredItem::is_valid_for_transfer() const noexcept {
+    return !frames.empty() && incomplete_frames == 0 && malformed_frames == 0 &&
+           tainted_frames == 0 && complete_frames == frames.size();
+}
+
 SysExManager::SysExManager(std::shared_ptr<const profiles::ProfileRegistry> registry)
     : registry_(std::move(registry)) {}
 
 midi::Result<std::uint64_t> SysExManager::add_file(const std::filesystem::path& path) {
     if (!is_syx_path(path)) {
         return midi::Result<std::uint64_t>::failure(
-            validation_error("SysEx Manager accepts .syx files only"));
+            error(midi::MidiErrorCode::invalid_argument, "SysEx Manager accepts .syx files only"));
     }
     auto loaded = sysex::load_syx_file(path);
     if (!loaded) return midi::Result<std::uint64_t>::failure(loaded.error());
+    return add_document(std::move(loaded.value()), file_name(path));
+}
 
-    SysExManagerItemSnapshot item;
+midi::Result<std::uint64_t> SysExManager::add_document(sysex::SyxDocument document,
+                                                        std::string source_name) {
+    if (source_name.empty()) {
+        return midi::Result<std::uint64_t>::failure(
+            error(midi::MidiErrorCode::invalid_argument, "SysEx workspace source name is required"));
+    }
+
+    StoredItem item;
     item.id = next_item_id_++;
-    item.source_path = path;
-    item.source_name = file_name(path);
-    item.raw_bytes = std::move(loaded.value().raw_bytes);
+    item.source_name = std::move(source_name);
+    item.raw_bytes = std::move(document.raw_bytes);
     item.file_hash = stable_hash(item.raw_bytes);
-    item.frames.reserve(loaded.value().frames.size());
-    for (auto& frame : loaded.value().frames) {
+    item.frames.reserve(document.frames.size());
+    for (auto& frame : document.frames) {
         if (frame.status == sysex::SysExFrameStatus::complete) {
             ++item.complete_frames;
         } else if (frame.status == sysex::SysExFrameStatus::incomplete) {
@@ -62,7 +75,8 @@ midi::Result<std::uint64_t> SysExManager::add_file(const std::filesystem::path& 
             ++item.malformed_frames;
         }
         if (frame.affected_by_data_loss) ++item.tainted_frames;
-        SysExManagerFrameSnapshot stored;
+
+        StoredFrame stored;
         stored.payload_bytes = payload_bytes(frame);
         stored.hash = stable_hash(frame.bytes);
         if (!stored.payload_bytes.empty()) stored.payload_hash = stable_hash(stored.payload_bytes);
@@ -102,7 +116,8 @@ midi::Result<void> SysExManager::remove_item(const std::uint64_t item_id) {
     const auto item = std::find_if(items_.begin(), items_.end(),
                                    [item_id](const auto& candidate) { return candidate.id == item_id; });
     if (item == items_.end()) {
-        return midi::Result<void>::failure(validation_error("SysEx workspace item was not found"));
+        return midi::Result<void>::failure(
+            error(midi::MidiErrorCode::not_found, "SysEx workspace item was not found"));
     }
     items_.erase(item);
     refresh_duplicate_evidence();
@@ -111,37 +126,42 @@ midi::Result<void> SysExManager::remove_item(const std::uint64_t item_id) {
 
 midi::Result<void> SysExManager::export_frames(
     const std::uint64_t item_id, const std::vector<std::size_t>& frame_indices,
-    const std::filesystem::path& destination) const {
+    const std::filesystem::path& destination, const bool replace_existing) const {
     const auto item = std::find_if(items_.begin(), items_.end(),
                                    [item_id](const auto& candidate) { return candidate.id == item_id; });
     if (item == items_.end()) {
-        return midi::Result<void>::failure(validation_error("SysEx workspace item was not found"));
+        return midi::Result<void>::failure(
+            error(midi::MidiErrorCode::not_found, "SysEx workspace item was not found"));
     }
     if (frame_indices.empty()) {
-        return midi::Result<void>::failure(validation_error("Select at least one frame to export"));
+        return midi::Result<void>::failure(
+            error(midi::MidiErrorCode::invalid_argument, "Select at least one frame to export"));
     }
 
     std::vector<sysex::SysExFrame> selected;
     selected.reserve(frame_indices.size());
     for (const auto index : frame_indices) {
         if (index >= item->frames.size()) {
-            return midi::Result<void>::failure(validation_error("Selected SysEx frame is unavailable"));
+            return midi::Result<void>::failure(
+                error(midi::MidiErrorCode::invalid_argument, "Selected SysEx frame is unavailable"));
         }
         const auto& frame = item->frames.at(index).frame;
         if (!frame_is_verified_complete(frame)) {
-            return midi::Result<void>::failure(validation_error(
+            return midi::Result<void>::failure(error(
+                midi::MidiErrorCode::incomplete_data,
                 "Only verified complete, unaffected frames can be exported as a normal .syx file"));
         }
         selected.push_back(frame);
     }
-    return sysex::save_syx_frames(destination, selected);
+    return sysex::save_syx_frames(destination, selected, replace_existing);
 }
 
 midi::Result<void> SysExManager::merge_frames(
     const std::vector<SysExManagerFrameReference>& references,
-    const std::filesystem::path& destination) const {
+    const std::filesystem::path& destination, const bool replace_existing) const {
     if (references.empty()) {
-        return midi::Result<void>::failure(validation_error("Select at least one frame to merge"));
+        return midi::Result<void>::failure(
+            error(midi::MidiErrorCode::invalid_argument, "Select at least one frame to merge"));
     }
     std::vector<sysex::SysExFrame> selected;
     selected.reserve(references.size());
@@ -149,17 +169,46 @@ midi::Result<void> SysExManager::merge_frames(
         const auto item = std::find_if(items_.begin(), items_.end(), [&reference](const auto& candidate) {
             return candidate.id == reference.item_id;
         });
-        if (item == items_.end() || reference.frame_index >= item->frames.size()) {
-            return midi::Result<void>::failure(validation_error("Selected SysEx frame is unavailable"));
+        if (item == items_.end()) {
+            return midi::Result<void>::failure(
+                error(midi::MidiErrorCode::not_found, "SysEx workspace item was not found"));
+        }
+        if (reference.frame_index >= item->frames.size()) {
+            return midi::Result<void>::failure(
+                error(midi::MidiErrorCode::invalid_argument, "Selected SysEx frame is unavailable"));
         }
         const auto& frame = item->frames.at(reference.frame_index).frame;
         if (!frame_is_verified_complete(frame)) {
-            return midi::Result<void>::failure(validation_error(
+            return midi::Result<void>::failure(error(
+                midi::MidiErrorCode::incomplete_data,
                 "Incomplete, malformed, or tainted data cannot be merged as verified .syx"));
         }
         selected.push_back(frame);
     }
-    return sysex::save_syx_frames(destination, selected);
+    return sysex::save_syx_frames(destination, selected, replace_existing);
+}
+
+bool SysExManager::can_transfer(const std::uint64_t item_id) const noexcept {
+    const auto item = std::find_if(items_.begin(), items_.end(),
+                                   [item_id](const auto& candidate) { return candidate.id == item_id; });
+    return item != items_.end() && item->is_valid_for_transfer();
+}
+
+midi::Result<std::vector<std::uint8_t>> SysExManager::frame_bytes(
+    const SysExManagerFrameReference& reference) const {
+    const auto item = std::find_if(items_.begin(), items_.end(), [&reference](const auto& candidate) {
+        return candidate.id == reference.item_id;
+    });
+    if (item == items_.end()) {
+        return midi::Result<std::vector<std::uint8_t>>::failure(
+            error(midi::MidiErrorCode::not_found, "SysEx workspace item was not found"));
+    }
+    if (reference.frame_index >= item->frames.size()) {
+        return midi::Result<std::vector<std::uint8_t>>::failure(
+            error(midi::MidiErrorCode::invalid_argument, "Selected SysEx frame is unavailable"));
+    }
+    return midi::Result<std::vector<std::uint8_t>>::success(
+        item->frames.at(reference.frame_index).frame.bytes);
 }
 
 std::optional<SysExManagerTransferItem> SysExManager::transferable_item(
@@ -174,7 +223,12 @@ std::optional<SysExManagerTransferItem> SysExManager::transferable_item(
     return SysExManagerTransferItem{item->source_name, std::move(document)};
 }
 
-SysExManagerSnapshot SysExManager::snapshot() const { return {items_}; }
+SysExManagerSnapshot SysExManager::snapshot() const {
+    SysExManagerSnapshot result;
+    result.items.reserve(items_.size());
+    for (const auto& item : items_) result.items.push_back(summary_of(item));
+    return result;
+}
 
 std::string SysExManager::stable_hash(const std::vector<std::uint8_t>& bytes) {
     // This is a deterministic identity aid, not a cryptographic integrity claim.
@@ -196,9 +250,33 @@ std::vector<std::uint8_t> SysExManager::payload_bytes(const sysex::SysExFrame& f
     return {frame.bytes.begin() + 1, frame.bytes.end() - 1};
 }
 
-midi::MidiError SysExManager::validation_error(std::string message) {
-    return {midi::MidiErrorCode::incomplete_data, std::move(message), "sysex-manager",
-            std::nullopt};
+midi::MidiError SysExManager::error(const midi::MidiErrorCode code, std::string message) {
+    return {code, std::move(message), "sysex-manager", std::nullopt};
+}
+
+SysExManagerFrameSnapshot SysExManager::summary_of(const StoredFrame& frame) {
+    return {frame.frame.status, frame.frame.bytes.size(), frame.frame.issue, frame.frame.group,
+            frame.frame.affected_by_data_loss, frame.hash, frame.payload_hash,
+            frame.exact_frame_duplicates, frame.exact_payload_duplicates};
+}
+
+SysExManagerItemSnapshot SysExManager::summary_of(const StoredItem& item) {
+    SysExManagerItemSnapshot result;
+    result.id = item.id;
+    result.source_name = item.source_name;
+    result.byte_count = item.raw_bytes.size();
+    result.frames.reserve(item.frames.size());
+    for (const auto& frame : item.frames) result.frames.push_back(summary_of(frame));
+    result.file_hash = item.file_hash;
+    result.exact_file_duplicate_of = item.exact_file_duplicate_of;
+    result.manufacturer = item.manufacturer;
+    result.model = item.model;
+    result.recognition_message = item.recognition_message;
+    result.complete_frames = item.complete_frames;
+    result.incomplete_frames = item.incomplete_frames;
+    result.malformed_frames = item.malformed_frames;
+    result.tainted_frames = item.tainted_frames;
+    return result;
 }
 
 void SysExManager::refresh_duplicate_evidence() {
@@ -233,8 +311,7 @@ void SysExManager::refresh_duplicate_evidence() {
                 auto& prior_item = items_.at(prior_item_index);
                 auto& prior = prior_item.frames.at(prior_frame_index);
                 if (frame.frame.bytes == prior.frame.bytes) {
-                    frame.exact_frame_duplicates.push_back(
-                        {prior_item.id, prior_frame_index});
+                    frame.exact_frame_duplicates.push_back({prior_item.id, prior_frame_index});
                     prior.exact_frame_duplicates.push_back(reference);
                 }
             }
@@ -246,8 +323,7 @@ void SysExManager::refresh_duplicate_evidence() {
                 auto& prior_item = items_.at(prior_item_index);
                 auto& prior = prior_item.frames.at(prior_frame_index);
                 if (frame.payload_bytes == prior.payload_bytes) {
-                    frame.exact_payload_duplicates.push_back(
-                        {prior_item.id, prior_frame_index});
+                    frame.exact_payload_duplicates.push_back({prior_item.id, prior_frame_index});
                     prior.exact_payload_duplicates.push_back(reference);
                 }
             }
