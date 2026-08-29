@@ -46,6 +46,9 @@ public:
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> begin_sysex_receive();
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> finish_sysex_receive();
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> clear_sysex();
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> select_temporary_profile(
+        std::string profile_id);
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> remember_overridden_manual_profile();
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> save_received_sysex(
         std::filesystem::path path);
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> start_raw_sysex_send(

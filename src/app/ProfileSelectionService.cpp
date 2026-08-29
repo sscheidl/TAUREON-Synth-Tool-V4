@@ -12,7 +12,7 @@ midi::Result<void> invalid(std::string detail) {
 
 } // namespace
 
-ProfileSelectionService::ProfileSelectionService(profiles::ProfileRegistry& registry)
+ProfileSelectionService::ProfileSelectionService(const profiles::ProfileRegistry& registry)
     : registry_(registry) {}
 
 midi::Result<void> ProfileSelectionService::select_temporary(std::string profile_id) {

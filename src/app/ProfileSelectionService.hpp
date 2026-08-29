@@ -9,7 +9,7 @@ namespace taureon::app {
 
 class ProfileSelectionService {
 public:
-    explicit ProfileSelectionService(profiles::ProfileRegistry& registry);
+    explicit ProfileSelectionService(const profiles::ProfileRegistry& registry);
 
     [[nodiscard]] midi::Result<void> select_temporary(std::string profile_id);
     [[nodiscard]] profiles::ProfileMatchResult match(const sysex::SysExFrame& frame);
@@ -20,7 +20,7 @@ public:
     [[nodiscard]] const std::optional<std::string>& saved_profile_id() const noexcept;
 
 private:
-    profiles::ProfileRegistry& registry_;
+    const profiles::ProfileRegistry& registry_;
     std::optional<std::string> manual_profile_id_;
     std::optional<std::string> saved_profile_id_;
     std::optional<profiles::ProfileMatchResult> last_result_;

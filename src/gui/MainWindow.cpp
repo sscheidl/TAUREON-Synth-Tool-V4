@@ -26,6 +26,7 @@
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -213,7 +214,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     sysex_transfer_panel_ = new SysExTransferPanel(connection_worker_);
     workspace_stack_->addWidget(sysex_transfer_panel_);
     sysex_manager_panel_ = new SysExManagerPanel(
-        std::move(profile_registry),
+        profile_registry,
         [this](app::SysExManagerTransferItem item,
                SysExManagerPanel::TransferCompletion completion) {
             return sysex_transfer_panel_->request_load_document(
@@ -226,6 +227,16 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     workspace_stack_->addWidget(sysex_manager_panel_);
     workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(3)));
     profile_panel_ = new ProfileMatchPanel;
+    if (profile_registry) profile_panel_->set_available_profiles(profile_registry->profiles());
+    profile_panel_->set_select_temporary_action([this](std::string profile_id) {
+        sysex_transfer_panel_->request_select_temporary_profile(std::move(profile_id));
+    });
+    profile_panel_->set_remember_binding_action([this] {
+        sysex_transfer_panel_->request_remember_overridden_manual_profile();
+    });
+    sysex_transfer_panel_->set_snapshot_observer([this](const app::SysExTransferSnapshot& snapshot) {
+        profile_panel_->present(snapshot.profile_match);
+    });
     workspace_stack_->addWidget(profile_panel_);
     for (std::size_t index = 5; index < kWorkspaceNames.size(); ++index) {
         workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(index)));

@@ -396,6 +396,41 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::clear_sysex()
     return future;
 }
 
+std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::select_temporary_profile(
+    std::string profile_id) {
+    auto promise = std::make_shared<std::promise<midi::Result<SysExTransferSnapshot>>>();
+    auto future = promise->get_future();
+    enqueue([promise, profile_id = std::move(profile_id), this](State& state) mutable {
+        state.synchronize_transfer();
+        const auto selected = state.sysex.select_temporary_profile(std::move(profile_id));
+        if (!selected) {
+            promise->set_value(midi::Result<SysExTransferSnapshot>::failure(selected.error()));
+            return;
+        }
+        promise->set_value(midi::Result<SysExTransferSnapshot>::success(
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
+    });
+    return future;
+}
+
+std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::remember_overridden_manual_profile() {
+    auto promise = std::make_shared<std::promise<midi::Result<SysExTransferSnapshot>>>();
+    auto future = promise->get_future();
+    enqueue([promise, this](State& state) {
+        state.synchronize_transfer();
+        const auto remembered = state.sysex.remember_overridden_manual_profile();
+        if (!remembered) {
+            promise->set_value(midi::Result<SysExTransferSnapshot>::failure(remembered.error()));
+            return;
+        }
+        promise->set_value(midi::Result<SysExTransferSnapshot>::success(
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
+    });
+    return future;
+}
+
 std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::save_received_sysex(
     std::filesystem::path path) {
     auto promise = std::make_shared<std::promise<midi::Result<SysExTransferSnapshot>>>();
