@@ -5,6 +5,7 @@
 #include <QAbstractTableModel>
 #include <QWidget>
 
+#include <cstddef>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -51,7 +52,9 @@ private:
 
 class SysExManagerPanel final : public QWidget {
 public:
-    using OpenInTransfer = std::function<void(app::SysExManagerTransferItem)>;
+    using TransferCompletion = std::function<void(bool loaded)>;
+    using OpenInTransfer =
+        std::function<bool(app::SysExManagerTransferItem item, TransferCompletion completion)>;
 
     explicit SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegistry> registry = {},
                                OpenInTransfer open_in_transfer = {}, QWidget* parent = nullptr);
@@ -60,9 +63,13 @@ public:
     [[nodiscard]] bool has_required_controls() const noexcept;
 
 private:
+    // A bounded presentation preview only; stored/exported/transferred bytes remain complete.
+    static constexpr std::size_t kRawInspectorPreviewBytes = 256;
+
     void refresh();
     void refresh_selection();
     void update_raw_inspector(int row);
+    void on_transfer_handoff_result(bool loaded);
     [[nodiscard]] std::vector<app::SysExManagerFrameReference> selected_frame_references() const;
     void show_error(const midi::MidiError& error);
     void update_controls();
