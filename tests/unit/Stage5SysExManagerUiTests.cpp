@@ -45,6 +45,8 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(files != nullptr && files->model()->rowCount() == 1);
         TAUREON_REQUIRE(files->model()->index(0, 1).data().toString().contains("Novation"));
         TAUREON_REQUIRE(frames != nullptr && frames->model()->rowCount() == 1);
+        frames->setCurrentIndex(frames->model()->index(0, 0));
+        QApplication::processEvents();
         TAUREON_REQUIRE(summary != nullptr && summary->text().contains("workspace file"));
         TAUREON_REQUIRE(raw != nullptr);
         TAUREON_REQUIRE(raw->toPlainText().contains(
