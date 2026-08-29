@@ -2,6 +2,7 @@
 
 #include "core/sysex/SysExCaptureSession.hpp"
 #include "core/sysex/SyxFile.hpp"
+#include "app/ProfileSelectionService.hpp"
 #include "core/transfer/TransferEngine.hpp"
 #include "profiles/ProfileRegistry.hpp"
 
@@ -44,6 +45,8 @@ struct SysExTransferSnapshot {
     bool profile_supports_transfer{};
     bool profile_supports_validated_restore{};
     std::vector<std::string> profile_warnings;
+    // Evidence-only copy for Devices & Profiles; it carries no route or transport operation.
+    profiles::ProfileMatchResult profile_match;
 };
 
 class SysExTransferSession {
@@ -57,6 +60,9 @@ public:
     void consume(const midi::MidiStreamEvent& event);
     [[nodiscard]] midi::Result<void> finish_receive();
     [[nodiscard]] midi::Result<void> clear();
+    // Session-scoped profile policy applies only to verified loaded/captured bytes.
+    [[nodiscard]] midi::Result<void> select_temporary_profile(std::string profile_id);
+    [[nodiscard]] midi::Result<void> remember_overridden_manual_profile();
     [[nodiscard]] midi::Result<void> save_verified_received(
         const std::filesystem::path& path) const;
 
@@ -84,6 +90,7 @@ private:
     std::chrono::milliseconds pacing_delay_{};
     std::vector<std::string> log_;
     std::shared_ptr<const profiles::ProfileRegistry> profile_registry_;
+    std::unique_ptr<ProfileSelectionService> profile_selection_;
     profiles::ProfileMatchResult profile_match_;
 };
 

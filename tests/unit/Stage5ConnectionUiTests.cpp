@@ -3,6 +3,7 @@
 #include "app/ConnectionWorker.hpp"
 #include "app/MonitorEventQueue.hpp"
 #include "gui/MainWindow.hpp"
+#include "gui/ProfileMatchPanel.hpp"
 #include "gui/SysExTransferPanel.hpp"
 #include "gui/SysExManagerPanel.hpp"
 #include "core/sysex/SysEx7.hpp"
@@ -65,6 +66,14 @@ int main(int argc, char* argv[]) {
             std::filesystem::path{TAUREON_SOURCE_DIR} / "resources" / "device_profiles",
             profile_issues));
         TAUREON_REQUIRE(profile_issues.empty());
+        const auto* summit = profile_registry->find("novation.summit");
+        TAUREON_REQUIRE(summit != nullptr);
+        auto manual = *summit;
+        manual.profile_id = "manual.other";
+        manual.display_name = "Manual Other Profile";
+        manual.recognition.sysex_fingerprints = {
+            {"manual-other", 0, {0xF0, 0x7D, 0x55, 0x66}}};
+        TAUREON_REQUIRE(profile_registry->register_profile(std::move(manual)));
         app::ConnectionWorker worker([&](const midi::MidiBackend backend) {
             TAUREON_REQUIRE(backend == midi::MidiBackend::windows_midi_services);
             auto transport = std::make_unique<midi::FakeMidiTransport>(
@@ -206,6 +215,41 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(profile_label->text().contains("Novation Summit"));
         TAUREON_REQUIRE(profile_label->text().contains("confident suggestion"));
         TAUREON_REQUIRE(profile_label->text().contains("not declared"));
+
+        auto* profile_panel = dynamic_cast<gui::ProfileMatchPanel*>(
+            window.findChild<QWidget*>("profileMatchPanel"));
+        auto* temporary_profile = window.findChild<QComboBox*>("profileTemporarySelector");
+        auto* use_temporary = window.findChild<QPushButton*>("profileUseTemporarily");
+        auto* remember_binding = window.findChild<QPushButton*>("profileRememberBinding");
+        auto* selected_profile = window.findChild<QLabel*>("profileSelectedProfile");
+        TAUREON_REQUIRE(profile_panel != nullptr);
+        TAUREON_REQUIRE(temporary_profile != nullptr);
+        TAUREON_REQUIRE(use_temporary != nullptr);
+        TAUREON_REQUIRE(remember_binding != nullptr);
+        TAUREON_REQUIRE(selected_profile != nullptr);
+        const auto temporary_index = temporary_profile->findData(QStringLiteral("manual.other"));
+        TAUREON_REQUIRE(temporary_index >= 0);
+        temporary_profile->setCurrentIndex(temporary_index);
+        TAUREON_REQUIRE(use_temporary->isEnabled());
+        use_temporary->click();
+        TAUREON_REQUIRE(process_until([&] {
+            return profile_panel->override_is_visible() &&
+                   profile_panel->remember_binding_is_enabled();
+        }));
+        TAUREON_REQUIRE(selected_profile->text().contains("novation.summit"));
+        {
+            std::scoped_lock lock(transport_mutex);
+            TAUREON_REQUIRE(transport_ptr->diagnostics().transmitted_messages == 0);
+        }
+        remember_binding->click();
+        TAUREON_REQUIRE(process_until([&] {
+            return !profile_panel->override_is_visible() &&
+                   selected_profile->text().contains("manual.other");
+        }));
+        {
+            std::scoped_lock lock(transport_mutex);
+            TAUREON_REQUIRE(transport_ptr->diagnostics().transmitted_messages == 0);
+        }
         raw_send->click();
         TAUREON_REQUIRE(process_until([&] {
             std::scoped_lock lock(transport_mutex);

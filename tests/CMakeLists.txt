@@ -136,6 +136,7 @@ add_executable(stage5_connection_ui_tests
     "${PROJECT_SOURCE_DIR}/src/gui/ProfileMatchPanel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/SysExTransferPanel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/SysExManagerPanel.cpp")
+set_target_properties(stage5_connection_ui_tests PROPERTIES AUTOMOC ON)
 target_include_directories(stage5_connection_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(stage5_connection_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
 target_compile_definitions(stage5_connection_ui_tests PRIVATE
@@ -183,6 +184,7 @@ set_tests_properties(stage5_sysex_manager_unit PROPERTIES LABELS "stage5;unit;ci
 add_executable(stage5_sysex_manager_ui_tests
     unit/Stage5SysExManagerUiTests.cpp
     "${PROJECT_SOURCE_DIR}/src/gui/SysExManagerPanel.cpp")
+set_target_properties(stage5_sysex_manager_ui_tests PROPERTIES AUTOMOC ON)
 target_include_directories(stage5_sysex_manager_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(stage5_sysex_manager_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
 target_compile_definitions(stage5_sysex_manager_ui_tests PRIVATE TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}")

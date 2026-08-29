@@ -33,7 +33,11 @@ bool verified_complete(const sysex::SysExFrame& frame) {
 
 SysExTransferSession::SysExTransferSession(
     std::shared_ptr<const profiles::ProfileRegistry> profile_registry)
-    : profile_registry_(std::move(profile_registry)) {}
+    : profile_registry_(std::move(profile_registry)) {
+    if (profile_registry_) {
+        profile_selection_ = std::make_unique<ProfileSelectionService>(*profile_registry_);
+    }
+}
 
 midi::Result<void> SysExTransferSession::load_file(const std::filesystem::path& path) {
     if (receiving_) {
@@ -120,6 +124,30 @@ midi::Result<void> SysExTransferSession::clear() {
     send_progress_ = {};
     send_error_.reset();
     record_log("Transfer workspace cleared");
+    return midi::Result<void>::success();
+}
+
+midi::Result<void> SysExTransferSession::select_temporary_profile(std::string profile_id) {
+    if (!profile_selection_) {
+        return midi::Result<void>::failure(
+            invalid_state("profile registry is unavailable"));
+    }
+    const auto selected = profile_selection_->select_temporary(std::move(profile_id));
+    if (!selected) return selected;
+    evaluate_profile();
+    record_log("Temporary profile selection changed; no route or transfer changed");
+    return midi::Result<void>::success();
+}
+
+midi::Result<void> SysExTransferSession::remember_overridden_manual_profile() {
+    if (!profile_selection_) {
+        return midi::Result<void>::failure(
+            invalid_state("profile registry is unavailable"));
+    }
+    const auto remembered = profile_selection_->remember_overridden_manual();
+    if (!remembered) return remembered;
+    evaluate_profile();
+    record_log("Manual profile promoted to a saved session binding; no route or transfer changed");
     return midi::Result<void>::success();
 }
 
@@ -214,6 +242,7 @@ SysExTransferSnapshot SysExTransferSession::snapshot() const {
     result.send_error = send_error_;
     result.pacing_delay = pacing_delay_;
     result.log = log_;
+    result.profile_match = profile_match_;
     result.profile_match_status = profile_match_.status;
     result.profile_match_message = profile_match_.message;
     result.profile_id = profile_match_.selected_profile_id;
@@ -250,7 +279,8 @@ void SysExTransferSession::evaluate_profile() {
                                                      "profile registry is unavailable";
         return;
     }
-    profile_match_ = profile_registry_->match(document_.frames.front());
+    profile_match_ = profile_selection_ ? profile_selection_->match(document_.frames.front()) :
+                                        profile_registry_->match(document_.frames.front());
 }
 
 } // namespace taureon::app

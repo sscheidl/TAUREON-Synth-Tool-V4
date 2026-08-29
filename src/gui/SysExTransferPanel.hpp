@@ -47,10 +47,16 @@ public:
     [[nodiscard]] bool request_load_document(sysex::SyxDocument document, std::string source_name,
                                              std::function<void(bool loaded)> completion = {});
     void request_save_received(const std::filesystem::path& path);
+    // These actions evaluate existing bytes on the application worker; they never open a route or send.
+    void request_select_temporary_profile(std::string profile_id);
+    void request_remember_overridden_manual_profile();
+    void set_snapshot_observer(std::function<void(const app::SysExTransferSnapshot&)> observer);
     [[nodiscard]] bool has_required_controls() const noexcept;
 
 private:
-    enum class PendingAction { load, receive, finish_receive, send, cancel, save, clear, refresh };
+    enum class PendingAction {
+        load, receive, finish_receive, send, cancel, save, clear, select_profile, remember_profile, refresh
+    };
 
     void set_pending(std::future<midi::Result<app::SysExTransferSnapshot>> future,
                      PendingAction action, QString status);
@@ -86,6 +92,7 @@ private:
     PendingAction pending_action_{PendingAction::refresh};
     app::SysExTransferSnapshot snapshot_;
     std::function<void(bool loaded)> load_completion_;
+    std::function<void(const app::SysExTransferSnapshot&)> snapshot_observer_;
     int idle_ticks_{};
 };
 

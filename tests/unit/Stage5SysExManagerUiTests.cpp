@@ -42,6 +42,7 @@ int main(int argc, char* argv[]) {
         auto* summary = panel.findChild<QLabel*>("sysExManagerSummary");
         auto* raw = panel.findChild<QPlainTextEdit*>("sysExManagerRawBytes");
         auto* open = panel.findChild<QPushButton*>("sysExManagerOpenTransfer");
+        auto* status = panel.findChild<QLabel*>("sysExManagerStatus");
         TAUREON_REQUIRE(panel.has_required_controls());
         TAUREON_REQUIRE(files != nullptr && files->model()->rowCount() == 1);
         TAUREON_REQUIRE(files->model()->index(0, 1).data().toString().contains("Novation"));
@@ -58,9 +59,32 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(raw->toPlainText().contains("remaining bytes are not displayed"));
         TAUREON_REQUIRE(open != nullptr && open->isEnabled());
         open->click();
+        QApplication::processEvents();
+        TAUREON_REQUIRE(status != nullptr &&
+                        status->text().contains("Opened inspected Manager bytes in SysEx Transfer"));
         TAUREON_REQUIRE(opened.has_value());
         TAUREON_REQUIRE(opened->source_name == "novation_summit_crazy_sine.syx");
         TAUREON_REQUIRE(opened->document.raw_bytes.size() == total_bytes);
         TAUREON_REQUIRE(opened->document.raw_bytes.size() > 256);
+
+        // The queued CompletionState connection is owned by the receiving Manager QWidget.
+        // Completing after its destruction must not invoke a stale manager callback.
+        std::optional<gui::SysExManagerPanel::TransferCompletion> deferred_completion;
+        {
+            auto shutting_down_panel = std::make_unique<gui::SysExManagerPanel>(
+                registry, [&deferred_completion](app::SysExManagerTransferItem,
+                                                  gui::SysExManagerPanel::TransferCompletion completion) {
+                    deferred_completion = std::move(completion);
+                    return true;
+                });
+            shutting_down_panel->add_file(fixture);
+            auto* shutdown_open =
+                shutting_down_panel->findChild<QPushButton*>("sysExManagerOpenTransfer");
+            TAUREON_REQUIRE(shutdown_open != nullptr && shutdown_open->isEnabled());
+            shutdown_open->click();
+            TAUREON_REQUIRE(deferred_completion.has_value());
+        }
+        (*deferred_completion)(true);
+        QApplication::processEvents();
     });
 }

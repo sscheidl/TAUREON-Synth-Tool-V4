@@ -267,6 +267,24 @@ void SysExTransferPanel::request_save_received(const std::filesystem::path& path
                 "Saving verified received data to a new file…");
 }
 
+void SysExTransferPanel::request_select_temporary_profile(std::string profile_id) {
+    if (pending_ || profile_id.empty()) return;
+    set_pending(worker_.select_temporary_profile(std::move(profile_id)), PendingAction::select_profile,
+                "Evaluating temporary profile against the existing SysEx data…");
+}
+
+void SysExTransferPanel::request_remember_overridden_manual_profile() {
+    if (pending_) return;
+    set_pending(worker_.remember_overridden_manual_profile(), PendingAction::remember_profile,
+                "Promoting the displayed manual profile choice…");
+}
+
+void SysExTransferPanel::set_snapshot_observer(
+    std::function<void(const app::SysExTransferSnapshot&)> observer) {
+    snapshot_observer_ = std::move(observer);
+    if (snapshot_observer_) snapshot_observer_(snapshot_);
+}
+
 bool SysExTransferPanel::has_required_controls() const noexcept {
     return open_button_ && receive_button_ && send_button_ && cancel_button_ && save_button_ &&
            clear_button_ && validated_restore_button_ && frame_table_ && raw_bytes_ &&
@@ -313,6 +331,10 @@ void SysExTransferPanel::poll_result() {
     if (action == PendingAction::load) {
         status_label_->setText("Loaded read-only — no automatic send was performed");
         if (completion) completion(true);
+    } else if (action == PendingAction::select_profile) {
+        status_label_->setText("Temporary profile evaluated — no route or send changed");
+    } else if (action == PendingAction::remember_profile) {
+        status_label_->setText("Profile binding promoted deliberately — no route or send changed");
     } else if (action == PendingAction::save) {
         status_label_->setText("Verified received data saved to a new file");
     } else if (action == PendingAction::clear) {
@@ -396,6 +418,7 @@ void SysExTransferPanel::apply_snapshot(const app::SysExTransferSnapshot& snapsh
     } else {
         raw_bytes_->clear();
     }
+    if (snapshot_observer_) snapshot_observer_(snapshot_);
     if (snapshot.send_error) {
         show_error(*snapshot.send_error);
     } else if (snapshot.receiving) {
