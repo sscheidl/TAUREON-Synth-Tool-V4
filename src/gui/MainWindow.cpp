@@ -213,10 +213,15 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     sysex_transfer_panel_ = new SysExTransferPanel(connection_worker_);
     workspace_stack_->addWidget(sysex_transfer_panel_);
     sysex_manager_panel_ = new SysExManagerPanel(
-        std::move(profile_registry), [this](app::SysExManagerTransferItem item) {
-            sysex_transfer_panel_->request_load_document(std::move(item.document),
-                                                         std::move(item.source_name));
-            navigation_->setCurrentRow(1);
+        std::move(profile_registry),
+        [this](app::SysExManagerTransferItem item,
+               SysExManagerPanel::TransferCompletion completion) {
+            return sysex_transfer_panel_->request_load_document(
+                std::move(item.document), std::move(item.source_name),
+                [this, completion = std::move(completion)](const bool loaded) mutable {
+                    if (loaded) navigation_->setCurrentRow(1);
+                    if (completion) completion(loaded);
+                });
         });
     workspace_stack_->addWidget(sysex_manager_panel_);
     workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(3)));
