@@ -316,3 +316,34 @@ This remains automated Windows software evidence only. Offscreen GUI tests do no
 review. Real MIDI/SysEx device, port, WMS lifecycle, timing, and hardware validation remain pending after
 09.09.2026. The five local hardware/loopback tests remain unregistered in cloud CI; none has been simulated or
 enabled here. Stage 5 remains **ACTIVE**; no Stage-5 gate or merge is implied.
+
+
+## Devices & Profiles composition slice — FU-3 consumed
+
+PR #3 connects the existing Qt-independent profile-selection policy to the existing, retained SysEx
+Transfer session. It does not introduce port binding, route persistence, connection changes, or transmission.
+
+The functional implementation revision
+`7548ea725655abe46cb4b8ecbad68babab772a2d` passed
+[Windows CI #75](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33241434863):
+Windows Server 2022 / `windows-2022`, MSVC v143 toolset 14.44.35207 /
+`cl.exe 19.44.35228.0`, CMake 3.31.6, Qt 6.10.3 `msvc2022_64`.
+Configure and the complete Debug build passed; all 21 registered cloud-capable CTest tests passed with zero
+failures or skips.
+
+- `SysExTransferSession` owns the session-scoped `ProfileSelectionService` and re-evaluates only its
+  retained, verified frame data. The registry is read-only for this purpose.
+- `ConnectionWorker` queues temporary selection and deliberate promotion through the existing application worker
+  and returns a presentation snapshot only. Neither command opens/closes a route nor starts Raw Send.
+- Devices & Profiles now lists real non-Generic profiles, permits an explicit temporary choice, presents the
+  matching evidence for imported or captured transfer data, and enables “Remember binding” only for the explicit
+  FU-3 override case.
+- `stage5_connection_ui_unit` adds the end-to-end negative proof: a deliberately different temporary manual
+  profile is overridden by the Summit fingerprint; the override/evidence is retained while the workspace is not
+  selected; deliberate promotion resolves the saved binding; the Fake Transport reports zero transmitted messages
+  throughout both actions. The existing explicit Raw Send remains the sole send trigger.
+
+This is automated Windows software evidence only. The offscreen test does not establish visual GUI quality.
+Real MIDI/SysEx devices, ports, WMS lifecycle, timing, and hardware validation, plus a visual Windows GUI review,
+remain pending after 09.09.2026. The five local hardware/loopback tests remain unregistered in cloud CI; none has
+been enabled or simulated. Stage 5 remains **ACTIVE**; no Stage-5 gate or merge is implied.
