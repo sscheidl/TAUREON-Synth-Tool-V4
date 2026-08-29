@@ -3,6 +3,7 @@
 #include "app/SysExManager.hpp"
 
 #include <QAbstractTableModel>
+#include <QObject>
 #include <QWidget>
 
 #include <cstddef>
@@ -50,6 +51,16 @@ private:
     std::vector<app::SysExManagerFrameSnapshot> frames_;
 };
 
+class TransferHandoffCompletionState final : public QObject {
+    Q_OBJECT
+
+public:
+    void complete(bool loaded) { emit completed(loaded); }
+
+signals:
+    void completed(bool loaded);
+};
+
 class SysExManagerPanel final : public QWidget {
 public:
     using TransferCompletion = std::function<void(bool loaded)>;
@@ -90,6 +101,9 @@ private:
     QPushButton* open_transfer_button_{};
     std::uint64_t selected_item_id_{};
     std::vector<app::SysExManagerFrameReference> visible_frame_references_;
+    // Completion state has no QWidget reference. Its queued Qt connection is receiver-owned,
+    // so destroying this panel deterministically disconnects completion delivery.
+    std::shared_ptr<TransferHandoffCompletionState> pending_handoff_completion_;
 };
 
 } // namespace taureon::gui

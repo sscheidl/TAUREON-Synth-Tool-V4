@@ -7,7 +7,6 @@
 #include <QItemSelectionModel>
 #include <QLabel>
 #include <QPlainTextEdit>
-#include <QPointer>
 #include <QPushButton>
 #include <QTableView>
 #include <QVBoxLayout>
@@ -288,12 +287,21 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
                 "Open in Transfer is unavailable until one complete, untainted workspace item is selected.");
             return;
         }
-        const QPointer<SysExManagerPanel> guard(this);
+        auto completion_state = std::make_shared<TransferHandoffCompletionState>();
+        pending_handoff_completion_ = completion_state;
+        connect(completion_state.get(), &TransferHandoffCompletionState::completed, this,
+                [this, completion = std::weak_ptr{completion_state}](const bool loaded) {
+                    if (pending_handoff_completion_ != completion.lock()) return;
+                    pending_handoff_completion_.reset();
+                    on_transfer_handoff_result(loaded);
+                },
+                Qt::QueuedConnection);
         const bool accepted = open_in_transfer_(
-            std::move(*item), [guard](const bool loaded) {
-                if (guard) guard->on_transfer_handoff_result(loaded);
+            std::move(*item), [completion = std::weak_ptr{completion_state}](const bool loaded) {
+                if (const auto state = completion.lock()) state->complete(loaded);
             });
         if (!accepted) {
+            pending_handoff_completion_.reset();
             status_label_->setText(
                 "Transfer handoff rejected: the Transfer workspace is busy; no document changed and no send started.");
         }
