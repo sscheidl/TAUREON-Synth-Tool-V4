@@ -63,7 +63,7 @@ std::string backend(const std::optional<midi::MidiRouteIdentity>& receive,
 
 std::string error_summary(const std::optional<midi::MidiError>& value) {
     if (!value) return "not observed";
-    return "observed: " + value->source + " (code " +
+    return "observed: " + value->native_api + " (code " +
            std::to_string(static_cast<int>(value->code)) + ")";
 }
 

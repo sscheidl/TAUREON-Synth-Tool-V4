@@ -4,6 +4,7 @@
 #include "app/MonitorEventQueue.hpp"
 #include "app/SysExTransferSession.hpp"
 #include "core/midi/Result.hpp"
+#include "core/midi/RoutePersistence.hpp"
 
 #include <filesystem>
 #include <string>
