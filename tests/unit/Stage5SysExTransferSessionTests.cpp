@@ -67,6 +67,21 @@ int main() {
         const auto fresh_capture = session.snapshot();
         TAUREON_REQUIRE(!fresh_capture.profile_id);
         TAUREON_REQUIRE(fresh_capture.send_progress.state == transfer::TransferState::idle);
+        sysex::SyxDocument rejected_document{{0xF0, 0x7D, 0x55, 0xF7},
+                                             {{sysex::SysExFrameStatus::complete,
+                                               {0xF0, 0x7D, 0x55, 0xF7}, {},
+                                               std::nullopt, false}}};
+        const auto rejected_handoff = session.load_document(
+            std::move(rejected_document), "must-not-replace-active-capture.syx");
+        TAUREON_REQUIRE(!rejected_handoff);
+        TAUREON_REQUIRE(rejected_handoff.error().code == midi::MidiErrorCode::invalid_state);
+        const auto after_rejected_handoff = session.snapshot();
+        TAUREON_REQUIRE(after_rejected_handoff.source_kind == fresh_capture.source_kind);
+        TAUREON_REQUIRE(after_rejected_handoff.source_name == fresh_capture.source_name);
+        TAUREON_REQUIRE(after_rejected_handoff.frames == fresh_capture.frames);
+        TAUREON_REQUIRE(after_rejected_handoff.receiving == fresh_capture.receiving);
+        TAUREON_REQUIRE(after_rejected_handoff.send_progress == fresh_capture.send_progress);
+        TAUREON_REQUIRE(!after_rejected_handoff.can_raw_send);
         session.consume(message_event({0xF0, 0x01, 0x02}));
         session.consume({1, midi::MidiDataLossEvent{midi::MidiBackend::winmm,
                                                     midi::MidiDataLossReason::queue_overflow,
