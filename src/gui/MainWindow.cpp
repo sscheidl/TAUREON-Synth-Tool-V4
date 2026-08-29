@@ -1,4 +1,6 @@
 #include "gui/MainWindow.hpp"
+#include "gui/DiagnosticsPanel.hpp"
+#include "gui/SettingsPanel.hpp"
 #include "gui/MidiMonitorModel.hpp"
 #include "gui/MidiMonitorFilterModel.hpp"
 #include "gui/MonitorEventBridge.hpp"
@@ -15,6 +17,7 @@
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QStatusBar>
+#include <QStandardPaths>
 #include <QStringList>
 #include <QToolBar>
 #include <QTableView>
@@ -238,9 +241,14 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
         profile_panel_->present(snapshot.profile_match);
     });
     workspace_stack_->addWidget(profile_panel_);
-    for (std::size_t index = 5; index < kWorkspaceNames.size(); ++index) {
-        workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(index)));
-    }
+    diagnostics_panel_ = new DiagnosticsPanel(connection_worker_, monitor_queue, workspace_stack_);
+    workspace_stack_->addWidget(diagnostics_panel_);
+    diagnostics_log_ = std::make_shared<app::BoundedLog>();
+    const auto settings_location = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    settings_panel_ = new SettingsPanel(
+        std::filesystem::path{settings_location.toStdWString()} / "taureon-settings.v1",
+        diagnostics_log_, workspace_stack_);
+    workspace_stack_->addWidget(settings_panel_);
     content_layout->addWidget(workspace_heading_);
     content_layout->addWidget(workspace_stack_);
 
@@ -363,6 +371,7 @@ void MainWindow::poll_connection_result() {
 
 void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapshot,
                                            const bool repopulate) {
+    if (settings_panel_) settings_panel_->set_connection_snapshot(snapshot);
     if (repopulate) {
         receive_routes_.clear();
         transmit_routes_.clear();

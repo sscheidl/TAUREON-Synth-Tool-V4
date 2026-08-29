@@ -37,11 +37,12 @@ const char* transfer_state(const transfer::TransferState value) noexcept {
 
 const char* match_state(const profiles::ProfileMatchStatus value) noexcept {
     switch (value) {
-    case profiles::ProfileMatchStatus::NoMatch: return "no match";
-    case profiles::ProfileMatchStatus::GenericFallback: return "generic fallback";
-    case profiles::ProfileMatchStatus::Suggested: return "suggested";
+    case profiles::ProfileMatchStatus::Explicit: return "explicit";
+    case profiles::ProfileMatchStatus::ConfidentSuggestion: return "confident suggestion";
     case profiles::ProfileMatchStatus::Ambiguous: return "ambiguous";
+    case profiles::ProfileMatchStatus::NoMatch: return "no match";
     case profiles::ProfileMatchStatus::Invalid: return "invalid";
+    case profiles::ProfileMatchStatus::GenericFallback: return "generic fallback";
     }
     return "not observed";
 }

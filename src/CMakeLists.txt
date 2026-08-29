@@ -38,6 +38,8 @@ add_executable(taureon_app
     app/NativeTransportFactory.cpp
     app/NativeTransportFactory.hpp
     app/taureon_app_main.cpp
+    gui/DiagnosticsPanel.cpp
+    gui/DiagnosticsPanel.hpp
     gui/MainWindow.cpp
     gui/MainWindow.hpp
     gui/MidiMonitorFilterModel.cpp
@@ -48,6 +50,8 @@ add_executable(taureon_app
     gui/MidiMonitorModel.hpp
     gui/ProfileMatchPanel.cpp
     gui/ProfileMatchPanel.hpp
+    gui/SettingsPanel.cpp
+    gui/SettingsPanel.hpp
     gui/SysExTransferPanel.cpp
     gui/SysExTransferPanel.hpp
     gui/SysExManagerPanel.cpp
@@ -55,6 +59,9 @@ add_executable(taureon_app
 set_target_properties(taureon_app PROPERTIES AUTOMOC ON)
 target_link_libraries(taureon_app PRIVATE taureon_midi_core Qt6::Widgets)
 target_compile_features(taureon_app PRIVATE cxx_std_20)
+target_compile_definitions(taureon_app PRIVATE
+    TAUREON_APP_VERSION="${PROJECT_VERSION}"
+    TAUREON_BUILD_REVISION="not embedded")
 add_custom_command(TARGET taureon_app POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${PROJECT_SOURCE_DIR}/resources/device_profiles"
