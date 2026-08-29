@@ -4,7 +4,8 @@
 #include <cctype>
 #include <iomanip>
 #include <sstream>
-#include <string_view>
+#include <unordered_map>
+#include <utility>
 
 namespace taureon::app {
 namespace {
@@ -24,6 +25,8 @@ std::string file_name(const std::filesystem::path& path) {
 bool frame_is_verified_complete(const sysex::SysExFrame& frame) {
     return frame.status == sysex::SysExFrameStatus::complete && !frame.affected_by_data_loss;
 }
+
+using FrameIndex = std::pair<std::size_t, std::size_t>;
 
 } // namespace
 
@@ -59,10 +62,12 @@ midi::Result<std::uint64_t> SysExManager::add_file(const std::filesystem::path& 
             ++item.malformed_frames;
         }
         if (frame.affected_by_data_loss) ++item.tainted_frames;
-        item.frames.push_back({std::move(frame), {}, {}, {}, {}});
-        auto& stored = item.frames.back();
-        stored.hash = stable_hash(stored.frame.bytes);
-        stored.payload_hash = stable_hash(payload_bytes(stored.frame));
+        SysExManagerFrameSnapshot stored;
+        stored.payload_bytes = payload_bytes(frame);
+        stored.hash = stable_hash(frame.bytes);
+        if (!stored.payload_bytes.empty()) stored.payload_hash = stable_hash(stored.payload_bytes);
+        stored.frame = std::move(frame);
+        item.frames.push_back(std::move(stored));
     }
 
     item.recognition_message = "No verified device evidence";
@@ -157,12 +162,16 @@ midi::Result<void> SysExManager::merge_frames(
     return sysex::save_syx_frames(destination, selected);
 }
 
-std::optional<std::filesystem::path> SysExManager::transferable_source(
+std::optional<SysExManagerTransferItem> SysExManager::transferable_item(
     const std::uint64_t item_id) const {
     const auto item = std::find_if(items_.begin(), items_.end(),
                                    [item_id](const auto& candidate) { return candidate.id == item_id; });
     if (item == items_.end() || !item->is_valid_for_transfer()) return std::nullopt;
-    return item->source_path;
+    sysex::SyxDocument document;
+    document.raw_bytes = item->raw_bytes;
+    document.frames.reserve(item->frames.size());
+    for (const auto& frame : item->frames) document.frames.push_back(frame.frame);
+    return SysExManagerTransferItem{item->source_name, std::move(document)};
 }
 
 SysExManagerSnapshot SysExManager::snapshot() const { return {items_}; }
@@ -201,33 +210,48 @@ void SysExManager::refresh_duplicate_evidence() {
         }
     }
 
-    for (std::size_t left_item = 0; left_item < items_.size(); ++left_item) {
-        for (std::size_t right_item = 0; right_item <= left_item; ++right_item) {
-            auto& left = items_.at(left_item);
-            auto& right = items_.at(right_item);
-            if (right_item < left_item && left.raw_bytes == right.raw_bytes &&
-                !left.exact_file_duplicate_of) {
-                left.exact_file_duplicate_of = right.id;
+    std::unordered_map<std::string, std::vector<std::size_t>> file_buckets;
+    std::unordered_map<std::string, std::vector<FrameIndex>> frame_buckets;
+    std::unordered_map<std::string, std::vector<FrameIndex>> payload_buckets;
+
+    for (std::size_t item_index = 0; item_index < items_.size(); ++item_index) {
+        auto& item = items_.at(item_index);
+        auto& same_file_hash = file_buckets[item.file_hash];
+        for (const auto prior_index : same_file_hash) {
+            const auto& prior = items_.at(prior_index);
+            if (item.raw_bytes == prior.raw_bytes && !item.exact_file_duplicate_of) {
+                item.exact_file_duplicate_of = prior.id;
             }
-            for (std::size_t left_frame = 0; left_frame < left.frames.size(); ++left_frame) {
-                const auto right_limit = right_item == left_item ? left_frame : right.frames.size();
-                for (std::size_t right_frame = 0; right_frame < right_limit; ++right_frame) {
-                    auto& candidate = left.frames.at(left_frame);
-                    auto& prior = right.frames.at(right_frame);
-                    const SysExManagerFrameReference candidate_ref{left.id, left_frame};
-                    const SysExManagerFrameReference prior_ref{right.id, right_frame};
-                    if (candidate.frame.bytes == prior.frame.bytes) {
-                        candidate.exact_frame_duplicates.push_back(prior_ref);
-                        prior.exact_frame_duplicates.push_back(candidate_ref);
-                    }
-                    const auto candidate_payload = payload_bytes(candidate.frame);
-                    const auto prior_payload = payload_bytes(prior.frame);
-                    if (!candidate_payload.empty() && candidate_payload == prior_payload) {
-                        candidate.exact_payload_duplicates.push_back(prior_ref);
-                        prior.exact_payload_duplicates.push_back(candidate_ref);
-                    }
+        }
+        same_file_hash.push_back(item_index);
+
+        for (std::size_t frame_index = 0; frame_index < item.frames.size(); ++frame_index) {
+            auto& frame = item.frames.at(frame_index);
+            const SysExManagerFrameReference reference{item.id, frame_index};
+            auto& same_frame_hash = frame_buckets[frame.hash];
+            for (const auto [prior_item_index, prior_frame_index] : same_frame_hash) {
+                auto& prior_item = items_.at(prior_item_index);
+                auto& prior = prior_item.frames.at(prior_frame_index);
+                if (frame.frame.bytes == prior.frame.bytes) {
+                    frame.exact_frame_duplicates.push_back(
+                        {prior_item.id, prior_frame_index});
+                    prior.exact_frame_duplicates.push_back(reference);
                 }
             }
+            same_frame_hash.push_back({item_index, frame_index});
+
+            if (frame.payload_hash.empty()) continue;
+            auto& same_payload_hash = payload_buckets[frame.payload_hash];
+            for (const auto [prior_item_index, prior_frame_index] : same_payload_hash) {
+                auto& prior_item = items_.at(prior_item_index);
+                auto& prior = prior_item.frames.at(prior_frame_index);
+                if (frame.payload_bytes == prior.payload_bytes) {
+                    frame.exact_payload_duplicates.push_back(
+                        {prior_item.id, prior_frame_index});
+                    prior.exact_payload_duplicates.push_back(reference);
+                }
+            }
+            same_payload_hash.push_back({item_index, frame_index});
         }
     }
 }

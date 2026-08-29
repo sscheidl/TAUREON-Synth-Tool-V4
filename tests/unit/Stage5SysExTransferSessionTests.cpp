@@ -42,6 +42,13 @@ int main() {
         TAUREON_REQUIRE(imported.model == std::optional<std::string>{"Summit"});
         TAUREON_REQUIRE(!imported.profile_supports_transfer);
         TAUREON_REQUIRE(!imported.profile_supports_validated_restore);
+        sysex::SyxDocument inspected_document{imported.frames.front().bytes, imported.frames};
+        TAUREON_REQUIRE(session.load_document(std::move(inspected_document),
+                                              "Manager copy of Crazy Sine.syx"));
+        const auto handed_off = session.snapshot();
+        TAUREON_REQUIRE(handed_off.source_name == "Manager copy of Crazy Sine.syx");
+        TAUREON_REQUIRE(handed_off.frames == imported.frames);
+        TAUREON_REQUIRE(handed_off.byte_count == imported.byte_count);
 
         auto winmm = session.build_raw_send(midi::MidiBackend::winmm, std::nullopt);
         TAUREON_REQUIRE(winmm);

@@ -51,6 +51,8 @@ public:
     explicit SysExTransferSession(
         std::shared_ptr<const profiles::ProfileRegistry> profile_registry = {});
     [[nodiscard]] midi::Result<void> load_file(const std::filesystem::path& path);
+    [[nodiscard]] midi::Result<void> load_document(sysex::SyxDocument document,
+                                                     std::string source_name);
     [[nodiscard]] midi::Result<void> begin_receive();
     void consume(const midi::MidiStreamEvent& event);
     [[nodiscard]] midi::Result<void> finish_receive();

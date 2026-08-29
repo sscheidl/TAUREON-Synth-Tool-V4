@@ -41,6 +41,9 @@ int main() {
         TAUREON_REQUIRE(snapshot.items.front().manufacturer == std::optional<std::string>{"Novation"});
         TAUREON_REQUIRE(snapshot.items.front().model == std::optional<std::string>{"Summit"});
         TAUREON_REQUIRE(snapshot.items.front().is_valid_for_transfer());
+        const auto transfer_item = manager.transferable_item(first.value());
+        TAUREON_REQUIRE(transfer_item);
+        TAUREON_REQUIRE(transfer_item->document.raw_bytes == snapshot.items.front().raw_bytes);
         TAUREON_REQUIRE(snapshot.items.front().file_hash.starts_with("fnv1a64:"));
         TAUREON_REQUIRE(snapshot.items.at(1).exact_file_duplicate_of == first.value());
         TAUREON_REQUIRE(!snapshot.items.front().frames.front().exact_frame_duplicates.empty());
@@ -73,7 +76,7 @@ int main() {
         }
         const auto invalid = manager.add_file(incomplete);
         TAUREON_REQUIRE(invalid);
-        TAUREON_REQUIRE(!manager.transferable_source(invalid.value()));
+        TAUREON_REQUIRE(!manager.transferable_item(invalid.value()));
         TAUREON_REQUIRE(!manager.export_frames(invalid.value(), {0}, output_path("never-write.syx")));
         remove_file(export_destination);
         remove_file(merge_destination);

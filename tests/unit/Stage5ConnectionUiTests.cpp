@@ -122,6 +122,15 @@ int main(int argc, char* argv[]) {
             window.findChild<QWidget*>("sysExManagerPanel"));
         TAUREON_REQUIRE(manager_panel != nullptr);
         TAUREON_REQUIRE(manager_panel->has_required_controls());
+        const auto manager_fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
+                                     "novation_summit_crazy_sine.syx";
+        manager_panel->add_file(manager_fixture);
+        auto* manager_open = window.findChild<QPushButton*>("sysExManagerOpenTransfer");
+        TAUREON_REQUIRE(manager_open != nullptr && manager_open->isEnabled());
+        manager_open->click();
+        TAUREON_REQUIRE(process_until([&] {
+            return frame_table->model()->rowCount() == 1;
+        }));
 
         receive_sysex->click();
         TAUREON_REQUIRE(process_until([&] { return receive_sysex->text() == "Stop Receive"; }));

@@ -51,7 +51,7 @@ private:
 
 class SysExManagerPanel final : public QWidget {
 public:
-    using OpenInTransfer = std::function<void(const std::filesystem::path&)>;
+    using OpenInTransfer = std::function<void(app::SysExManagerTransferItem)>;
 
     explicit SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegistry> registry = {},
                                OpenInTransfer open_in_transfer = {}, QWidget* parent = nullptr);
@@ -61,9 +61,9 @@ public:
 
 private:
     void refresh();
-    void select_item(int row);
+    void refresh_selection();
     void update_raw_inspector(int row);
-    [[nodiscard]] std::vector<std::size_t> selected_frame_indices() const;
+    [[nodiscard]] std::vector<app::SysExManagerFrameReference> selected_frame_references() const;
     void show_error(const midi::MidiError& error);
     void update_controls();
 
@@ -82,6 +82,7 @@ private:
     QPushButton* merge_button_{};
     QPushButton* open_transfer_button_{};
     std::uint64_t selected_item_id_{};
+    std::vector<app::SysExManagerFrameReference> visible_frame_references_;
 };
 
 } // namespace taureon::gui

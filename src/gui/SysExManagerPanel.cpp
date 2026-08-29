@@ -176,7 +176,7 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
     item_table_->setObjectName("sysExManagerFileTable");
     item_table_->setModel(item_model_);
     item_table_->setSelectionBehavior(QAbstractItemView::SelectRows);
-    item_table_->setSelectionMode(QAbstractItemView::SingleSelection);
+    item_table_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     item_table_->horizontalHeader()->setStretchLastSection(true);
     root->addWidget(item_table_, 2);
 
@@ -218,13 +218,23 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
         refresh();
     });
     connect(export_button_, &QPushButton::clicked, this, [this] {
-        const auto indices = selected_frame_indices();
-        if (selected_item_id_ == 0 || indices.empty()) return;
+        const auto references = selected_frame_references();
+        if (references.empty()) return;
+        const auto item_id = references.front().item_id;
+        std::vector<std::size_t> indices;
+        indices.reserve(references.size());
+        for (const auto& reference : references) {
+            if (reference.item_id != item_id) {
+                status_label_->setText(
+                    "Export selected frames requires one workspace file; use Merge for multiple files.");
+                return;
+            }
+            indices.push_back(reference.frame_index);
+        }
         const auto destination = QFileDialog::getSaveFileName(
             this, "Export selected verified frames", {}, "SysEx files (*.syx)");
         if (destination.isEmpty()) return;
-        const auto result = manager_.export_frames(selected_item_id_, indices,
-                                                    destination.toStdWString());
+        const auto result = manager_.export_frames(item_id, indices, destination.toStdWString());
         if (!result) {
             show_error(result.error());
             return;
@@ -232,15 +242,12 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
         status_label_->setText("Exported selected verified frames to a new file. Source unchanged.");
     });
     connect(merge_button_, &QPushButton::clicked, this, [this] {
-        const auto indices = selected_frame_indices();
-        if (selected_item_id_ == 0 || indices.empty()) return;
-        std::vector<app::SysExManagerFrameReference> frames;
-        frames.reserve(indices.size());
-        for (const auto index : indices) frames.push_back({selected_item_id_, index});
+        const auto references = selected_frame_references();
+        if (references.empty()) return;
         const auto destination = QFileDialog::getSaveFileName(
             this, "Merge selected verified frames", {}, "SysEx files (*.syx)");
         if (destination.isEmpty()) return;
-        const auto result = manager_.merge_frames(frames, destination.toStdWString());
+        const auto result = manager_.merge_frames(references, destination.toStdWString());
         if (!result) {
             show_error(result.error());
             return;
@@ -248,17 +255,17 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
         status_label_->setText("Merged selected verified frames to a new file. Source unchanged.");
     });
     connect(open_transfer_button_, &QPushButton::clicked, this, [this] {
-        const auto source = manager_.transferable_source(selected_item_id_);
-        if (!source || !open_in_transfer_) {
+        auto item = manager_.transferable_item(selected_item_id_);
+        if (!item || !open_in_transfer_) {
             status_label_->setText(
                 "Open in Transfer is unavailable until one complete, untainted workspace item is selected.");
             return;
         }
-        open_in_transfer_(*source);
-        status_label_->setText("Opened the selected valid source in SysEx Transfer; no send was started.");
+        open_in_transfer_(std::move(*item));
+        status_label_->setText("Opened inspected Manager bytes in SysEx Transfer; no send was started.");
     });
-    connect(item_table_->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
-            [this](const QModelIndex& current) { select_item(current.row()); });
+    connect(item_table_->selectionModel(), &QItemSelectionModel::selectionChanged, this,
+            [this] { refresh_selection(); });
     connect(frame_table_->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
             [this](const QModelIndex& current) { update_raw_inspector(current.row()); });
     refresh();
@@ -296,7 +303,7 @@ void SysExManagerPanel::refresh() {
     if (row < 0 && item_model_->rowCount() > 0) row = 0;
     if (row >= 0) {
         item_table_->selectRow(row);
-        select_item(row);
+        refresh_selection();
     } else {
         selected_item_id_ = 0;
         frame_model_->set_frames({});
@@ -305,21 +312,32 @@ void SysExManagerPanel::refresh() {
     }
 }
 
-void SysExManagerPanel::select_item(const int row) {
-    const auto* item = item_model_->item(row);
-    if (!item) {
+void SysExManagerPanel::refresh_selection() {
+    const auto selected = item_table_->selectionModel()->selectedRows();
+    if (selected.empty()) {
         selected_item_id_ = 0;
+        visible_frame_references_.clear();
         frame_model_->set_frames({});
         raw_bytes_->clear();
         update_controls();
         return;
     }
-    selected_item_id_ = item->id;
-    frame_model_->set_frames(item->frames);
+    std::vector<app::SysExManagerFrameSnapshot> frames;
+    visible_frame_references_.clear();
+    for (const auto& selection : selected) {
+        const auto* item = item_model_->item(selection.row());
+        if (!item) continue;
+        for (std::size_t index = 0; index < item->frames.size(); ++index) {
+            frames.push_back(item->frames.at(index));
+            visible_frame_references_.push_back({item->id, index});
+        }
+    }
+    const auto* current = item_model_->item(item_table_->currentIndex().row());
+    selected_item_id_ = current ? current->id : 0;
+    frame_model_->set_frames(std::move(frames));
     summary_label_->setText(
-        QStringLiteral("%1 · %2 · %3")
-            .arg(QString::fromStdString(item->source_name), device_text(*item),
-                 QString::fromStdString(item->recognition_message)));
+        QStringLiteral("%1 workspace file(s) selected; select frames below to export or merge.")
+            .arg(selected.size()));
     if (frame_model_->rowCount() > 0) {
         frame_table_->selectRow(0);
         update_raw_inspector(0);
@@ -335,14 +353,20 @@ void SysExManagerPanel::update_raw_inspector(const int row) {
     update_controls();
 }
 
-std::vector<std::size_t> SysExManagerPanel::selected_frame_indices() const {
-    std::vector<std::size_t> result;
+std::vector<app::SysExManagerFrameReference> SysExManagerPanel::selected_frame_references() const {
+    std::vector<app::SysExManagerFrameReference> result;
     const auto selected = frame_table_->selectionModel()->selectedRows();
     result.reserve(selected.size());
     for (const auto& index : selected) {
-        if (index.row() >= 0) result.push_back(static_cast<std::size_t>(index.row()));
+        if (index.row() >= 0 &&
+            index.row() < static_cast<int>(visible_frame_references_.size())) {
+            result.push_back(visible_frame_references_.at(static_cast<std::size_t>(index.row())));
+        }
     }
-    std::sort(result.begin(), result.end());
+    std::sort(result.begin(), result.end(), [](const auto& left, const auto& right) {
+        return left.item_id == right.item_id ? left.frame_index < right.frame_index :
+                                               left.item_id < right.item_id;
+    });
     return result;
 }
 
@@ -352,17 +376,23 @@ void SysExManagerPanel::show_error(const midi::MidiError& error) {
 
 void SysExManagerPanel::update_controls() {
     const bool item_selected = selected_item_id_ != 0;
-    const bool frames_selected = !selected_frame_indices().empty();
+    const auto references = selected_frame_references();
+    const bool frames_selected = !references.empty();
+    const bool single_source = frames_selected &&
+        std::all_of(references.begin(), references.end(), [&references](const auto& reference) {
+            return reference.item_id == references.front().item_id;
+        });
     remove_button_->setEnabled(item_selected);
-    export_button_->setEnabled(item_selected && frames_selected);
-    merge_button_->setEnabled(item_selected && frames_selected);
-    open_transfer_button_->setEnabled(manager_.transferable_source(selected_item_id_).has_value());
+    export_button_->setEnabled(frames_selected && single_source);
+    merge_button_->setEnabled(frames_selected);
+    open_transfer_button_->setEnabled(item_table_->selectionModel()->selectedRows().size() == 1 &&
+                                      manager_.transferable_item(selected_item_id_).has_value());
     export_button_->setToolTip(
         "Writes selected complete, unaffected frames to a new destination; source files are unchanged.");
     merge_button_->setToolTip(
-        "Writes the selected complete, unaffected frames in visible order to a new destination.");
+        "Merges selected complete, unaffected frames from one or more workspace files.");
     open_transfer_button_->setToolTip(
-        "Loads one complete, untainted source file into SysEx Transfer. It does not send automatically.");
+        "Loads the inspected Manager bytes into SysEx Transfer. It does not send automatically.");
 }
 
 } // namespace taureon::gui

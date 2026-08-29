@@ -22,9 +22,9 @@ int main(int argc, char* argv[]) {
             std::filesystem::path{TAUREON_SOURCE_DIR} / "resources" / "device_profiles", issues));
         TAUREON_REQUIRE(issues.empty());
 
-        std::optional<std::filesystem::path> opened;
-        gui::SysExManagerPanel panel(registry, [&opened](const std::filesystem::path& path) {
-            opened = path;
+        std::optional<app::SysExManagerTransferItem> opened;
+        gui::SysExManagerPanel panel(registry, [&opened](app::SysExManagerTransferItem item) {
+            opened = std::move(item);
         });
         const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
                              "novation_summit_crazy_sine.syx";
@@ -40,6 +40,8 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(summary != nullptr && summary->text().contains("Novation"));
         TAUREON_REQUIRE(open != nullptr && open->isEnabled());
         open->click();
-        TAUREON_REQUIRE(opened == fixture);
+        TAUREON_REQUIRE(opened.has_value());
+        TAUREON_REQUIRE(opened->source_name == "novation_summit_crazy_sine.syx");
+        TAUREON_REQUIRE(!opened->document.raw_bytes.empty());
     });
 }

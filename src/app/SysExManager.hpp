@@ -23,6 +23,7 @@ struct SysExManagerFrameReference {
 
 struct SysExManagerFrameSnapshot {
     sysex::SysExFrame frame;
+    std::vector<std::uint8_t> payload_bytes;
     std::string hash;
     std::string payload_hash;
     std::vector<SysExManagerFrameReference> exact_frame_duplicates;
@@ -48,6 +49,11 @@ struct SysExManagerItemSnapshot {
     [[nodiscard]] bool is_valid_for_transfer() const noexcept;
 };
 
+struct SysExManagerTransferItem {
+    std::string source_name;
+    sysex::SyxDocument document;
+};
+
 struct SysExManagerSnapshot {
     std::vector<SysExManagerItemSnapshot> items;
 };
@@ -64,7 +70,7 @@ public:
     [[nodiscard]] midi::Result<void> merge_frames(
         const std::vector<SysExManagerFrameReference>& frames,
         const std::filesystem::path& destination) const;
-    [[nodiscard]] std::optional<std::filesystem::path> transferable_source(
+    [[nodiscard]] std::optional<SysExManagerTransferItem> transferable_item(
         std::uint64_t item_id) const;
     [[nodiscard]] SysExManagerSnapshot snapshot() const;
 

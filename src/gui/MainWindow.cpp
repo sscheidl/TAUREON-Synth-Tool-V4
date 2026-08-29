@@ -213,8 +213,9 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     sysex_transfer_panel_ = new SysExTransferPanel(connection_worker_);
     workspace_stack_->addWidget(sysex_transfer_panel_);
     sysex_manager_panel_ = new SysExManagerPanel(
-        std::move(profile_registry), [this](const std::filesystem::path& path) {
-            sysex_transfer_panel_->request_load(path);
+        std::move(profile_registry), [this](app::SysExManagerTransferItem item) {
+            sysex_transfer_panel_->request_load_document(std::move(item.document),
+                                                         std::move(item.source_name));
             navigation_->setCurrentRow(1);
         });
     workspace_stack_->addWidget(sysex_manager_panel_);

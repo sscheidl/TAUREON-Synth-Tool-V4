@@ -249,6 +249,13 @@ void SysExTransferPanel::request_load(const std::filesystem::path& path) {
     set_pending(worker_.load_sysex(path), PendingAction::load, "Loading SysEx read-only…");
 }
 
+void SysExTransferPanel::request_load_document(sysex::SyxDocument document,
+                                              std::string source_name) {
+    if (pending_) return;
+    set_pending(worker_.load_sysex_document(std::move(document), std::move(source_name)),
+                PendingAction::load, "Loading inspected Manager bytes read-only…");
+}
+
 void SysExTransferPanel::request_save_received(const std::filesystem::path& path) {
     if (pending_) return;
     set_pending(worker_.save_received_sysex(path), PendingAction::save,

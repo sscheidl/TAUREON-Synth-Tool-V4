@@ -42,6 +42,7 @@ public:
     explicit SysExTransferPanel(app::ConnectionWorker& worker, QWidget* parent = nullptr);
 
     void request_load(const std::filesystem::path& path);
+    void request_load_document(sysex::SyxDocument document, std::string source_name);
     void request_save_received(const std::filesystem::path& path);
     [[nodiscard]] bool has_required_controls() const noexcept;
 

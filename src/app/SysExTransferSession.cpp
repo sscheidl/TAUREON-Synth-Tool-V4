@@ -48,6 +48,22 @@ midi::Result<void> SysExTransferSession::load_file(const std::filesystem::path& 
     return midi::Result<void>::success();
 }
 
+midi::Result<void> SysExTransferSession::load_document(sysex::SyxDocument document,
+                                                       std::string source_name) {
+    if (receiving_) {
+        return midi::Result<void>::failure(
+            invalid_state("finish the active receive capture before loading a file"));
+    }
+    if (!document.all_complete()) {
+        return midi::Result<void>::failure(
+            incomplete_data("Manager handoff accepts complete, untainted SysEx frames only"));
+    }
+    if (source_name.empty()) source_name = "SysEx Manager item";
+    replace_document(SysExSourceKind::imported_file, std::move(source_name), std::move(document));
+    record_log("Loaded inspected bytes from SysEx Manager");
+    return midi::Result<void>::success();
+}
+
 midi::Result<void> SysExTransferSession::begin_receive() {
     if (receiving_) {
         return midi::Result<void>::failure(invalid_state("receive capture is already active"));
