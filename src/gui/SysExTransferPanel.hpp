@@ -6,6 +6,7 @@
 #include <QWidget>
 
 #include <filesystem>
+#include <functional>
 #include <future>
 #include <optional>
 #include <vector>
@@ -42,6 +43,9 @@ public:
     explicit SysExTransferPanel(app::ConnectionWorker& worker, QWidget* parent = nullptr);
 
     void request_load(const std::filesystem::path& path);
+    // Returns false only when this panel has not accepted the request (for example, while pending).
+    [[nodiscard]] bool request_load_document(sysex::SyxDocument document, std::string source_name,
+                                             std::function<void(bool loaded)> completion = {});
     void request_save_received(const std::filesystem::path& path);
     [[nodiscard]] bool has_required_controls() const noexcept;
 
@@ -81,6 +85,7 @@ private:
     std::optional<std::future<midi::Result<app::SysExTransferSnapshot>>> pending_;
     PendingAction pending_action_{PendingAction::refresh};
     app::SysExTransferSnapshot snapshot_;
+    std::function<void(bool loaded)> load_completion_;
     int idle_ticks_{};
 };
 

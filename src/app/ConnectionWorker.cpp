@@ -298,6 +298,30 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::load_sysex(
     return future;
 }
 
+std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::load_sysex_document(
+    sysex::SyxDocument document, std::string source_name) {
+    auto promise = std::make_shared<std::promise<midi::Result<SysExTransferSnapshot>>>();
+    auto future = promise->get_future();
+    enqueue([promise, document = std::move(document), source_name = std::move(source_name), this](
+                State& state) mutable {
+        state.synchronize_transfer();
+        if (state.transfer) {
+            promise->set_value(midi::Result<SysExTransferSnapshot>::failure(
+                worker_error("cancel the active transfer before loading another file")));
+            return;
+        }
+        const auto loaded = state.sysex.load_document(std::move(document), std::move(source_name));
+        if (!loaded) {
+            promise->set_value(midi::Result<SysExTransferSnapshot>::failure(loaded.error()));
+            return;
+        }
+        promise->set_value(midi::Result<SysExTransferSnapshot>::success(
+            state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
+                                 last_synthetic_loss_sequence())));
+    });
+    return future;
+}
+
 std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::begin_sysex_receive() {
     auto promise = std::make_shared<std::promise<midi::Result<SysExTransferSnapshot>>>();
     auto future = promise->get_future();

@@ -262,3 +262,57 @@ succeeded, preserving the existing exception-safe pending-loss accounting. The t
 still injects 9,000 events into the blocked 8,192-event boundary, proves exactly 808 drops, and now additionally
 proves `application_last_loss_sequence == 8999`. No architecture deviation or Stage-6 work was required. Stage 5
 remains **ACTIVE**.
+
+## SysEx Manager slice — targeted review follow-up pending verification
+
+PR #2 adds the deliberately generic, read-only SysEx Manager workspace: user-selected `.syx` files are
+inspected as file/frame data, with deterministic FNV-1a 64 identity aids and exact file, frame, and payload
+duplicate evidence only. The Manager reuses the accepted Stage-3 parser and atomic writer, exports or merges only
+verified complete unaffected frames, and never mutates source files. Profile recognition is annotation only; no
+device-specific codec, librarian semantics, automatic cleanup, or automatic transmission is introduced.
+
+The original independently reviewed PR revision was
+`6706ef930b18f0fcb0f769a46e89662bbbd4812e`. Its historical Windows CI evidence is
+[Windows CI #29](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33227162834):
+`windows-2022`, MSVC v143 / `cl.exe 19.44.35228.0`, CMake 3.31.6, Qt 6.10.3 `msvc2022_64`,
+Configure PASS, full Debug build PASS, and 21/21 cloud-capable CTest tests PASS. That is historical evidence for
+the original slice revision only.
+
+Three internal Codex review findings on the earlier implementation were corrected before that review: Manager
+handoff now supplies the inspected retained document rather than rereading a path; multi-file selection retains
+actual item/frame references for Merge; and duplicate analysis hashes/buckets candidates and compares bytes only
+within matching buckets. Claude Code reviewed the exact original revision with
+**PASS WITH NON-BLOCKING FOLLOW-UPS**.
+
+### Targeted follow-up status
+
+The repair implementation revision
+`e870611b7d854a23e5464c12ce2526c7a2bc9a17` passed
+[Windows CI #67](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33235022070):
+`windows-2022`, MSVC v143 toolset 14.44.35207 / `cl.exe 19.44.35228.0`, CMake 3.31.6, and
+Qt 6.10.3 `msvc2022_64`. Configure and the complete Debug build passed; all 21 registered
+cloud-capable CTest tests passed with zero failures.
+
+- **M-1 — verified:** the Transfer panel explicitly accepts or rejects a Manager handoff, reports its eventual
+  worker result, and navigation occurs only after successful document load. A rejected request preserves the active
+  capture/document state and does not send.
+- **M-2 — verified:** targeted negative evidence covers non-duplicates, tainted Manager documents, malformed
+  versus incomplete input, invalid selection/error codes, failed-output cleanup, immutable source bytes, merge
+  ordering, and no automatic fake-transport send.
+- **L-1 — verified:** refresh snapshots contain summary metadata rather than raw/frame byte vectors; selected
+  inspection copies only one frame. The raw inspector is explicitly limited to 256 displayed bytes and names both
+  shown and total byte counts; stored/exported/transferred data remains complete.
+- **L-2 — verified:** native Save dialog confirmation is propagated as `replace_existing` to the existing
+  `save_syx_frames` / atomic-write path. Unconfirmed targets retain the no-replace default.
+- **L-3 — OPEN Product Owner decision:** the Manager workspace is user-initiated and currently has no fixed total
+  file/frame/byte capacity limit. No ad-hoc cap was introduced because large SysEx support remains required. A
+  concrete capacity/memory policy must be decided before the final Stage-5 gate.
+- **L-4 — verified:** Manager item absence uses `not_found`; empty or invalid frame selection uses
+  `invalid_argument`, with direct code assertions.
+- **L-5 — completed:** this report records both the original reviewed revision and its historical CI, plus the exact
+  successful follow-up implementation revision and CI evidence above.
+
+This remains automated Windows software evidence only. Offscreen GUI tests do not establish a visual Windows GUI
+review. Real MIDI/SysEx device, port, WMS lifecycle, timing, and hardware validation remain pending after
+09.09.2026. The five local hardware/loopback tests remain unregistered in cloud CI; none has been simulated or
+enabled here. Stage 5 remains **ACTIVE**; no Stage-5 gate or merge is implied.

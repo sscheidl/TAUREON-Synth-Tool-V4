@@ -41,6 +41,8 @@ public:
 
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> load_sysex(
         std::filesystem::path path);
+    [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> load_sysex_document(
+        sysex::SyxDocument document, std::string source_name);
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> begin_sysex_receive();
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> finish_sysex_receive();
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> clear_sysex();

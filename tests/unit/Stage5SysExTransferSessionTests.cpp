@@ -42,6 +42,13 @@ int main() {
         TAUREON_REQUIRE(imported.model == std::optional<std::string>{"Summit"});
         TAUREON_REQUIRE(!imported.profile_supports_transfer);
         TAUREON_REQUIRE(!imported.profile_supports_validated_restore);
+        sysex::SyxDocument inspected_document{imported.frames.front().bytes, imported.frames};
+        TAUREON_REQUIRE(session.load_document(std::move(inspected_document),
+                                              "Manager copy of Crazy Sine.syx"));
+        const auto handed_off = session.snapshot();
+        TAUREON_REQUIRE(handed_off.source_name == "Manager copy of Crazy Sine.syx");
+        TAUREON_REQUIRE(handed_off.frames == imported.frames);
+        TAUREON_REQUIRE(handed_off.byte_count == imported.byte_count);
 
         auto winmm = session.build_raw_send(midi::MidiBackend::winmm, std::nullopt);
         TAUREON_REQUIRE(winmm);
@@ -60,6 +67,21 @@ int main() {
         const auto fresh_capture = session.snapshot();
         TAUREON_REQUIRE(!fresh_capture.profile_id);
         TAUREON_REQUIRE(fresh_capture.send_progress.state == transfer::TransferState::idle);
+        sysex::SyxDocument rejected_document{{0xF0, 0x7D, 0x55, 0xF7},
+                                             {{sysex::SysExFrameStatus::complete,
+                                               {0xF0, 0x7D, 0x55, 0xF7}, {},
+                                               std::nullopt, false}}};
+        const auto rejected_handoff = session.load_document(
+            std::move(rejected_document), "must-not-replace-active-capture.syx");
+        TAUREON_REQUIRE(!rejected_handoff);
+        TAUREON_REQUIRE(rejected_handoff.error().code == midi::MidiErrorCode::invalid_state);
+        const auto after_rejected_handoff = session.snapshot();
+        TAUREON_REQUIRE(after_rejected_handoff.source_kind == fresh_capture.source_kind);
+        TAUREON_REQUIRE(after_rejected_handoff.source_name == fresh_capture.source_name);
+        TAUREON_REQUIRE(after_rejected_handoff.frames == fresh_capture.frames);
+        TAUREON_REQUIRE(after_rejected_handoff.receiving == fresh_capture.receiving);
+        TAUREON_REQUIRE(after_rejected_handoff.send_progress == fresh_capture.send_progress);
+        TAUREON_REQUIRE(!after_rejected_handoff.can_raw_send);
         session.consume(message_event({0xF0, 0x01, 0x02}));
         session.consume({1, midi::MidiDataLossEvent{midi::MidiBackend::winmm,
                                                     midi::MidiDataLossReason::queue_overflow,

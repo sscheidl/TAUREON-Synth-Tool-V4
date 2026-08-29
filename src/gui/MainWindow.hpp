@@ -2,10 +2,12 @@
 
 #include "app/MonitorEventQueue.hpp"
 #include "app/ConnectionWorker.hpp"
+#include "profiles/ProfileRegistry.hpp"
 
 #include <QMainWindow>
 
 #include <future>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -22,10 +24,12 @@ class MidiMonitorModel;
 class MonitorEventBridge;
 class ProfileMatchPanel;
 class SysExTransferPanel;
+class SysExManagerPanel;
 
 class MainWindow final : public QMainWindow {
 public:
-    MainWindow(app::MonitorEventQueue& monitor_queue, app::ConnectionWorker& connection_worker);
+    MainWindow(app::MonitorEventQueue& monitor_queue, app::ConnectionWorker& connection_worker,
+               std::shared_ptr<const profiles::ProfileRegistry> profile_registry = {});
     ~MainWindow() override;
 
     [[nodiscard]] bool has_expected_shell() const noexcept;
@@ -47,6 +51,7 @@ private:
     MonitorEventBridge* monitor_bridge_{};
     ProfileMatchPanel* profile_panel_{};
     SysExTransferPanel* sysex_transfer_panel_{};
+    SysExManagerPanel* sysex_manager_panel_{};
     app::ConnectionWorker& connection_worker_;
     QComboBox* backend_selector_{};
     QComboBox* receive_selector_{};

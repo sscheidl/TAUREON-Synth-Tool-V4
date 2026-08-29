@@ -134,7 +134,8 @@ add_executable(stage5_connection_ui_tests
     "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/ProfileMatchPanel.cpp"
-    "${PROJECT_SOURCE_DIR}/src/gui/SysExTransferPanel.cpp")
+    "${PROJECT_SOURCE_DIR}/src/gui/SysExTransferPanel.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/SysExManagerPanel.cpp")
 target_include_directories(stage5_connection_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(stage5_connection_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
 target_compile_definitions(stage5_connection_ui_tests PRIVATE
@@ -163,6 +164,38 @@ else()
 endif()
 add_test(NAME stage5_sysex_transfer_session_unit COMMAND stage5_sysex_transfer_session_tests)
 set_tests_properties(stage5_sysex_transfer_session_unit PROPERTIES LABELS "stage5;unit;ci")
+
+
+add_executable(stage5_sysex_manager_tests unit/Stage5SysExManagerTests.cpp)
+target_include_directories(stage5_sysex_manager_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_sysex_manager_tests PRIVATE taureon_midi_core)
+target_compile_definitions(stage5_sysex_manager_tests PRIVATE
+    TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    TAUREON_TEST_OUTPUT_DIR="$<TARGET_FILE_DIR:stage5_sysex_manager_tests>")
+if(MSVC)
+    target_compile_options(stage5_sysex_manager_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_sysex_manager_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_sysex_manager_unit COMMAND stage5_sysex_manager_tests)
+set_tests_properties(stage5_sysex_manager_unit PROPERTIES LABELS "stage5;unit;ci")
+
+add_executable(stage5_sysex_manager_ui_tests
+    unit/Stage5SysExManagerUiTests.cpp
+    "${PROJECT_SOURCE_DIR}/src/gui/SysExManagerPanel.cpp")
+target_include_directories(stage5_sysex_manager_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_sysex_manager_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
+target_compile_definitions(stage5_sysex_manager_ui_tests PRIVATE TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+if(MSVC)
+    target_compile_options(stage5_sysex_manager_ui_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_sysex_manager_ui_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_sysex_manager_ui_unit COMMAND stage5_sysex_manager_ui_tests)
+set_tests_properties(stage5_sysex_manager_ui_unit PROPERTIES
+    LABELS "stage5;gui;unit;ci"
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 
 if(WIN32)
     add_executable(stage2_winmm_header_tests unit/Stage2WinmmHeaderTests.cpp)

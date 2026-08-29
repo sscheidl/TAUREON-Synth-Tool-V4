@@ -249,6 +249,18 @@ void SysExTransferPanel::request_load(const std::filesystem::path& path) {
     set_pending(worker_.load_sysex(path), PendingAction::load, "Loading SysEx read-only…");
 }
 
+bool SysExTransferPanel::request_load_document(
+    sysex::SyxDocument document, std::string source_name, std::function<void(bool loaded)> completion) {
+    if (pending_) {
+        if (completion) completion(false);
+        return false;
+    }
+    load_completion_ = std::move(completion);
+    set_pending(worker_.load_sysex_document(std::move(document), std::move(source_name)),
+                PendingAction::load, "Loading inspected Manager bytes read-only…");
+    return true;
+}
+
 void SysExTransferPanel::request_save_received(const std::filesystem::path& path) {
     if (pending_) return;
     set_pending(worker_.save_received_sysex(path), PendingAction::save,
@@ -289,14 +301,18 @@ void SysExTransferPanel::poll_result() {
     auto result = pending_->get();
     const auto action = pending_action_;
     pending_.reset();
+    auto completion = action == PendingAction::load ? std::move(load_completion_) :
+                                                       std::function<void(bool loaded)>{};
     if (!result) {
         show_error(result.error());
         apply_snapshot(snapshot_);
+        if (completion) completion(false);
         return;
     }
     apply_snapshot(result.value());
     if (action == PendingAction::load) {
         status_label_->setText("Loaded read-only — no automatic send was performed");
+        if (completion) completion(true);
     } else if (action == PendingAction::save) {
         status_label_->setText("Verified received data saved to a new file");
     } else if (action == PendingAction::clear) {

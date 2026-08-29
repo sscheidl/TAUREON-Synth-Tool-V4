@@ -4,6 +4,7 @@
 #include "gui/MonitorEventBridge.hpp"
 #include "gui/ProfileMatchPanel.hpp"
 #include "gui/SysExTransferPanel.hpp"
+#include "gui/SysExManagerPanel.hpp"
 
 #include <QComboBox>
 #include <QFrame>
@@ -24,6 +25,7 @@
 #include <array>
 #include <chrono>
 #include <cstddef>
+#include <filesystem>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -151,7 +153,8 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
 } // namespace
 
 MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
-                       app::ConnectionWorker& connection_worker)
+                       app::ConnectionWorker& connection_worker,
+                       std::shared_ptr<const profiles::ProfileRegistry> profile_registry)
     : connection_worker_(connection_worker) {
     setObjectName("taureonMainWindow");
     setWindowTitle("TAUREON Synth Tool V4");
@@ -209,9 +212,19 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_));
     sysex_transfer_panel_ = new SysExTransferPanel(connection_worker_);
     workspace_stack_->addWidget(sysex_transfer_panel_);
-    for (std::size_t index = 2; index < 4; ++index) {
-        workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(index)));
-    }
+    sysex_manager_panel_ = new SysExManagerPanel(
+        std::move(profile_registry),
+        [this](app::SysExManagerTransferItem item,
+               SysExManagerPanel::TransferCompletion completion) {
+            return sysex_transfer_panel_->request_load_document(
+                std::move(item.document), std::move(item.source_name),
+                [this, completion = std::move(completion)](const bool loaded) mutable {
+                    if (loaded) navigation_->setCurrentRow(1);
+                    if (completion) completion(loaded);
+                });
+        });
+    workspace_stack_->addWidget(sysex_manager_panel_);
+    workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(3)));
     profile_panel_ = new ProfileMatchPanel;
     workspace_stack_->addWidget(profile_panel_);
     for (std::size_t index = 5; index < kWorkspaceNames.size(); ++index) {
