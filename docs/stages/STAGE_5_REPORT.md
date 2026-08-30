@@ -455,9 +455,18 @@ there is no connect/disconnect, route rebinding, Raw Send, Restore, or MIDI/SysE
 different known capacities, a zero-slot bank, an unknown-capacity bank, occupied/empty/read-only
 slots, unavailable operations, provider replacement, model row/column/role/invalid-index
 contracts, reset behavior, real `QKeyEvent` keyboard navigation, and Shift range selection.
-Windows CI evidence is pending for the final Slice-8 PR head. The five hardware/loopback tests
-remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**; real hardware, WMS/WinMM product-host
-lifetime/timing, visual Windows quality, and High-DPI inspection remain outside this slice.
+Starting main and starting Slice-8 branch were both remotely verified at
+`d0de6306782797455779e70f63b2d7c90d550a31`. The working branch is
+`codex/stage5-librarian-foundation`; [Draft PR #5](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/5)
+remains unmerged.
+
+[Windows CI #124](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33331596362)
+passed on implementation/test head `a033b8a86472b5df336fc2fb6ba6ffc2939251c3`: full Windows
+Debug configure/build PASS; **24/24** registered CTest tests PASS, **0** failed, **0** skipped.
+The additional registered test is stage5_librarian_unit. This is automated Windows software
+evidence only. The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT
+SIMULATED**; real hardware, WMS/WinMM product-host lifetime/timing, visual Windows quality, and
+High-DPI inspection remain outside this slice.
 
 The separate `claude/stage5-gate-cleanup` branch (N-1, N-2, N-3, S7-3, S7-4) is untouched.
 L-3, S6-2, S6-3, S6-4, and S7-2 remain open. Stage 5 remains **ACTIVE**.
