@@ -140,7 +140,7 @@ void DiagnosticsPanel::poll() {
 
 void DiagnosticsPanel::present() {
     const auto snapshot = app::DiagnosticBundle::make_snapshot(
-        connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION);
+        connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION, *export_policy_);
     details_->setPlainText(format_snapshot(snapshot));
     if (have_connection_ || have_transfer_) {
         status_->setText("Safe snapshots refreshed; unavailable values are not inferred.");
