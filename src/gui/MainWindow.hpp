@@ -18,11 +18,15 @@ class QPushButton;
 class QStackedWidget;
 class QTimer;
 
+namespace taureon::app { class BoundedLog; struct DiagnosticExportPolicy; }
+
 namespace taureon::gui {
 
+class DiagnosticsPanel;
 class MidiMonitorModel;
 class MonitorEventBridge;
 class ProfileMatchPanel;
+class SettingsPanel;
 class SysExTransferPanel;
 class SysExManagerPanel;
 
@@ -47,10 +51,14 @@ private:
     QListWidget* navigation_{};
     QStackedWidget* workspace_stack_{};
     QLabel* workspace_heading_{};
+    DiagnosticsPanel* diagnostics_panel_{};
     MidiMonitorModel* monitor_model_{};
     MonitorEventBridge* monitor_bridge_{};
     ProfileMatchPanel* profile_panel_{};
+    SettingsPanel* settings_panel_{};
     SysExTransferPanel* sysex_transfer_panel_{};
+    std::shared_ptr<app::BoundedLog> diagnostics_log_;
+    std::shared_ptr<app::DiagnosticExportPolicy> diagnostic_export_policy_;
     SysExManagerPanel* sysex_manager_panel_{};
     app::ConnectionWorker& connection_worker_;
     QComboBox* backend_selector_{};

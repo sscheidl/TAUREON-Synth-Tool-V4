@@ -129,11 +129,13 @@ set_tests_properties(stage5_connection_worker_unit PROPERTIES LABELS "stage5;uni
 add_executable(stage5_connection_ui_tests
     unit/Stage5ConnectionUiTests.cpp
     "${PROJECT_SOURCE_DIR}/src/app/ConnectionWorker.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/DiagnosticsPanel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MainWindow.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorFilterModel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/ProfileMatchPanel.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/SettingsPanel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/SysExTransferPanel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/SysExManagerPanel.cpp")
 set_target_properties(stage5_connection_ui_tests PROPERTIES AUTOMOC ON)
@@ -195,6 +197,40 @@ else()
 endif()
 add_test(NAME stage5_sysex_manager_ui_unit COMMAND stage5_sysex_manager_ui_tests)
 set_tests_properties(stage5_sysex_manager_ui_unit PROPERTIES
+    LABELS "stage5;gui;unit;ci"
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+
+
+add_executable(stage5_settings_diagnostics_tests unit/Stage5SettingsDiagnosticsTests.cpp)
+target_include_directories(stage5_settings_diagnostics_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_settings_diagnostics_tests PRIVATE taureon_midi_core)
+target_compile_definitions(stage5_settings_diagnostics_tests PRIVATE
+    TAUREON_TEST_OUTPUT_DIR="$<TARGET_FILE_DIR:stage5_settings_diagnostics_tests>")
+if(MSVC)
+    target_compile_options(stage5_settings_diagnostics_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_settings_diagnostics_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_settings_diagnostics_unit COMMAND stage5_settings_diagnostics_tests)
+set_tests_properties(stage5_settings_diagnostics_unit PROPERTIES LABELS "stage5;unit;ci")
+
+add_executable(stage5_settings_diagnostics_ui_tests
+    unit/Stage5SettingsDiagnosticsUiTests.cpp
+    "${PROJECT_SOURCE_DIR}/src/app/ConnectionWorker.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/DiagnosticsPanel.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/SettingsPanel.cpp")
+target_include_directories(stage5_settings_diagnostics_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(stage5_settings_diagnostics_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
+target_compile_definitions(stage5_settings_diagnostics_ui_tests PRIVATE
+    TAUREON_TEST_OUTPUT_DIR="$<TARGET_FILE_DIR:stage5_settings_diagnostics_ui_tests>")
+if(MSVC)
+    target_compile_options(stage5_settings_diagnostics_ui_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(stage5_settings_diagnostics_ui_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME stage5_settings_diagnostics_ui_unit COMMAND stage5_settings_diagnostics_ui_tests)
+set_tests_properties(stage5_settings_diagnostics_ui_unit PROPERTIES
     LABELS "stage5;gui;unit;ci"
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
