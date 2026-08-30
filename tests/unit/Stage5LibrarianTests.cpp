@@ -71,8 +71,8 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(app::librarian_snapshot_is_well_formed(snapshot));
         TAUREON_REQUIRE(snapshot.collections.size() == 1);
         TAUREON_REQUIRE(snapshot.collections.at(0).banks.size() == 3);
-        TAUREON_REQUIRE(snapshot.collections.at(0).banks.at(0).slots.size() == 3);
-        TAUREON_REQUIRE(snapshot.collections.at(0).banks.at(1).slots.empty());
+        TAUREON_REQUIRE(snapshot.collections.at(0).banks.at(0).entries.size() == 3);
+        TAUREON_REQUIRE(snapshot.collections.at(0).banks.at(1).entries.empty());
         TAUREON_REQUIRE(snapshot.collections.at(0).banks.at(2).capacity.kind ==
                         app::LibrarianCapacityKind::unknown);
 
