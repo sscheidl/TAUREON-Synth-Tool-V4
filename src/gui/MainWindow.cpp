@@ -1,4 +1,5 @@
 #include "gui/MainWindow.hpp"
+#include "app/Diagnostics.hpp"
 #include "gui/DiagnosticsPanel.hpp"
 #include "gui/SettingsPanel.hpp"
 #include "gui/MidiMonitorModel.hpp"
@@ -241,13 +242,15 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
         profile_panel_->present(snapshot.profile_match);
     });
     workspace_stack_->addWidget(profile_panel_);
-    diagnostics_panel_ = new DiagnosticsPanel(connection_worker_, monitor_queue, workspace_stack_);
-    workspace_stack_->addWidget(diagnostics_panel_);
     diagnostics_log_ = std::make_shared<app::BoundedLog>();
+    diagnostic_export_policy_ = std::make_shared<app::DiagnosticExportPolicy>();
+    diagnostics_panel_ = new DiagnosticsPanel(
+        connection_worker_, monitor_queue, diagnostic_export_policy_, workspace_stack_);
+    workspace_stack_->addWidget(diagnostics_panel_);
     const auto settings_location = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     settings_panel_ = new SettingsPanel(
         std::filesystem::path{settings_location.toStdWString()} / "taureon-settings.v1",
-        diagnostics_log_, workspace_stack_);
+        diagnostics_log_, diagnostic_export_policy_, workspace_stack_);
     workspace_stack_->addWidget(settings_panel_);
     content_layout->addWidget(workspace_heading_);
     content_layout->addWidget(workspace_stack_);

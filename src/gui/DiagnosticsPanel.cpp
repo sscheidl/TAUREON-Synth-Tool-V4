@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <future>
 #include <string>
+#include <utility>
 
 #ifndef TAUREON_APP_VERSION
 #define TAUREON_APP_VERSION "0.0.0"
@@ -63,8 +64,8 @@ QString format_snapshot(const app::DiagnosticSnapshot& snapshot) {
 } // namespace
 
 DiagnosticsPanel::DiagnosticsPanel(app::ConnectionWorker& worker, app::MonitorEventQueue& monitor_queue,
-                                   QWidget* parent)
-    : QWidget(parent), worker_(worker), monitor_queue_(monitor_queue) {
+                                   std::shared_ptr<const app::DiagnosticExportPolicy> export_policy, QWidget* parent)
+    : QWidget(parent), worker_(worker), monitor_queue_(monitor_queue), export_policy_(std::move(export_policy)) {
     setObjectName("diagnosticsPanel");
     auto* layout = new QVBoxLayout(this);
     auto* explanation = new QLabel(
@@ -106,7 +107,7 @@ bool DiagnosticsPanel::has_required_controls() const noexcept {
 
 midi::Result<void> DiagnosticsPanel::export_bundle(const std::filesystem::path& path) const {
     const auto snapshot = app::DiagnosticBundle::make_snapshot(
-        connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION);
+        connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION, *export_policy_);
     return app::DiagnosticBundle::write(path, snapshot);
 }
 

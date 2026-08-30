@@ -2,6 +2,7 @@
 
 #include "app/BoundedLog.hpp"
 #include "app/ConnectionWorker.hpp"
+#include "app/Diagnostics.hpp"
 #include "app/MonitorEventQueue.hpp"
 #include "app/Settings.hpp"
 #include "gui/DiagnosticsPanel.hpp"
@@ -9,6 +10,7 @@
 #include "transports/fake/FakeMidiTransport.hpp"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QEventLoop>
 #include <QLabel>
 #include <QPushButton>
@@ -56,12 +58,13 @@ int main(int argc, char* argv[]) {
         });
         app::MonitorEventQueue queue(8);
         auto log = std::make_shared<app::BoundedLog>(16);
+        auto export_policy = std::make_shared<app::DiagnosticExportPolicy>();
         const auto path = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} / "stage5-settings-ui.txt";
         std::error_code error;
         std::filesystem::remove(path, error);
 
-        gui::DiagnosticsPanel diagnostics(worker, queue);
-        gui::SettingsPanel settings(path, log);
+        gui::DiagnosticsPanel diagnostics(worker, queue, export_policy);
+        gui::SettingsPanel settings(path, log, export_policy);
         TAUREON_REQUIRE(diagnostics.has_required_controls());
         TAUREON_REQUIRE(settings.has_required_controls());
         TAUREON_REQUIRE(diagnostics.findChild<QPushButton*>("diagnosticsExportBundle") != nullptr);
@@ -81,6 +84,14 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(reloaded.settings.preferred_transmit_route.has_value());
         TAUREON_REQUIRE(reloaded.settings.preferred_receive_route->identity == snapshot.receive_route);
         TAUREON_REQUIRE(reloaded.settings.preferred_transmit_route->identity == snapshot.transmit_route);
+
+        auto* include_route_identity = settings.findChild<QCheckBox*>("settingsBundleRouteIdentity");
+        TAUREON_REQUIRE(include_route_identity != nullptr);
+        TAUREON_REQUIRE(export_policy->include_route_identity);
+        include_route_identity->setChecked(false);
+        TAUREON_REQUIRE(export_policy->include_route_identity);
+        TAUREON_REQUIRE(settings.save());
+        TAUREON_REQUIRE(!export_policy->include_route_identity);
 
         TAUREON_REQUIRE(process_until([&] {
             return diagnostics.findChild<QLabel*>("diagnosticsStatus")->text().contains("Safe snapshots") ||

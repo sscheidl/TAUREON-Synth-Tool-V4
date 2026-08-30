@@ -112,7 +112,8 @@ midi::Result<void> write_atomic(const std::filesystem::path& path, std::string_v
 
 DiagnosticSnapshot DiagnosticBundle::make_snapshot(
     const ConnectionSnapshot& connection, const SysExTransferSnapshot& transfer,
-    const MonitorQueueStats& queue, std::string application_version, std::string build_revision) {
+    const MonitorQueueStats& queue, std::string application_version, std::string build_revision,
+    const DiagnosticExportPolicy& export_policy) {
     DiagnosticSnapshot result;
     result.application_version = std::move(application_version);
     result.build_revision = build_revision.empty() ? "not embedded" : std::move(build_revision);
@@ -128,8 +129,13 @@ DiagnosticSnapshot DiagnosticBundle::make_snapshot(
                                 ? result.selected_backend
                                 : "not observed";
     result.windows_midi_runtime = "not observed: no safe runtime/API-mode snapshot contract";
-    result.receive_route = route(connection.receive_route);
-    result.transmit_route = route(connection.transmit_route);
+    if (export_policy.include_route_identity) {
+        result.receive_route = route(connection.receive_route);
+        result.transmit_route = route(connection.transmit_route);
+    } else {
+        result.receive_route = "omitted by settings";
+        result.transmit_route = "omitted by settings";
+    }
     result.connection_state = connection_state(connection.state);
     result.transfer_state = transfer_state(transfer.send_progress.state);
     result.profile_id = transfer.profile_id.value_or("not observed");

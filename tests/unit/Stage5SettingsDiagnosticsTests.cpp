@@ -109,11 +109,14 @@ void diagnostic_bundle_exclusion_tests() {
     app::ConnectionSnapshot connection;
     connection.state = app::ConnectionPresentationState::connected;
     connection.receive_route = route(midi::MidiDirection::input, "bundle-rx").identity;
+    connection.transmit_route = route(midi::MidiDirection::output, "bundle-tx").identity;
     app::MonitorQueueStats queue;
     queue.current_size = 1;
     queue.high_water_mark = 3;
     queue.dropped = 2;
-    const auto snapshot = app::DiagnosticBundle::make_snapshot(connection, transfer, queue, "0.0.0", "test-revision");
+    const app::DiagnosticExportPolicy include_route_identity;
+    const auto snapshot = app::DiagnosticBundle::make_snapshot(
+        connection, transfer, queue, "0.0.0", "test-revision", include_route_identity);
     const auto path = output_path("stage5-diagnostic-bundle.txt");
     TAUREON_REQUIRE(app::DiagnosticBundle::write(path, snapshot));
 
@@ -124,6 +127,24 @@ void diagnostic_bundle_exclusion_tests() {
     TAUREON_REQUIRE(bundle.find("application_version=0.0.0") != std::string::npos);
     TAUREON_REQUIRE(bundle.find("sysex_frame_count=1") != std::string::npos);
     TAUREON_REQUIRE(bundle.find("queue_high_water_mark=3") != std::string::npos);
+
+    const app::DiagnosticExportPolicy omit_route_identity{false};
+    const auto redacted_snapshot = app::DiagnosticBundle::make_snapshot(
+        connection, transfer, queue, "0.0.0", "test-revision", omit_route_identity);
+    TAUREON_REQUIRE(redacted_snapshot.receive_route == "omitted by settings");
+    TAUREON_REQUIRE(redacted_snapshot.transmit_route == "omitted by settings");
+    const auto redacted_path = output_path("stage5-diagnostic-bundle-routes-omitted.txt");
+    TAUREON_REQUIRE(app::DiagnosticBundle::write(redacted_path, redacted_snapshot));
+
+    std::ifstream redacted_stream(redacted_path, std::ios::binary);
+    const std::string redacted_bundle(
+        (std::istreambuf_iterator<char>(redacted_stream)), std::istreambuf_iterator<char>());
+    TAUREON_REQUIRE(redacted_bundle.find("bundle-rx") == std::string::npos);
+    TAUREON_REQUIRE(redacted_bundle.find("bundle-tx") == std::string::npos);
+    TAUREON_REQUIRE(redacted_bundle.find("receive_route=omitted by settings") != std::string::npos);
+    TAUREON_REQUIRE(redacted_bundle.find("transmit_route=omitted by settings") != std::string::npos);
+    TAUREON_REQUIRE(redacted_bundle.find("application_version=0.0.0") != std::string::npos);
+    TAUREON_REQUIRE(redacted_bundle.find("sysex_frame_count=1") != std::string::npos);
 }
 
 } // namespace

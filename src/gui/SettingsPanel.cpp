@@ -75,11 +75,15 @@ Enum enum_from(QComboBox& box, Enum fallback) {
 } // namespace
 
 SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::BoundedLog> log,
-                             QWidget* parent)
-    : QWidget(parent), path_(std::move(path)), log_(std::move(log)) {
+                             std::shared_ptr<app::DiagnosticExportPolicy> diagnostic_export_policy, QWidget* parent)
+    : QWidget(parent), path_(std::move(path)), log_(std::move(log)),
+      diagnostic_export_policy_(std::move(diagnostic_export_policy)) {
     setObjectName("settingsPanel");
     const auto loaded = app::SettingsStore::load(path_);
     settings_ = loaded.settings;
+    if (diagnostic_export_policy_) {
+        diagnostic_export_policy_->include_route_identity = settings_.include_route_identity_in_bundle;
+    }
     auto* layout = new QVBoxLayout(this);
 
     auto* general = new QGroupBox("General", this);
@@ -197,6 +201,9 @@ void SettingsPanel::set_connection_snapshot(const app::ConnectionSnapshot& snaps
 midi::Result<void> SettingsPanel::save() {
     read_controls();
     const auto result = app::SettingsStore::save(path_, settings_);
+    if (result && diagnostic_export_policy_) {
+        diagnostic_export_policy_->include_route_identity = settings_.include_route_identity_in_bundle;
+    }
     if (result && log_) {
         log_->configure(settings_.log_level, settings_.log_rotation_entries);
         log_->append(app::LogLevel::info, "Settings saved without applying a route or connection.");

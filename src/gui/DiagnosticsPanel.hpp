@@ -7,6 +7,7 @@
 #include <QWidget>
 
 #include <future>
+#include <memory>
 #include <optional>
 
 class QLabel;
@@ -19,6 +20,7 @@ namespace taureon::gui {
 class DiagnosticsPanel final : public QWidget {
 public:
     explicit DiagnosticsPanel(app::ConnectionWorker& worker, app::MonitorEventQueue& monitor_queue,
+                              std::shared_ptr<const app::DiagnosticExportPolicy> export_policy,
                               QWidget* parent = nullptr);
 
     [[nodiscard]] bool has_required_controls() const noexcept;
@@ -31,6 +33,7 @@ private:
 
     app::ConnectionWorker& worker_;
     app::MonitorEventQueue& monitor_queue_;
+    std::shared_ptr<const app::DiagnosticExportPolicy> export_policy_;
     QPlainTextEdit* details_{};
     QLabel* status_{};
     QPushButton* export_button_{};

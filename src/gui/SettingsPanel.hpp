@@ -2,6 +2,7 @@
 
 #include "app/BoundedLog.hpp"
 #include "app/ConnectionController.hpp"
+#include "app/Diagnostics.hpp"
 #include "app/Settings.hpp"
 
 #include <QWidget>
@@ -21,6 +22,7 @@ namespace taureon::gui {
 class SettingsPanel final : public QWidget {
 public:
     explicit SettingsPanel(std::filesystem::path path, std::shared_ptr<app::BoundedLog> log,
+                           std::shared_ptr<app::DiagnosticExportPolicy> diagnostic_export_policy,
                            QWidget* parent = nullptr);
 
     void set_connection_snapshot(const app::ConnectionSnapshot& snapshot);
@@ -36,6 +38,7 @@ private:
 
     std::filesystem::path path_;
     std::shared_ptr<app::BoundedLog> log_;
+    std::shared_ptr<app::DiagnosticExportPolicy> diagnostic_export_policy_;
     app::Settings settings_;
     app::ConnectionSnapshot connection_;
     QLabel* status_{};
