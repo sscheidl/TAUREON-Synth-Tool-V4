@@ -34,6 +34,14 @@ struct SysExManagerFrameSnapshot {
     std::vector<SysExManagerFrameReference> exact_payload_duplicates;
 };
 
+// N-2: the single transfer-eligibility rule. Both the public snapshot and the private stored
+// item evaluate it through this template so the two representations cannot drift apart.
+template <typename Item>
+[[nodiscard]] constexpr bool item_is_valid_for_transfer(const Item& item) noexcept {
+    return !item.frames.empty() && item.incomplete_frames == 0 && item.malformed_frames == 0 &&
+           item.tainted_frames == 0 && item.complete_frames == item.frames.size();
+}
+
 struct SysExManagerItemSnapshot {
     std::uint64_t id{};
     std::string source_name;
@@ -67,6 +75,10 @@ public:
 
     [[nodiscard]] midi::Result<std::uint64_t> add_file(const std::filesystem::path& path);
     // Supports an already captured/imported document without exposing mutable workspace bytes.
+    // N-3 justification: this is the only entry point that can admit a document carrying
+    // affected_by_data_loss frames, because load_syx_file() cannot produce one from a file. The
+    // tainted-input rejection evidence therefore depends on it. It is retained deliberately and
+    // has no production caller yet; wiring capture-to-workspace is Stage-6 work.
     [[nodiscard]] midi::Result<std::uint64_t> add_document(
         sysex::SyxDocument document, std::string source_name);
     [[nodiscard]] midi::Result<void> remove_item(std::uint64_t item_id);

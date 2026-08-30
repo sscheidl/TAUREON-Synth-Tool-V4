@@ -421,3 +421,52 @@ S7-1 targeted repair evidence
 S7-1 uses the selected variant: an explicit DiagnosticExportPolicy reaches DiagnosticBundle::make_snapshot. With include_route_identity_in_bundle=true, the bundle contains the observed RX/TX route metadata; with false, receive_route and transmit_route remain structurally present but contain exactly `omitted by settings`, distinct from `not observed`. No other endpoint identity is serialized; selected_backend remains backend-only.
 
 Repair revision b061dda4f0f649f6622c8eda8b45712f368d534c passed Windows CI run 33293921972 (pull_request): full Windows Server 2022 configure and Debug build PASS; 23/23 registered cloud-capable CTest tests PASS, 0 failed, 0 skipped. The five local hardware/loopback tests remain unregistered, unskipped, and unsimulated. Real MIDI/SysEx hardware, WMS/WinMM runtime and timing, visual Windows GUI, and High-DPI validation remain pending after 09.09.2026.
+
+
+## Pre-gate follow-up cleanup (N-1, N-2, N-3, S7-3, S7-4)
+
+Authorship note: this change set was implemented by Claude Code at the Product Owner's explicit
+instruction, because no Codex repository workspace was reachable from the Product Owner's
+Android-only environment. Claude Code is therefore the author of these lines and must not be
+treated as their independent reviewer. An independent review of this branch is still outstanding
+and is required before the Stage-5 gate.
+
+Closed follow-ups:
+
+- N-1: `not_found` and `invalid_argument` are moved to the end of `MidiErrorCode`, so every
+  pre-existing enumerator keeps its ordinal position. A comment records the append-only rule.
+- N-2: the transfer-eligibility rule exists once, as `item_is_valid_for_transfer()`. Both
+  `SysExManagerItemSnapshot` and the private `SysExManager::StoredItem` evaluate it through that
+  single definition, so the two representations cannot drift apart.
+- N-3: `SysExManager::add_document()` is retained with a recorded justification. It is the only
+  entry point that can admit `affected_by_data_loss` frames, because `load_syx_file()` cannot
+  produce them from a file, so the tainted-input rejection evidence depends on it. It has no
+  production caller yet; wiring capture-to-workspace is Stage-6 work.
+- S7-3: the Settings workspace now names which saved preferences are not yet applied to the
+  running application and which take effect on save.
+- S7-4: `DiagnosticsPanel` no longer dereferences the shared export policy unconditionally; it
+  falls back to the documented defaults, matching the handling the Settings panel already applied.
+
+Deliberately NOT included, with reasons:
+
+- S7-2 (Diagnostics polls while not visible) was skipped. Coupling the timer to visibility would
+  change behaviour that `stage5_settings_diagnostics_ui_unit` observes, and this environment
+  cannot build or run the Qt tests. Making an existing test pass vacuously is the failure mode
+  that must be avoided; S7-2 stays open for an environment that can run the GUI tests.
+- S6-2 (second queued-delivery destroy regression) was skipped for the same reason: a new Qt test
+  that cannot be executed before it is pushed is not evidence.
+
+Validation actually performed, and its limits: no Windows build was possible in this environment
+(no MSVC, no Qt). The Qt-free translation units were syntax-checked with g++ 13.3 `-std=c++20
+-fsyntax-only`, and the Qt-free unit tests were compiled and executed on Linux:
+`stage5_sysex_manager_unit`, `stage5_settings_diagnostics_unit`,
+`stage5_sysex_transfer_session_unit`, `stage3_midi_sysex_unit` and `stage4_profile_unit` all
+passed, including the `not_found` / `invalid_argument` error-code assertions that N-1 could have
+broken. `stage3_syx_file_unit` fails on Linux at the `save_syx_frames` replace-into-directory
+case; that path is untouched by this change set and the failure is a POSIX `rename` versus
+`MoveFileExW` semantic difference, not a regression. The two touched Qt sources
+(`SettingsPanel.cpp`, `DiagnosticsPanel.cpp`) could not be compiled here at all. Windows CI on
+this branch is therefore the only authoritative build and test evidence.
+
+No route, connection, transfer, send, byte or taint path is changed. L-3, S6-2, S6-3, S6-4 and
+S7-2 remain open for the Stage-5 gate.

@@ -163,6 +163,17 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
 
     save_button_ = new QPushButton("Save Settings", this);
     save_button_->setObjectName("settingsSave");
+    // S7-3: name the preferences that are persisted but not yet consumed by the running
+    // application, so the workspace does not imply an effect it does not have.
+    auto* application_scope = new QLabel(
+        "Saved preferences are persisted and reloaded. Theme, interface scale, monitor history "
+        "limit, monitor start state, preferred backend, reconnect policy, SysEx pacing, "
+        "confirmation policy and stop-on-data-loss are not yet applied to the running "
+        "application. The diagnostic-bundle route-identity choice and the log level/size take "
+        "effect on save.",
+        this);
+    application_scope->setObjectName("settingsApplicationScope");
+    application_scope->setWordWrap(true);
     status_ = new QLabel(this);
     status_->setObjectName("settingsStatus");
     status_->setWordWrap(true);
@@ -170,6 +181,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     layout->addWidget(midi);
     layout->addWidget(sysex);
     layout->addWidget(diagnostics);
+    layout->addWidget(application_scope);
     layout->addWidget(save_button_);
     layout->addWidget(status_);
     layout->addStretch();

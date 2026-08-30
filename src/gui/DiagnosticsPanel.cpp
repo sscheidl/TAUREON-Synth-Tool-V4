@@ -105,9 +105,16 @@ bool DiagnosticsPanel::has_required_controls() const noexcept {
     return details_ && status_ && export_button_ && timer_;
 }
 
+app::DiagnosticExportPolicy DiagnosticsPanel::effective_export_policy() const {
+    // S7-4: mirror the defensive handling the Settings panel already applies to the same shared
+    // policy. A missing policy falls back to the documented defaults instead of dereferencing null.
+    return export_policy_ ? *export_policy_ : app::DiagnosticExportPolicy{};
+}
+
 midi::Result<void> DiagnosticsPanel::export_bundle(const std::filesystem::path& path) const {
     const auto snapshot = app::DiagnosticBundle::make_snapshot(
-        connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION, *export_policy_);
+        connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION,
+        effective_export_policy());
     return app::DiagnosticBundle::write(path, snapshot);
 }
 
@@ -140,7 +147,8 @@ void DiagnosticsPanel::poll() {
 
 void DiagnosticsPanel::present() {
     const auto snapshot = app::DiagnosticBundle::make_snapshot(
-        connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION, *export_policy_);
+        connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION,
+        effective_export_policy());
     details_->setPlainText(format_snapshot(snapshot));
     if (have_connection_ || have_transfer_) {
         status_->setText("Safe snapshots refreshed; unavailable values are not inferred.");
