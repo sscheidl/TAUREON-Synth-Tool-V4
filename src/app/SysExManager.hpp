@@ -10,6 +10,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace taureon::app {
@@ -63,6 +64,9 @@ struct SysExManagerSnapshot {
 
 class SysExManager {
 public:
+    inline static constexpr std::size_t kMaxDocumentRawBytes = 256U * 1024U * 1024U;
+    inline static constexpr std::size_t kMaxAggregateRawBytes = 512U * 1024U * 1024U;
+
     explicit SysExManager(std::shared_ptr<const profiles::ProfileRegistry> registry = {});
 
     [[nodiscard]] midi::Result<std::uint64_t> add_file(const std::filesystem::path& path);
@@ -117,11 +121,17 @@ private:
     [[nodiscard]] static midi::MidiError error(midi::MidiErrorCode code, std::string message);
     [[nodiscard]] static SysExManagerFrameSnapshot summary_of(const StoredFrame& frame);
     [[nodiscard]] static SysExManagerItemSnapshot summary_of(const StoredItem& item);
+    [[nodiscard]] static bool exceeds_limit(std::size_t current, std::size_t addition,
+                                            std::size_t limit) noexcept;
+    [[nodiscard]] static midi::MidiError resource_limit_error(std::size_t actual,
+                                                               std::size_t limit,
+                                                               std::string_view subject);
     void refresh_duplicate_evidence();
 
     std::shared_ptr<const profiles::ProfileRegistry> registry_;
     std::vector<StoredItem> items_;
     std::uint64_t next_item_id_{1};
+    std::size_t loaded_raw_bytes_{};
 };
 
 } // namespace taureon::app
