@@ -1,0 +1,180 @@
+#include "TestSupport.hpp"
+
+#include "app/Librarian.hpp"
+#include "gui/LibrarianPanel.hpp"
+#include "core/sysex/SyxFile.hpp"
+#include "profiles/ProfileRegistry.hpp"
+
+#include <QApplication>
+#include <QComboBox>
+#include <QItemSelectionModel>
+#include <QKeyEvent>
+#include <QLabel>
+#include <QPushButton>
+#include <QTableView>
+
+#include <filesystem>
+#include <memory>
+#include <utility>
+#include <vector>
+
+using namespace taureon;
+
+namespace {
+
+class InMemoryLibrarianProvider final : public app::ILibrarianProvider {
+public:
+    explicit InMemoryLibrarianProvider(app::LibrarianSnapshot snapshot)
+        : snapshot_(std::move(snapshot)) {}
+
+    [[nodiscard]] app::LibrarianSnapshot snapshot() const override { return snapshot_; }
+
+private:
+    app::LibrarianSnapshot snapshot_;
+};
+
+app::LibrarianSnapshot test_snapshot() {
+    return {
+        true,
+        {},
+        {{
+            "collection.test", "Test collection",
+            {
+                {
+                    "bank.alpha", "Alpha", app::LibrarianCapacity::known(3),
+                    {
+                        {"slot.alpha.1", "One", false,
+                         app::LibrarianSemanticObject{"object.1", "Synthetic object", "Synthetic"}, {}},
+                        {"slot.alpha.2", "Two", false, std::nullopt, {}},
+                        {"slot.alpha.3", "Three", true, std::nullopt, "This slot is read-only."},
+                    },
+                    {true, false, false, false, "Rename is unavailable in the bounded foundation."},
+                },
+                {
+                    "bank.empty", "Empty", app::LibrarianCapacity::known(0), {},
+                    {true, false, false, false, "No semantic write operation is available."},
+                },
+                {
+                    "bank.unknown", "Unknown", app::LibrarianCapacity::unknown(),
+                    {
+                        {"slot.unknown.1", "First observed", false, std::nullopt, {}},
+                        {"slot.unknown.2", "Second observed", false, std::nullopt, {}},
+                    },
+                    {true, false, false, false, "Provider capacity is unknown."},
+                },
+            },
+        }},
+    };
+}
+
+} // namespace
+
+int main(int argc, char* argv[]) {
+    QApplication application(argc, argv);
+    return test::run([&] {
+        const auto snapshot = test_snapshot();
+        TAUREON_REQUIRE(app::librarian_snapshot_is_well_formed(snapshot));
+        TAUREON_REQUIRE(snapshot.collections.size() == 1);
+        TAUREON_REQUIRE(snapshot.collections.at(0).banks.size() == 3);
+        TAUREON_REQUIRE(snapshot.collections.at(0).banks.at(0).entries.size() == 3);
+        TAUREON_REQUIRE(snapshot.collections.at(0).banks.at(1).entries.empty());
+        TAUREON_REQUIRE(snapshot.collections.at(0).banks.at(2).capacity.kind ==
+                        app::LibrarianCapacityKind::unknown);
+
+        auto unavailable_with_collections = snapshot;
+        unavailable_with_collections.semantic_support_available = false;
+        TAUREON_REQUIRE(!app::librarian_snapshot_is_well_formed(unavailable_with_collections));
+
+        auto duplicate_bank = snapshot;
+        duplicate_bank.collections.at(0).banks.at(1).stable_id =
+            duplicate_bank.collections.at(0).banks.at(0).stable_id;
+        TAUREON_REQUIRE(!app::librarian_snapshot_is_well_formed(duplicate_bank));
+
+        auto known_capacity_overflow = snapshot;
+        known_capacity_overflow.collections.at(0).banks.at(0).entries.push_back(
+            {"slot.alpha.overflow", "Overflow", false, std::nullopt, {}});
+        TAUREON_REQUIRE(!app::librarian_snapshot_is_well_formed(known_capacity_overflow));
+
+        auto provider = std::make_shared<InMemoryLibrarianProvider>(snapshot);
+        gui::LibrarianPanel panel;
+        panel.set_provider(provider);
+        panel.show();
+        QApplication::processEvents();
+
+        auto* table = panel.findChild<QTableView*>("librarianSlotsTable");
+        auto* bank_selector = panel.findChild<QComboBox*>("librarianBankSelector");
+        auto* capacity = panel.findChild<QLabel*>("librarianCapacityState");
+        auto* support = panel.findChild<QLabel*>("librarianSupportState");
+        auto* rename = panel.findChild<QPushButton*>("librarianRenameAction");
+        TAUREON_REQUIRE(panel.has_required_controls());
+        TAUREON_REQUIRE(table != nullptr && table->model()->rowCount() == 3);
+        TAUREON_REQUIRE(bank_selector != nullptr && bank_selector->count() == 3);
+        TAUREON_REQUIRE(table->model()->columnCount() == 4);
+        TAUREON_REQUIRE(table->model()->index(-1, 0).data().isNull());
+        TAUREON_REQUIRE(table->model()->index(0, 1).data().toString() == "Occupied");
+        TAUREON_REQUIRE(table->model()->index(1, 1).data().toString() == "Empty");
+        TAUREON_REQUIRE(table->model()->index(0, 3).data().toString() == "Writable");
+        TAUREON_REQUIRE(table->model()->index(2, 3).data().toString() == "Read-only");
+        TAUREON_REQUIRE(capacity != nullptr && capacity->text().contains("Known capacity: 3"));
+
+        bank_selector->setCurrentIndex(1);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(table->model()->rowCount() == 0);
+        TAUREON_REQUIRE(capacity->text().contains("Known capacity: 0"));
+
+        bank_selector->setCurrentIndex(2);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(table->model()->rowCount() == 2);
+        TAUREON_REQUIRE(capacity->text().contains("unknown"));
+
+        bank_selector->setCurrentIndex(0);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(table->model()->rowCount() == 3);
+        TAUREON_REQUIRE(support != nullptr && support->text().contains("available"));
+        TAUREON_REQUIRE(rename != nullptr && !rename->isEnabled());
+
+        const auto first = table->model()->index(0, 0);
+        table->selectionModel()->setCurrentIndex(
+            first, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        table->setFocus();
+        QKeyEvent down(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier);
+        QApplication::sendEvent(table, &down);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(table->selectionModel()->currentIndex().row() == 1);
+
+        QKeyEvent range(QEvent::KeyPress, Qt::Key_Down, Qt::ShiftModifier);
+        QApplication::sendEvent(table, &range);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(table->selectionModel()->selectedRows().size() >= 2);
+
+        auto unavailable = std::make_shared<InMemoryLibrarianProvider>(
+            app::LibrarianSnapshot{false,
+                                   "Semantic Librarian support is unavailable for this profile.", {}});
+        panel.set_provider(unavailable);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(table->model()->rowCount() == 0);
+        TAUREON_REQUIRE(support->text().contains("unavailable"));
+        TAUREON_REQUIRE(!rename->isEnabled());
+
+        // Recognition is intentionally not semantic decoding: a recognized Summit frame
+        // leaves the production Librarian unavailable and manufactures no slots.
+        const std::filesystem::path root{TAUREON_SOURCE_DIR};
+        profiles::ProfileRegistry registry;
+        std::vector<profiles::ProfileLoadIssue> issues;
+        TAUREON_REQUIRE(registry.load_directory(root / "resources" / "device_profiles", issues));
+        TAUREON_REQUIRE(issues.empty());
+        const auto fixture =
+            sysex::load_syx_file(root / "tests" / "fixtures" / "novation_summit_crazy_sine.syx");
+        TAUREON_REQUIRE(fixture && fixture.value().frames.size() == 1);
+        const auto profile_match = registry.match(fixture.value().frames.front(), {});
+        TAUREON_REQUIRE(profile_match.selected_profile_id ==
+                        std::optional<std::string>{"novation.summit"});
+
+        gui::LibrarianPanel production_panel;
+        auto* production_table = production_panel.findChild<QTableView*>("librarianSlotsTable");
+        auto* production_support = production_panel.findChild<QLabel*>("librarianSupportState");
+        TAUREON_REQUIRE(production_table != nullptr && production_table->model()->rowCount() == 0);
+        TAUREON_REQUIRE(production_support != nullptr &&
+                        production_support->text().contains("unavailable"));
+    });
+}
