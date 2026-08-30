@@ -38,7 +38,7 @@ LibrarianTableModel::LibrarianTableModel(QObject* parent) : QAbstractTableModel(
 
 int LibrarianTableModel::rowCount(const QModelIndex& parent) const {
     if (parent.isValid() || !bank_) return 0;
-    return static_cast<int>(bank_->slots.size());
+    return static_cast<int>(bank_->entries.size());
 }
 
 int LibrarianTableModel::columnCount(const QModelIndex& parent) const {
@@ -47,8 +47,8 @@ int LibrarianTableModel::columnCount(const QModelIndex& parent) const {
 
 QVariant LibrarianTableModel::data(const QModelIndex& index, const int role) const {
     if (!index.isValid() || !bank_ || index.row() < 0 ||
-        index.row() >= static_cast<int>(bank_->slots.size())) return {};
-    const auto& slot = bank_->slots.at(static_cast<std::size_t>(index.row()));
+        index.row() >= static_cast<int>(bank_->entries.size())) return {};
+    const auto& slot = bank_->entries.at(static_cast<std::size_t>(index.row()));
     if (role == Qt::ToolTipRole && !slot.unavailable_reason.empty()) {
         return QString::fromStdString(slot.unavailable_reason);
     }
