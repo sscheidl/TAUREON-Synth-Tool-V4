@@ -243,6 +243,7 @@ add_executable(stage5_librarian_tests
 set_target_properties(stage5_librarian_tests PROPERTIES AUTOMOC ON)
 target_include_directories(stage5_librarian_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(stage5_librarian_tests PRIVATE taureon_midi_core Qt6::Widgets)
+target_compile_definitions(stage5_librarian_tests PRIVATE TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 if(MSVC)
     target_compile_options(stage5_librarian_tests PRIVATE /W4 /permissive- /EHsc)
 else()
