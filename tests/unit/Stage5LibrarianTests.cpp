@@ -6,6 +6,7 @@
 #include "profiles/ProfileRegistry.hpp"
 
 #include <QApplication>
+#include <QComboBox>
 #include <QItemSelectionModel>
 #include <QKeyEvent>
 #include <QLabel>
@@ -80,6 +81,20 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(snapshot.collections.at(0).banks.at(2).capacity.kind ==
                         app::LibrarianCapacityKind::unknown);
 
+        auto unavailable_with_collections = snapshot;
+        unavailable_with_collections.semantic_support_available = false;
+        TAUREON_REQUIRE(!app::librarian_snapshot_is_well_formed(unavailable_with_collections));
+
+        auto duplicate_bank = snapshot;
+        duplicate_bank.collections.at(0).banks.at(1).stable_id =
+            duplicate_bank.collections.at(0).banks.at(0).stable_id;
+        TAUREON_REQUIRE(!app::librarian_snapshot_is_well_formed(duplicate_bank));
+
+        auto known_capacity_overflow = snapshot;
+        known_capacity_overflow.collections.at(0).banks.at(0).entries.push_back(
+            {"slot.alpha.overflow", "Overflow", false, std::nullopt, {}});
+        TAUREON_REQUIRE(!app::librarian_snapshot_is_well_formed(known_capacity_overflow));
+
         auto provider = std::make_shared<InMemoryLibrarianProvider>(snapshot);
         gui::LibrarianPanel panel;
         panel.set_provider(provider);
@@ -87,17 +102,34 @@ int main(int argc, char* argv[]) {
         QApplication::processEvents();
 
         auto* table = panel.findChild<QTableView*>("librarianSlotsTable");
+        auto* bank_selector = panel.findChild<QComboBox*>("librarianBankSelector");
         auto* capacity = panel.findChild<QLabel*>("librarianCapacityState");
         auto* support = panel.findChild<QLabel*>("librarianSupportState");
         auto* rename = panel.findChild<QPushButton*>("librarianRenameAction");
         TAUREON_REQUIRE(panel.has_required_controls());
         TAUREON_REQUIRE(table != nullptr && table->model()->rowCount() == 3);
+        TAUREON_REQUIRE(bank_selector != nullptr && bank_selector->count() == 3);
         TAUREON_REQUIRE(table->model()->columnCount() == 4);
         TAUREON_REQUIRE(table->model()->index(-1, 0).data().isNull());
         TAUREON_REQUIRE(table->model()->index(0, 1).data().toString() == "Occupied");
         TAUREON_REQUIRE(table->model()->index(1, 1).data().toString() == "Empty");
+        TAUREON_REQUIRE(table->model()->index(0, 3).data().toString() == "Writable");
         TAUREON_REQUIRE(table->model()->index(2, 3).data().toString() == "Read-only");
         TAUREON_REQUIRE(capacity != nullptr && capacity->text().contains("Known capacity: 3"));
+
+        bank_selector->setCurrentIndex(1);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(table->model()->rowCount() == 0);
+        TAUREON_REQUIRE(capacity->text().contains("Known capacity: 0"));
+
+        bank_selector->setCurrentIndex(2);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(table->model()->rowCount() == 2);
+        TAUREON_REQUIRE(capacity->text().contains("unknown"));
+
+        bank_selector->setCurrentIndex(0);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(table->model()->rowCount() == 3);
         TAUREON_REQUIRE(support != nullptr && support->text().contains("available"));
         TAUREON_REQUIRE(rename != nullptr && !rename->isEnabled());
 
