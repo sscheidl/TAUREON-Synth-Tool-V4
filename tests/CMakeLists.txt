@@ -131,6 +131,7 @@ add_executable(stage5_connection_ui_tests
     "${PROJECT_SOURCE_DIR}/src/app/ConnectionWorker.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/DiagnosticsPanel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MainWindow.cpp"
+    "${PROJECT_SOURCE_DIR}/src/gui/LibrarianPanel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorFilterModel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp"
