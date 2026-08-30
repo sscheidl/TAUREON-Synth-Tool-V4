@@ -45,7 +45,7 @@ struct LibrarianBank {
     std::string stable_id;
     std::string display_name;
     LibrarianCapacity capacity;
-    std::vector<LibrarianSlot> slots;
+    std::vector<LibrarianSlot> entries;
     LibrarianOperationAvailability operations;
 };
 
