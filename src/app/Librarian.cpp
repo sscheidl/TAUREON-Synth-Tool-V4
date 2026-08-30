@@ -26,9 +26,9 @@ bool librarian_snapshot_is_well_formed(const LibrarianSnapshot& snapshot) {
         for (const auto& bank : collection.banks) {
             if (bank.stable_id.empty() || !bank_ids.insert(bank.stable_id).second) return false;
             if (bank.capacity.kind == LibrarianCapacityKind::known &&
-                bank.slots.size() > bank.capacity.known_slots) return false;
+                bank.entries.size() > bank.capacity.known_slots) return false;
             std::unordered_set<std::string> slot_ids;
-            for (const auto& slot : bank.slots) {
+            for (const auto& slot : bank.entries) {
                 if (slot.stable_id.empty() || !slot_ids.insert(slot.stable_id).second) return false;
                 if (slot.semantic_object && slot.semantic_object->stable_id.empty()) return false;
             }
