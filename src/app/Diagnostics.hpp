@@ -41,11 +41,16 @@ struct DiagnosticSnapshot {
     std::uint64_t sysex_byte_count{};
 };
 
+struct DiagnosticExportPolicy {
+    bool include_route_identity{true};
+};
+
 class DiagnosticBundle {
 public:
     [[nodiscard]] static DiagnosticSnapshot make_snapshot(
         const ConnectionSnapshot& connection, const SysExTransferSnapshot& transfer,
-        const MonitorQueueStats& queue, std::string application_version, std::string build_revision);
+        const MonitorQueueStats& queue, std::string application_version, std::string build_revision,
+        const DiagnosticExportPolicy& export_policy);
     [[nodiscard]] static midi::Result<void> write(const std::filesystem::path& path,
                                                    const DiagnosticSnapshot& snapshot);
     [[nodiscard]] static std::string text(const DiagnosticSnapshot& snapshot);
