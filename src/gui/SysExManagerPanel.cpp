@@ -334,8 +334,11 @@ void SysExManagerPanel::refresh() {
     item_model_->set_items(snapshot.items);
     summary_label_->setText(
         QStringLiteral("%1 file(s) in this user-initiated read-only workspace. "
-                       "No total workspace capacity limit is configured. Hashes use deterministic FNV-1a 64.")
-            .arg(snapshot.items.size()));
+                       "Raw SysEx payload limit: %2 bytes per document, %3 bytes aggregate. "
+                       "Hashes use deterministic FNV-1a 64.")
+            .arg(snapshot.items.size())
+            .arg(static_cast<qulonglong>(app::SysExManager::kMaxDocumentRawBytes))
+            .arg(static_cast<qulonglong>(app::SysExManager::kMaxAggregateRawBytes)));
     int row = -1;
     for (int index = 0; index < item_model_->rowCount(); ++index) {
         if (const auto* item = item_model_->item(index); item && item->id == selected_item_id_) {
