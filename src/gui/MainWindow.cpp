@@ -1,4 +1,5 @@
 #include "gui/MainWindow.hpp"
+#include "gui/LibrarianPanel.hpp"
 #include "app/Diagnostics.hpp"
 #include "gui/DiagnosticsPanel.hpp"
 #include "gui/SettingsPanel.hpp"
@@ -229,7 +230,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
                 });
         });
     workspace_stack_->addWidget(sysex_manager_panel_);
-    workspace_stack_->addWidget(make_workspace_page(kWorkspaceNames.at(3)));
+    workspace_stack_->addWidget(new LibrarianPanel(workspace_stack_));
     profile_panel_ = new ProfileMatchPanel;
     if (profile_registry) profile_panel_->set_available_profiles(profile_registry->profiles());
     profile_panel_->set_select_temporary_action([this](std::string profile_id) {
