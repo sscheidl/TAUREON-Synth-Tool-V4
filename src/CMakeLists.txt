@@ -2,6 +2,7 @@ add_library(taureon_midi_core STATIC
     app/BoundedLog.cpp
     app/ConnectionController.cpp
     app/Diagnostics.cpp
+    app/Librarian.cpp
     app/Settings.cpp
     app/MonitorEventQueue.cpp
     app/ProfileSelectionService.cpp
@@ -40,6 +41,8 @@ add_executable(taureon_app
     app/taureon_app_main.cpp
     gui/DiagnosticsPanel.cpp
     gui/DiagnosticsPanel.hpp
+    gui/LibrarianPanel.cpp
+    gui/LibrarianPanel.hpp
     gui/MainWindow.cpp
     gui/MainWindow.hpp
     gui/MidiMonitorFilterModel.cpp
