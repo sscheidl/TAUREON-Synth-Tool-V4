@@ -451,10 +451,22 @@ recognized SysEx frame remains raw data and does not promote a semantic Libraria
 Changing a Librarian provider, collection, bank, slot, or selection is presentation state only:
 there is no connect/disconnect, route rebinding, Raw Send, Restore, or MIDI/SysEx send path.
 
-`stage5_librarian_unit` supplies its own test-only semantic provider with multiple banks,
-different known capacities, a zero-slot bank, an unknown-capacity bank, occupied/empty/read-only
-slots, unavailable operations, provider replacement, model row/column/role/invalid-index
-contracts, reset behavior, real `QKeyEvent` keyboard navigation, and Shift range selection.
+`stage5_librarian_unit` keeps its test-only semantic provider local to the test target.
+At the **domain** level it proves a valid snapshot with multiple banks, different known capacities,
+a zero-slot bank, an unknown-capacity bank, occupied/empty/read-only slots, and unavailable
+operations. It also rejects a provider marked unavailable while carrying collections, duplicate bank
+identity, and entries exceeding known capacity.
+
+At the **model/view** level it renders and selects Alpha (known capacity 3), then actually switches
+the production panel's bank selector to Empty (known capacity 0, zero rows) and Unknown (two
+observed rows, unknown capacity), before returning to Alpha (three rows). It verifies
+row/column/role/invalid-index contracts, reset behavior, explicit Writable versus Read-only slot
+access labels, real `QKeyEvent` keyboard navigation, and Shift range selection.
+
+**S8-1 repair:** revision `0e154d5f9e2f7e0737aca405ff1d0a7423989b6d` fixes the false
+Read-only access label for writable slots and adds the targeted S8-1 through S8-3 evidence above.
+[Windows CI #130](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33333659405)
+passed its complete Windows Debug build and **24/24** registered CTest tests (0 failed, 0 skipped).
 Starting main and starting Slice-8 branch were both remotely verified at
 `d0de6306782797455779e70f63b2d7c90d550a31`. The working branch is
 `codex/stage5-librarian-foundation`; [Draft PR #5](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/5)
