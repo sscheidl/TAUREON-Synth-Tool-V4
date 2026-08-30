@@ -2,6 +2,8 @@
 
 #include "app/Librarian.hpp"
 #include "gui/LibrarianPanel.hpp"
+#include "core/sysex/SyxFile.hpp"
+#include "profiles/ProfileRegistry.hpp"
 
 #include <QApplication>
 #include <QItemSelectionModel>
@@ -10,8 +12,10 @@
 #include <QPushButton>
 #include <QTableView>
 
+#include <filesystem>
 #include <memory>
 #include <utility>
+#include <vector>
 
 using namespace taureon;
 
@@ -120,7 +124,20 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(support->text().contains("unavailable"));
         TAUREON_REQUIRE(!rename->isEnabled());
 
-        // A valid, profile-recognized raw SysEx frame has no semantic provider in production.
+        // Recognition is intentionally not semantic decoding: a recognized Summit frame
+        // leaves the production Librarian unavailable and manufactures no slots.
+        const std::filesystem::path root{TAUREON_SOURCE_DIR};
+        profiles::ProfileRegistry registry;
+        std::vector<profiles::ProfileLoadIssue> issues;
+        TAUREON_REQUIRE(registry.load_directory(root / "resources" / "device_profiles", issues));
+        TAUREON_REQUIRE(issues.empty());
+        const auto fixture =
+            sysex::load_syx_file(root / "tests" / "fixtures" / "novation_summit_crazy_sine.syx");
+        TAUREON_REQUIRE(fixture && fixture.value().frames.size() == 1);
+        const auto profile_match = registry.match(fixture.value().frames.front(), {});
+        TAUREON_REQUIRE(profile_match.selected_profile_id ==
+                        std::optional<std::string>{"novation.summit"});
+
         gui::LibrarianPanel production_panel;
         auto* production_table = production_panel.findChild<QTableView*>("librarianSlotsTable");
         auto* production_support = production_panel.findChild<QLabel*>("librarianSupportState");
