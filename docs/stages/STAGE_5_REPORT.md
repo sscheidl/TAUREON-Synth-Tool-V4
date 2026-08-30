@@ -414,3 +414,10 @@ implied.
 - N-2: duplicate is_valid_for_transfer() rule.
 - N-3: justify or remove currently test-only add_document() if still unused at gate.
 - S6-2, S6-3, S6-4 as recorded above.
+
+
+S7-1 targeted repair evidence
+
+S7-1 uses the selected variant: an explicit DiagnosticExportPolicy reaches DiagnosticBundle::make_snapshot. With include_route_identity_in_bundle=true, the bundle contains the observed RX/TX route metadata; with false, receive_route and transmit_route remain structurally present but contain exactly `omitted by settings`, distinct from `not observed`. No other endpoint identity is serialized; selected_backend remains backend-only.
+
+Repair revision b061dda4f0f649f6622c8eda8b45712f368d534c passed Windows CI run 33293921972 (pull_request): full Windows Server 2022 configure and Debug build PASS; 23/23 registered cloud-capable CTest tests PASS, 0 failed, 0 skipped. The five local hardware/loopback tests remain unregistered, unskipped, and unsimulated. Real MIDI/SysEx hardware, WMS/WinMM runtime and timing, visual Windows GUI, and High-DPI validation remain pending after 09.09.2026.
