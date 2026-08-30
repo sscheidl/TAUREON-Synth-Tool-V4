@@ -59,7 +59,7 @@ QVariant LibrarianTableModel::data(const QModelIndex& index, const int role) con
     case 2: return slot.semantic_object
         ? QString::fromStdString(slot.semantic_object->display_name)
         : QStringLiteral("—");
-    case 3: return slot.read_only ? QStringLiteral("Read-only") : QStringLiteral("Read-only actions unavailable");
+    case 3: return slot.read_only ? QStringLiteral("Read-only") : QStringLiteral("Writable");
     default: return {};
     }
 }
