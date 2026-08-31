@@ -15,6 +15,13 @@ midi::MidiStreamEvent message_event(std::vector<std::uint8_t> bytes) {
                                        std::nullopt}};
 }
 
+std::vector<std::uint8_t> large_frame(const std::size_t bytes) {
+    std::vector<std::uint8_t> result(bytes, 0x01);
+    result.front() = 0xF0;
+    result.back() = 0xF7;
+    return result;
+}
+
 } // namespace
 
 int main() {
@@ -62,6 +69,48 @@ int main() {
         const auto& words = std::get<midi::UmpNativeMessage>(wms.value().front().data).words;
         TAUREON_REQUIRE(!words.empty());
         TAUREON_REQUIRE(((words.front() >> 24u) & 0x0fu) == 6);
+
+        // The Stage-5 transfer/encode path independently keeps invalid large data invalid.
+        for (const auto bytes : {64U * 1024U, 600U * 1024U, 900U * 1024U,
+                                 1024U * 1024U + 257U}) {
+            const auto original = large_frame(bytes);
+
+            auto malformed_bytes = original;
+            malformed_bytes.at(2) = 0x80;
+            sysex::SyxDocument malformed_document{
+                malformed_bytes,
+                {{sysex::SysExFrameStatus::malformed, malformed_bytes, "large malformed",
+                  std::nullopt, false}}};
+            TAUREON_REQUIRE(session.load_document(std::move(malformed_document), "large-malformed.syx"));
+            const auto malformed_large = session.snapshot();
+            TAUREON_REQUIRE(malformed_large.byte_count == malformed_bytes.size());
+            TAUREON_REQUIRE(malformed_large.malformed_frames == 1);
+            TAUREON_REQUIRE(malformed_large.frames.front().bytes == malformed_bytes);
+            TAUREON_REQUIRE(!session.build_raw_send(midi::MidiBackend::winmm, std::nullopt));
+
+            auto incomplete_bytes = original;
+            incomplete_bytes.pop_back();
+            sysex::SyxDocument incomplete_document{
+                incomplete_bytes,
+                {{sysex::SysExFrameStatus::incomplete, incomplete_bytes, "large incomplete",
+                  std::nullopt, false}}};
+            TAUREON_REQUIRE(session.load_document(std::move(incomplete_document), "large-incomplete.syx"));
+            const auto incomplete_large = session.snapshot();
+            TAUREON_REQUIRE(incomplete_large.byte_count == incomplete_bytes.size());
+            TAUREON_REQUIRE(incomplete_large.incomplete_frames == 1);
+            TAUREON_REQUIRE(incomplete_large.frames.front().bytes == incomplete_bytes);
+            TAUREON_REQUIRE(!session.build_raw_send(midi::MidiBackend::winmm, std::nullopt));
+
+            sysex::SyxDocument tainted_document{
+                original,
+                {{sysex::SysExFrameStatus::complete, original, "large data loss", std::nullopt, true}}};
+            TAUREON_REQUIRE(session.load_document(std::move(tainted_document), "large-tainted.syx"));
+            const auto tainted_large = session.snapshot();
+            TAUREON_REQUIRE(tainted_large.byte_count == original.size());
+            TAUREON_REQUIRE(tainted_large.tainted_frames == 1);
+            TAUREON_REQUIRE(tainted_large.frames.front().bytes == original);
+            TAUREON_REQUIRE(!session.build_raw_send(midi::MidiBackend::winmm, std::nullopt));
+        }
 
         TAUREON_REQUIRE(session.begin_receive());
         const auto fresh_capture = session.snapshot();
