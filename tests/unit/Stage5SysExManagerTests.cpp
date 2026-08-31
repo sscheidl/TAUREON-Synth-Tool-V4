@@ -3,6 +3,7 @@
 #include "app/SysExManager.hpp"
 
 #include <filesystem>
+#include <string>
 #include <fstream>
 #include <iterator>
 #include <memory>
@@ -30,6 +31,13 @@ void write_bytes(const std::filesystem::path& path, const std::vector<std::uint8
 std::vector<std::uint8_t> read_bytes(const std::filesystem::path& path) {
     std::ifstream stream(path, std::ios::binary);
     return {std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
+}
+
+std::vector<std::uint8_t> large_frame(const std::size_t bytes) {
+    std::vector<std::uint8_t> result(bytes, 0x01);
+    result.front() = 0xF0;
+    result.back() = 0xF7;
+    return result;
 }
 
 } // namespace
@@ -119,6 +127,25 @@ int main() {
                                              merge_destination));
         TAUREON_REQUIRE(read_bytes(merge_destination).size() == fixture_bytes.size() * 2);
         TAUREON_REQUIRE(read_bytes(fixture) == fixture_bytes);
+
+        for (const auto bytes : {64U * 1024U, 600U * 1024U, 900U * 1024U,
+                                 1024U * 1024U + 257U}) {
+            const auto input = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} /
+                               ("stage5-manager-large-" + std::to_string(bytes) + ".syx");
+            const auto output = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} /
+                                ("stage5-manager-large-output-" + std::to_string(bytes) + ".syx");
+            remove_file(input);
+            remove_file(output);
+            const auto original = large_frame(bytes);
+            write_bytes(input, original);
+            const auto large_item = manager.add_file(input);
+            TAUREON_REQUIRE(large_item);
+            TAUREON_REQUIRE(manager.snapshot().items.back().byte_count == original.size());
+            TAUREON_REQUIRE(manager.export_frames(large_item.value(), {0}, output));
+            TAUREON_REQUIRE(read_bytes(output) == original);
+            remove_file(input);
+            remove_file(output);
+        }
 
         write_bytes(replace_destination, {0x01, 0x02, 0x03});
         TAUREON_REQUIRE(!manager.export_frames(first.value(), {0}, replace_destination));
