@@ -31,13 +31,11 @@ using FrameIndex = std::pair<std::size_t, std::size_t>;
 } // namespace
 
 bool SysExManagerItemSnapshot::is_valid_for_transfer() const noexcept {
-    return !frames.empty() && incomplete_frames == 0 && malformed_frames == 0 &&
-           tainted_frames == 0 && complete_frames == frames.size();
+    return item_is_valid_for_transfer(*this);
 }
 
 bool SysExManager::StoredItem::is_valid_for_transfer() const noexcept {
-    return !frames.empty() && incomplete_frames == 0 && malformed_frames == 0 &&
-           tainted_frames == 0 && complete_frames == frames.size();
+    return item_is_valid_for_transfer(*this);
 }
 
 SysExManager::SysExManager(std::shared_ptr<const profiles::ProfileRegistry> registry)
