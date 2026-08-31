@@ -31,7 +31,6 @@ public:
 
 private:
     app::MonitorEventQueue& queue_;
-    MidiMonitorModel& model_;
     MidiMonitorModel* model_{};
     QTimer* timer_{};
     QMetaObject::Connection model_destroyed_connection_;
