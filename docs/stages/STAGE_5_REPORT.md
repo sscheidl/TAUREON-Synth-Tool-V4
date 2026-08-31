@@ -485,9 +485,9 @@ L-3, S6-2, S6-3, S6-4, and S7-2 remain open. Stage 5 remains **ACTIVE**.
 
 ## Slice 9a — Software completion and gate evidence (targeted repair)
 
-**Starting Slice-9a main:** `2ca2c246f15ab9ee5be6e9b04fb38e102d361032`  
-**Branch:** `codex/stage5-software-completion`  
-**Draft PR:** [#6](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/6)  
+**Starting Slice-9a main:** `2ca2c246f15ab9ee5be6e9b04fb38e102d361032`
+**Branch:** `codex/stage5-software-completion`
+**Draft PR:** [#6](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/6)
 **Exact repair HEAD:** `cea1a42c7134b7c505e946692ac9358d86443e71`
 
 Slice 9a is a software-only completion/review slice. It retains every earlier Stage-5 record above; this section adds no Stage-5 closure claim.
@@ -531,6 +531,8 @@ Slice 9a adds Librarian repeated-refresh evidence and the repaired Manager/Diagn
 
 ### Final Slice-9a CI evidence
 
-[Windows CI #166](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33362823357) ran on the prior documentation head `5d8f20279553cf6d9a90d25345b101af681953ba`: full Windows Debug configure/build passed and **24/24 CTest tests passed, 0 failed, 0 skipped**. The targeted-repair commits above require the final Windows CI run recorded below before re-review.
+[Windows CI #166](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33362823357) ran on the prior documentation head `5d8f20279553cf6d9a90d25345b101af681953ba`: full Windows Debug configure/build passed and **24/24 CTest tests passed, 0 failed, 0 skipped**.
+
+[Windows CI #176](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33367640795) ran on targeted-repair head `e42d6e6b68b38e1dd875f7b827891f525dbd04c1`: full Windows Debug configure/build passed and **24/24 CTest tests passed, 0 failed, 0 skipped**.
 
 B-3 remains **OUTSTANDING**: actual `QApplication` WMS/WinMM apartment, close-active, and shutdown-lifetime evidence requires Slice 9b on the Product Owner's Windows hardware after 09.09.2026. The visual half of B-4 remains **OUTSTANDING**: 1920×1080 inspection at 125%, 150%, and 200% requires the same Slice 9b environment. The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**. Stage 5 remains **ACTIVE**; Stage 6 has not begun.
