@@ -3,6 +3,7 @@
 #include "app/SysExManager.hpp"
 
 #include <filesystem>
+#include <string>
 #include <fstream>
 #include <iterator>
 #include <memory>
@@ -32,6 +33,13 @@ std::vector<std::uint8_t> read_bytes(const std::filesystem::path& path) {
     return {std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
 }
 
+std::vector<std::uint8_t> large_frame(const std::size_t bytes) {
+    std::vector<std::uint8_t> result(bytes, 0x01);
+    result.front() = 0xF0;
+    result.back() = 0xF7;
+    return result;
+}
+
 } // namespace
 
 int main() {
@@ -56,15 +64,49 @@ int main() {
         const auto second_distinct_path = output_path("stage5-manager-distinct-two.syx");
         const auto no_output_parent = output_path("stage5-manager-no-output-parent");
         const auto failed_export = no_output_parent / "failed-export.syx";
+        const auto oversized_path = output_path("stage5-manager-oversized.syx");
         std::error_code ignored;
         std::filesystem::remove_all(no_output_parent, ignored);
         for (const auto& path : {export_destination, merge_destination, replace_destination,
                                  incomplete_path, malformed_path, first_distinct_path,
-                                 second_distinct_path, failed_export}) {
+                                 second_distinct_path, failed_export, oversized_path}) {
             remove_file(path);
         }
+        {
+            std::ofstream oversized(oversized_path, std::ios::binary | std::ios::trunc);
+        }
+        std::filesystem::resize_file(oversized_path, app::SysExManager::kMaxDocumentRawBytes + 1);
 
         app::SysExManager manager(registry);
+        const auto oversized = manager.add_file(oversized_path);
+        TAUREON_REQUIRE(!oversized);
+        TAUREON_REQUIRE(oversized.error().code == midi::MidiErrorCode::resource_limit_exceeded);
+        TAUREON_REQUIRE(oversized.error().message.find("document file") != std::string::npos);
+        TAUREON_REQUIRE(manager.snapshot().items.empty());
+
+        const auto unknown_size = manager.add_file(output_path("stage5-manager-missing.syx"));
+        TAUREON_REQUIRE(!unknown_size);
+        TAUREON_REQUIRE(unknown_size.error().code == midi::MidiErrorCode::io_error);
+
+        const auto aggregate_chunk = app::SysExManager::kMaxAggregateRawBytes / 3 + 1;
+        const auto aggregate_document = [aggregate_chunk] {
+            sysex::SyxDocument document;
+            document.raw_bytes.assign(aggregate_chunk, 0x7D);
+            return document;
+        };
+        app::SysExManager aggregate_manager;
+        const auto aggregate_first = aggregate_manager.add_document(aggregate_document(), "aggregate-one.syx");
+        const auto aggregate_second = aggregate_manager.add_document(aggregate_document(), "aggregate-two.syx");
+        TAUREON_REQUIRE(aggregate_first && aggregate_second);
+        const auto aggregate_rejected =
+            aggregate_manager.add_document(aggregate_document(), "aggregate-three.syx");
+        TAUREON_REQUIRE(!aggregate_rejected);
+        TAUREON_REQUIRE(aggregate_rejected.error().code ==
+                        midi::MidiErrorCode::resource_limit_exceeded);
+        TAUREON_REQUIRE(aggregate_manager.snapshot().items.size() == 2);
+        TAUREON_REQUIRE(aggregate_manager.remove_item(aggregate_first.value()));
+        TAUREON_REQUIRE(aggregate_manager.add_document(aggregate_document(), "aggregate-three.syx"));
+
         const auto first = manager.add_file(fixture);
         TAUREON_REQUIRE(first);
         const auto duplicate = manager.add_file(fixture);
@@ -90,6 +132,36 @@ int main() {
                                              merge_destination));
         TAUREON_REQUIRE(read_bytes(merge_destination).size() == fixture_bytes.size() * 2);
         TAUREON_REQUIRE(read_bytes(fixture) == fixture_bytes);
+
+        for (const auto bytes : {64U * 1024U, 600U * 1024U, 900U * 1024U,
+                                 1024U * 1024U + 257U}) {
+            const auto input = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} /
+                               ("stage5-manager-large-" + std::to_string(bytes) + ".syx");
+            const auto output = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} /
+                                ("stage5-manager-large-output-" + std::to_string(bytes) + ".syx");
+            remove_file(input);
+            remove_file(output);
+            const auto original = large_frame(bytes);
+            write_bytes(input, original);
+            const auto large_item = manager.add_file(input);
+            TAUREON_REQUIRE(large_item);
+            TAUREON_REQUIRE(manager.snapshot().items.back().byte_count == original.size());
+            TAUREON_REQUIRE(manager.export_frames(large_item.value(), {0}, output));
+            TAUREON_REQUIRE(read_bytes(output) == original);
+            remove_file(input);
+            remove_file(output);
+        }
+
+        const auto large_snapshot = manager.snapshot();
+        std::size_t observed_raw_bytes = 0;
+        std::size_t observed_frames = 0;
+        for (const auto& item : large_snapshot.items) {
+            observed_raw_bytes += item.byte_count;
+            observed_frames += item.frames.size();
+        }
+        TAUREON_REQUIRE(large_snapshot.items.size() == 6);
+        TAUREON_REQUIRE(observed_frames == 6);
+        TAUREON_REQUIRE(observed_raw_bytes == 2'651'423);
 
         write_bytes(replace_destination, {0x01, 0x02, 0x03});
         TAUREON_REQUIRE(!manager.export_frames(first.value(), {0}, replace_destination));
@@ -178,6 +250,7 @@ int main() {
         remove_file(malformed_path);
         remove_file(first_distinct_path);
         remove_file(second_distinct_path);
+        remove_file(oversized_path);
         std::filesystem::remove_all(no_output_parent, ignored);
     });
 }

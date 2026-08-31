@@ -14,6 +14,7 @@
 #include <QEventLoop>
 #include <QLabel>
 #include <QPushButton>
+#include <QTimer>
 
 #include <filesystem>
 #include <memory>
@@ -93,10 +94,13 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(settings.save());
         TAUREON_REQUIRE(!export_policy->include_route_identity);
 
-        TAUREON_REQUIRE(process_until([&] {
-            return diagnostics.findChild<QLabel*>("diagnosticsStatus")->text().contains("Safe snapshots") ||
-                   diagnostics.findChild<QLabel*>("diagnosticsStatus")->text().contains("Refreshing");
-        }));
+        diagnostics.show();
+        QEventLoop wait_for_visible_refresh;
+        QTimer::singleShot(600, &wait_for_visible_refresh, &QEventLoop::quit);
+        wait_for_visible_refresh.exec();
+        TAUREON_REQUIRE(diagnostics.findChild<QLabel*>("diagnosticsStatus")->text().contains(
+            "Safe snapshots refreshed"));
+        diagnostics.hide();
         TAUREON_REQUIRE(transport == nullptr);
     });
 }

@@ -1,6 +1,6 @@
 # TAUREON V4 – Project State
 
-**Last updated:** 2026-08-24  
+**Last updated:** 2026-08-24
 **Maintained by:** ChatGPT Classic / Project Manager
 
 ## Current stage
@@ -30,10 +30,23 @@ Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
 
 Stage 5 – Qt 6 Product GUI
-Status: ACTIVE / USER-AUTHORIZED
-Gate: implementation in progress under the approved Stage-5 brief
+Status: ACTIVE / Slice 9a targeted repair in progress
+Gate: NOT COMPLETE — Draft PR #6 remains under independent review
 Implementation lead: Codex
 ```
+
+## Stage 5 readiness — Slice 9a
+
+Slice 8 was merged at `2ca2c246f15ab9ee5be6e9b04fb38e102d361032`. Slice 9a continues on `codex/stage5-software-completion` as [Draft PR #6](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/6). It is not merged and Stage 5 is not complete.
+
+The software-side resource policy, Librarian/Manager/Diagnostics repair evidence, and documentation repair are under targeted re-review. L-3 remains a safety/resource policy: 256 MiB per document and 512 MiB aggregate raw workspace payload. Those values neither claim MIDI/SysEx protocol limits nor bound total process memory.
+
+Deliberately outstanding for Slice 9b on the Product Owner's Windows machine after 09.09.2026:
+
+- B-3: actual `QApplication` WMS/WinMM apartment, active-close, and shutdown-lifetime evidence.
+- B-4 visual half: 1920×1080 Windows visual inspection at 125%, 150%, and 200% scaling.
+
+The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**. No real MIDI device, port, WMS/WinMM runtime/timing, visual Windows quality, or High-DPI validation is claimed.
 
 ## Project location
 

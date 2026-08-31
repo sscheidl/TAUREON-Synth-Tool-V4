@@ -482,3 +482,57 @@ High-DPI inspection remain outside this slice.
 
 The separate `claude/stage5-gate-cleanup` branch (N-1, N-2, N-3, S7-3, S7-4) is untouched.
 L-3, S6-2, S6-3, S6-4, and S7-2 remain open. Stage 5 remains **ACTIVE**.
+
+## Slice 9a — Software completion and gate evidence (targeted repair)
+
+**Starting Slice-9a main:** `2ca2c246f15ab9ee5be6e9b04fb38e102d361032`
+**Branch:** `codex/stage5-software-completion`
+**Draft PR:** [#6](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/6)
+**Exact repair HEAD:** `cea1a42c7134b7c505e946692ac9358d86443e71`
+
+Slice 9a is a software-only completion/review slice. It retains every earlier Stage-5 record above; this section adds no Stage-5 closure claim.
+
+### Retained evidence required by §23
+
+The existing 100,000-event Monitor measurement remains recorded above: 100,000 accepted events, zero drops, queue high-water 169, bounded 10,000 model rows, 886 GUI heartbeats, 2 ms maximum observed heartbeat delay, and 908 ms elapsed in that Debug test. It is retained prior Slice-5 evidence, not newly created Slice-9a evidence.
+
+The existing Diagnostics bundle test remains recorded above: a non-empty transfer SysEx document contributes permitted version/counter metadata but no raw frame bytes, source name, Manager content, transfer log, or user-file payload to the exported bundle. This payload-exclusion proof is retained Slice-7 evidence.
+
+The existing Devices & Profiles evidence remains recorded above: a stronger Summit fingerprint can override a distinct temporary manual selection; the discarded choice/evidence remains visible and a deliberate promotion creates the saved binding. This is retained Slice-6/FU-3 route/profile ambiguity evidence, not a route change or automatic send path.
+
+### L-3 product resource policy
+
+`SysExManager.hpp` defines fixed product safety limits of 256 MiB per raw SysEx document and 512 MiB aggregate loaded raw SysEx payload. They are not protocol-size claims and are not Settings-configurable. Aggregate accounting is the sum of workspace `raw_bytes`, not total process memory: parser structures, frame payload copies, and Qt model copies consume additional memory.
+
+`add_file` now obtains `std::filesystem::file_size` before loading. An error while determining the size is rejected as `io_error`; an oversized **document file** is rejected before `load_syx_file`. The distinction is asserted by the unit test. `add_document` independently rejects an oversized **individual document** before ownership, and aggregate rejection leaves existing items unchanged. `remove_item` returns the consumed budget. Export/merge calculate their projected document size before any output or `.taureon.tmp` file is created. `MidiErrorCode::resource_limit_exceeded` remains appended at the end of the enum and identifies actual bytes, applicable limit, and subject.
+
+The aggregate-budget test intentionally allocates roughly 512 MiB of real raw-byte storage in its process (three approximately 171 MiB documents; two retained while the third is offered). This is test-memory cost, not a claim that the 512 MiB raw-payload limit bounds total process memory.
+
+### Large SysEx test observations
+
+The Manager test imports and byte-exactly exports complete synthetic frames of 64 KiB, 600 KiB, 900 KiB, and 1 MiB + 257 bytes. At the observed peak after those four imports, alongside two 527-byte fixture documents, it asserts **6 workspace items, 6 frames, and 2,651,423 loaded raw bytes**. This is the measured Manager-workspace growth figure for the test, not a Monitor constant.
+
+Malformed, incomplete, and tainted save/merge/encode rejection remains covered by retained smaller-input tests. Large-size malformed/tainted variants are **not** added in Slice 9a and remain an explicitly outstanding test extension. The cancellation evidence reused here is the existing Stage-3 16×64 KiB transfer cancellation regression; it is pre-existing evidence, not Slice-9a-created evidence. Offscreen tests prove bounded work/state transitions, not machine wall-clock responsiveness.
+
+### Model/view scope stated honestly
+
+Slice 9a adds Librarian repeated-refresh evidence and the repaired Manager/Diagnostics UI tests only. Earlier Slice-5–8 tests provide the existing model-index, roles, headers, insert/remove/reset, filtering/sorting where exposed, keyboard, and extended-selection coverage. Slice 9a does **not** add selection-preservation across insert/remove/reset or model destruction while MonitorEventBridge queued batches are pending. Those two model/view extensions remain outstanding for the Stage-5 software follow-up owner after this targeted review; they are not claimed as completed evidence.
+
+### Accepted targeted corrections
+
+- S6-2: Manager-to-Transfer queued handoff now includes completion followed by Manager-panel destruction before delivery.
+- S6-3: MainWindow clears the synchronous Transfer snapshot observer before sibling teardown.
+- S6-4: target-local AUTOMOC is retained because only Qt targets require moc; core targets remain Qt-independent.
+- S7-2: Diagnostics polling is visibility-coupled; its UI test shows the panel and observes a real refresh.
+- S8-4: Librarian operation-availability fields are documented as reserved semantic-provider metadata; no unimplemented action is enabled.
+- S8-5: malformed snapshot and selected-provider/no-bank messages name their actual cause.
+- S8-6: same-provider refresh does not accumulate Librarian rows or selector entries.
+- S8-7 correction: `4e40e25` changed the Access label; `0e154d5` added its test evidence.
+
+### Final Slice-9a CI evidence
+
+[Windows CI #166](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33362823357) ran on the prior documentation head `5d8f20279553cf6d9a90d25345b101af681953ba`: full Windows Debug configure/build passed and **24/24 CTest tests passed, 0 failed, 0 skipped**.
+
+[Windows CI #176](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33367640795) ran on targeted-repair head `e42d6e6b68b38e1dd875f7b827891f525dbd04c1`: full Windows Debug configure/build passed and **24/24 CTest tests passed, 0 failed, 0 skipped**.
+
+B-3 remains **OUTSTANDING**: actual `QApplication` WMS/WinMM apartment, close-active, and shutdown-lifetime evidence requires Slice 9b on the Product Owner's Windows hardware after 09.09.2026. The visual half of B-4 remains **OUTSTANDING**: 1920×1080 inspection at 125%, 150%, and 200% requires the same Slice 9b environment. The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**. Stage 5 remains **ACTIVE**; Stage 6 has not begun.

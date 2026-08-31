@@ -109,6 +109,12 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(panel.has_required_controls());
         TAUREON_REQUIRE(table != nullptr && table->model()->rowCount() == 3);
         TAUREON_REQUIRE(bank_selector != nullptr && bank_selector->count() == 3);
+        for (int refresh = 0; refresh < 3; ++refresh) {
+            panel.set_provider(provider);
+            QApplication::processEvents();
+            TAUREON_REQUIRE(table->model()->rowCount() == 3);
+            TAUREON_REQUIRE(bank_selector->count() == 3);
+        }
         TAUREON_REQUIRE(table->model()->columnCount() == 4);
         TAUREON_REQUIRE(table->model()->index(-1, 0).data().isNull());
         TAUREON_REQUIRE(table->model()->index(0, 1).data().toString() == "Occupied");
@@ -146,6 +152,19 @@ int main(int argc, char* argv[]) {
         QApplication::sendEvent(table, &range);
         QApplication::processEvents();
         TAUREON_REQUIRE(table->selectionModel()->selectedRows().size() >= 2);
+
+        auto no_bank_provider = std::make_shared<InMemoryLibrarianProvider>(
+            app::LibrarianSnapshot{true, {}, {{"collection.no-banks", "No banks", {}}}});
+        panel.set_provider(no_bank_provider);
+        QApplication::processEvents();
+        auto* operation_reason = panel.findChild<QLabel*>("librarianOperationReason");
+        TAUREON_REQUIRE(operation_reason != nullptr &&
+                        operation_reason->text().contains("no Librarian bank"));
+
+        auto malformed_provider = std::make_shared<InMemoryLibrarianProvider>(duplicate_bank);
+        panel.set_provider(malformed_provider);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(support->text().contains("malformed"));
 
         auto unavailable = std::make_shared<InMemoryLibrarianProvider>(
             app::LibrarianSnapshot{false,

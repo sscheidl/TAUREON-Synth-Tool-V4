@@ -48,6 +48,17 @@ midi::Result<std::uint64_t> SysExManager::add_file(const std::filesystem::path& 
         return midi::Result<std::uint64_t>::failure(
             error(midi::MidiErrorCode::invalid_argument, "SysEx Manager accepts .syx files only"));
     }
+    std::error_code size_error;
+    const auto size = std::filesystem::file_size(path, size_error);
+    if (size_error) {
+        return midi::Result<std::uint64_t>::failure(
+            error(midi::MidiErrorCode::io_error,
+                  "Cannot determine SysEx document file size: " + size_error.message()));
+    }
+    if (size > kMaxDocumentRawBytes) {
+        return midi::Result<std::uint64_t>::failure(resource_limit_error(
+            static_cast<std::size_t>(size), kMaxDocumentRawBytes, "document file"));
+    }
     auto loaded = sysex::load_syx_file(path);
     if (!loaded) return midi::Result<std::uint64_t>::failure(loaded.error());
     return add_document(std::move(loaded.value()), file_name(path));
@@ -58,6 +69,15 @@ midi::Result<std::uint64_t> SysExManager::add_document(sysex::SyxDocument docume
     if (source_name.empty()) {
         return midi::Result<std::uint64_t>::failure(
             error(midi::MidiErrorCode::invalid_argument, "SysEx workspace source name is required"));
+    }
+    if (document.raw_bytes.size() > kMaxDocumentRawBytes) {
+        return midi::Result<std::uint64_t>::failure(resource_limit_error(
+            document.raw_bytes.size(), kMaxDocumentRawBytes, "individual document"));
+    }
+    if (exceeds_limit(loaded_raw_bytes_, document.raw_bytes.size(), kMaxAggregateRawBytes)) {
+        return midi::Result<std::uint64_t>::failure(resource_limit_error(
+            loaded_raw_bytes_ + document.raw_bytes.size(), kMaxAggregateRawBytes,
+            "aggregate workspace raw payload"));
     }
 
     StoredItem item;
@@ -107,6 +127,7 @@ midi::Result<std::uint64_t> SysExManager::add_document(sysex::SyxDocument docume
     }
 
     const auto id = item.id;
+    loaded_raw_bytes_ += item.raw_bytes.size();
     items_.push_back(std::move(item));
     refresh_duplicate_evidence();
     return midi::Result<std::uint64_t>::success(id);
@@ -119,6 +140,7 @@ midi::Result<void> SysExManager::remove_item(const std::uint64_t item_id) {
         return midi::Result<void>::failure(
             error(midi::MidiErrorCode::not_found, "SysEx workspace item was not found"));
     }
+    loaded_raw_bytes_ -= item->raw_bytes.size();
     items_.erase(item);
     refresh_duplicate_evidence();
     return midi::Result<void>::success();
@@ -140,6 +162,7 @@ midi::Result<void> SysExManager::export_frames(
 
     std::vector<sysex::SysExFrame> selected;
     selected.reserve(frame_indices.size());
+    std::size_t projected_bytes{};
     for (const auto index : frame_indices) {
         if (index >= item->frames.size()) {
             return midi::Result<void>::failure(
@@ -151,6 +174,11 @@ midi::Result<void> SysExManager::export_frames(
                 midi::MidiErrorCode::incomplete_data,
                 "Only verified complete, unaffected frames can be exported as a normal .syx file"));
         }
+        if (exceeds_limit(projected_bytes, frame.bytes.size(), kMaxDocumentRawBytes)) {
+            return midi::Result<void>::failure(resource_limit_error(
+                projected_bytes + frame.bytes.size(), kMaxDocumentRawBytes, "export result"));
+        }
+        projected_bytes += frame.bytes.size();
         selected.push_back(frame);
     }
     return sysex::save_syx_frames(destination, selected, replace_existing);
@@ -165,6 +193,7 @@ midi::Result<void> SysExManager::merge_frames(
     }
     std::vector<sysex::SysExFrame> selected;
     selected.reserve(references.size());
+    std::size_t projected_bytes{};
     for (const auto& reference : references) {
         const auto item = std::find_if(items_.begin(), items_.end(), [&reference](const auto& candidate) {
             return candidate.id == reference.item_id;
@@ -183,6 +212,11 @@ midi::Result<void> SysExManager::merge_frames(
                 midi::MidiErrorCode::incomplete_data,
                 "Incomplete, malformed, or tainted data cannot be merged as verified .syx"));
         }
+        if (exceeds_limit(projected_bytes, frame.bytes.size(), kMaxDocumentRawBytes)) {
+            return midi::Result<void>::failure(resource_limit_error(
+                projected_bytes + frame.bytes.size(), kMaxDocumentRawBytes, "merge result"));
+        }
+        projected_bytes += frame.bytes.size();
         selected.push_back(frame);
     }
     return sysex::save_syx_frames(destination, selected, replace_existing);
@@ -228,6 +262,20 @@ SysExManagerSnapshot SysExManager::snapshot() const {
     result.items.reserve(items_.size());
     for (const auto& item : items_) result.items.push_back(summary_of(item));
     return result;
+}
+
+bool SysExManager::exceeds_limit(const std::size_t current, const std::size_t addition,
+                                  const std::size_t limit) noexcept {
+    return current > limit || addition > limit - current;
+}
+
+midi::MidiError SysExManager::resource_limit_error(const std::size_t actual,
+                                                    const std::size_t limit,
+                                                    std::string_view subject) {
+    return error(midi::MidiErrorCode::resource_limit_exceeded,
+                 "SysEx Manager " + std::string(subject) + " is " +
+                     std::to_string(actual) + " bytes; limit is " + std::to_string(limit) +
+                     " bytes");
 }
 
 std::string SysExManager::stable_hash(const std::vector<std::uint8_t>& bytes) {

@@ -6,6 +6,9 @@
 
 #include <QWidget>
 
+class QHideEvent;
+class QShowEvent;
+
 #include <future>
 #include <memory>
 #include <optional>
@@ -25,6 +28,10 @@ public:
 
     [[nodiscard]] bool has_required_controls() const noexcept;
     [[nodiscard]] midi::Result<void> export_bundle(const std::filesystem::path& path) const;
+
+protected:
+    void showEvent(QShowEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
 
 private:
     void refresh();

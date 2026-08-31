@@ -28,6 +28,7 @@ enum class MidiErrorCode {
     timeout,
     transfer_cancelled,
     transport_disconnected,
+    resource_limit_exceeded,
 };
 
 struct MidiError {

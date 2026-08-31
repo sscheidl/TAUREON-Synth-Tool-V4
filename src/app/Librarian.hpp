@@ -20,6 +20,8 @@ struct LibrarianCapacity {
 };
 
 struct LibrarianOperationAvailability {
+    // Reserved semantic-provider capability metadata. The Slice-8 foundation does not
+    // expose the corresponding actions until a later slice implements them.
     bool readable{};
     bool writable{};
     bool renameable{};

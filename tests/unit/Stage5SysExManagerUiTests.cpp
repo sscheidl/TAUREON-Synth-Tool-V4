@@ -67,8 +67,8 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(opened->document.raw_bytes.size() == total_bytes);
         TAUREON_REQUIRE(opened->document.raw_bytes.size() > 256);
 
-        // The queued CompletionState connection is owned by the receiving Manager QWidget.
-        // Completing after its destruction must not invoke a stale manager callback.
+        // Complete first so the queued receiver delivery exists, then destroy the
+        // receiving Manager panel before processing that queued delivery.
         std::optional<gui::SysExManagerPanel::TransferCompletion> deferred_completion;
         {
             auto shutting_down_panel = std::make_unique<gui::SysExManagerPanel>(
@@ -83,8 +83,8 @@ int main(int argc, char* argv[]) {
             TAUREON_REQUIRE(shutdown_open != nullptr && shutdown_open->isEnabled());
             shutdown_open->click();
             TAUREON_REQUIRE(deferred_completion.has_value());
+            (*deferred_completion)(true);
         }
-        (*deferred_completion)(true);
         QApplication::processEvents();
     });
 }
