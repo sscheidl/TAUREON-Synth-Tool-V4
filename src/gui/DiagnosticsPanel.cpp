@@ -4,6 +4,8 @@
 #include <QLabel>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QHideEvent>
+#include <QShowEvent>
 #include <QTimer>
 #include <QVBoxLayout>
 
@@ -97,8 +99,17 @@ DiagnosticsPanel::DiagnosticsPanel(app::ConnectionWorker& worker, app::MonitorEv
     timer_ = new QTimer(this);
     timer_->setInterval(250);
     connect(timer_, &QTimer::timeout, this, [this] { poll(); });
-    timer_->start();
+}
+
+void DiagnosticsPanel::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    if (!timer_->isActive()) timer_->start();
     refresh();
+}
+
+void DiagnosticsPanel::hideEvent(QHideEvent* event) {
+    timer_->stop();
+    QWidget::hideEvent(event);
 }
 
 bool DiagnosticsPanel::has_required_controls() const noexcept {
