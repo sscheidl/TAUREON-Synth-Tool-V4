@@ -153,6 +153,19 @@ int main(int argc, char* argv[]) {
         QApplication::processEvents();
         TAUREON_REQUIRE(table->selectionModel()->selectedRows().size() >= 2);
 
+        auto no_bank_provider = std::make_shared<InMemoryLibrarianProvider>(
+            app::LibrarianSnapshot{true, {}, {{"collection.no-banks", "No banks", {}}}});
+        panel.set_provider(no_bank_provider);
+        QApplication::processEvents();
+        auto* operation_reason = panel.findChild<QLabel*>("librarianOperationReason");
+        TAUREON_REQUIRE(operation_reason != nullptr &&
+                        operation_reason->text().contains("no Librarian bank"));
+
+        auto malformed_provider = std::make_shared<InMemoryLibrarianProvider>(duplicate_bank);
+        panel.set_provider(malformed_provider);
+        QApplication::processEvents();
+        TAUREON_REQUIRE(support->text().contains("malformed"));
+
         auto unavailable = std::make_shared<InMemoryLibrarianProvider>(
             app::LibrarianSnapshot{false,
                                    "Semantic Librarian support is unavailable for this profile.", {}});
