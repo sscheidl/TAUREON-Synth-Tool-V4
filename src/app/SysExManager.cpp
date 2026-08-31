@@ -50,9 +50,14 @@ midi::Result<std::uint64_t> SysExManager::add_file(const std::filesystem::path& 
     }
     std::error_code size_error;
     const auto size = std::filesystem::file_size(path, size_error);
-    if (!size_error && size > kMaxDocumentRawBytes) {
+    if (size_error) {
+        return midi::Result<std::uint64_t>::failure(
+            error(midi::MidiErrorCode::io_error,
+                  "Cannot determine SysEx document file size: " + size_error.message()));
+    }
+    if (size > kMaxDocumentRawBytes) {
         return midi::Result<std::uint64_t>::failure(resource_limit_error(
-            static_cast<std::size_t>(size), kMaxDocumentRawBytes, "individual document"));
+            static_cast<std::size_t>(size), kMaxDocumentRawBytes, "document file"));
     }
     auto loaded = sysex::load_syx_file(path);
     if (!loaded) return midi::Result<std::uint64_t>::failure(loaded.error());
