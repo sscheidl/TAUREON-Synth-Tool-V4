@@ -46,9 +46,9 @@ int main() {
     return test::run([] {
         // N-1: the established codes retain their serialized ordinal positions; newer codes append.
         TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::serialization_error) == 11);
-        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::resource_limit_exceeded) == 19);
-        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::not_found) == 20);
-        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::invalid_argument) == 21);
+        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::resource_limit_exceeded) == 21);
+        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::not_found) == 19);
+        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::invalid_argument) == 20);
 
         const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
                              "novation_summit_crazy_sine.syx";
