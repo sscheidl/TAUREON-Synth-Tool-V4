@@ -50,6 +50,7 @@ set_tests_properties(stage5_gui_smoke PROPERTIES
 
 add_executable(stage5_application_tests
     unit/Stage5ApplicationTests.cpp
+    "${PROJECT_SOURCE_DIR}/src/app/ConnectionWorker.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorFilterModel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp")
