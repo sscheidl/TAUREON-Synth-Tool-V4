@@ -152,6 +152,17 @@ int main() {
             remove_file(output);
         }
 
+        const auto large_snapshot = manager.snapshot();
+        std::size_t observed_raw_bytes = 0;
+        std::size_t observed_frames = 0;
+        for (const auto& item : large_snapshot.items) {
+            observed_raw_bytes += item.byte_count;
+            observed_frames += item.frames.size();
+        }
+        TAUREON_REQUIRE(large_snapshot.items.size() == 6);
+        TAUREON_REQUIRE(observed_frames == 6);
+        TAUREON_REQUIRE(observed_raw_bytes == 2'651'423);
+
         write_bytes(replace_destination, {0x01, 0x02, 0x03});
         TAUREON_REQUIRE(!manager.export_frames(first.value(), {0}, replace_destination));
         TAUREON_REQUIRE(read_bytes(replace_destination) == std::vector<std::uint8_t>({0x01, 0x02, 0x03}));
