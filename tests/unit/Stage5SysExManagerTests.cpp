@@ -74,6 +74,26 @@ int main() {
         TAUREON_REQUIRE(!oversized);
         TAUREON_REQUIRE(oversized.error().code == midi::MidiErrorCode::resource_limit_exceeded);
         TAUREON_REQUIRE(manager.snapshot().items.empty());
+
+        const auto aggregate_chunk = app::SysExManager::kMaxAggregateRawBytes / 3 + 1;
+        const auto aggregate_document = [aggregate_chunk] {
+            sysex::SyxDocument document;
+            document.raw_bytes.assign(aggregate_chunk, 0x7D);
+            return document;
+        };
+        app::SysExManager aggregate_manager;
+        const auto aggregate_first = aggregate_manager.add_document(aggregate_document(), "aggregate-one.syx");
+        const auto aggregate_second = aggregate_manager.add_document(aggregate_document(), "aggregate-two.syx");
+        TAUREON_REQUIRE(aggregate_first && aggregate_second);
+        const auto aggregate_rejected =
+            aggregate_manager.add_document(aggregate_document(), "aggregate-three.syx");
+        TAUREON_REQUIRE(!aggregate_rejected);
+        TAUREON_REQUIRE(aggregate_rejected.error().code ==
+                        midi::MidiErrorCode::resource_limit_exceeded);
+        TAUREON_REQUIRE(aggregate_manager.snapshot().items.size() == 2);
+        TAUREON_REQUIRE(aggregate_manager.remove_item(aggregate_first.value()));
+        TAUREON_REQUIRE(aggregate_manager.add_document(aggregate_document(), "aggregate-three.syx"));
+
         const auto first = manager.add_file(fixture);
         TAUREON_REQUIRE(first);
         const auto duplicate = manager.add_file(fixture);
