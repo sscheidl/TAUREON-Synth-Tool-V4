@@ -81,7 +81,12 @@ int main() {
         const auto oversized = manager.add_file(oversized_path);
         TAUREON_REQUIRE(!oversized);
         TAUREON_REQUIRE(oversized.error().code == midi::MidiErrorCode::resource_limit_exceeded);
+        TAUREON_REQUIRE(oversized.error().message.find("document file") != std::string::npos);
         TAUREON_REQUIRE(manager.snapshot().items.empty());
+
+        const auto unknown_size = manager.add_file(output_path("stage5-manager-missing.syx"));
+        TAUREON_REQUIRE(!unknown_size);
+        TAUREON_REQUIRE(unknown_size.error().code == midi::MidiErrorCode::io_error);
 
         const auto aggregate_chunk = app::SysExManager::kMaxAggregateRawBytes / 3 + 1;
         const auto aggregate_document = [aggregate_chunk] {
