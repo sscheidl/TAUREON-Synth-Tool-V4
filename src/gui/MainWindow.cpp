@@ -281,7 +281,11 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
         "Disconnected — Auto has no exactly resolvable saved route; choose a backend and routes.");
 }
 
-MainWindow::~MainWindow() { monitor_bridge_->shutdown(); }
+MainWindow::~MainWindow() {
+    // The observer targets a sibling workspace. Clear it before QWidget child teardown.
+    if (sysex_transfer_panel_) sysex_transfer_panel_->set_snapshot_observer({});
+    monitor_bridge_->shutdown();
+}
 
 bool MainWindow::has_expected_shell() const noexcept {
     return navigation_ != nullptr && workspace_stack_ != nullptr && workspace_heading_ != nullptr &&
