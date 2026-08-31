@@ -109,6 +109,12 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(panel.has_required_controls());
         TAUREON_REQUIRE(table != nullptr && table->model()->rowCount() == 3);
         TAUREON_REQUIRE(bank_selector != nullptr && bank_selector->count() == 3);
+        for (int refresh = 0; refresh < 3; ++refresh) {
+            panel.set_provider(provider);
+            QApplication::processEvents();
+            TAUREON_REQUIRE(table->model()->rowCount() == 3);
+            TAUREON_REQUIRE(bank_selector->count() == 3);
+        }
         TAUREON_REQUIRE(table->model()->columnCount() == 4);
         TAUREON_REQUIRE(table->model()->index(-1, 0).data().isNull());
         TAUREON_REQUIRE(table->model()->index(0, 1).data().toString() == "Occupied");
