@@ -56,15 +56,24 @@ int main() {
         const auto second_distinct_path = output_path("stage5-manager-distinct-two.syx");
         const auto no_output_parent = output_path("stage5-manager-no-output-parent");
         const auto failed_export = no_output_parent / "failed-export.syx";
+        const auto oversized_path = output_path("stage5-manager-oversized.syx");
         std::error_code ignored;
         std::filesystem::remove_all(no_output_parent, ignored);
         for (const auto& path : {export_destination, merge_destination, replace_destination,
                                  incomplete_path, malformed_path, first_distinct_path,
-                                 second_distinct_path, failed_export}) {
+                                 second_distinct_path, failed_export, oversized_path}) {
             remove_file(path);
         }
+        {
+            std::ofstream oversized(oversized_path, std::ios::binary | std::ios::trunc);
+        }
+        std::filesystem::resize_file(oversized_path, app::SysExManager::kMaxDocumentRawBytes + 1);
 
         app::SysExManager manager(registry);
+        const auto oversized = manager.add_file(oversized_path);
+        TAUREON_REQUIRE(!oversized);
+        TAUREON_REQUIRE(oversized.error().code == midi::MidiErrorCode::resource_limit_exceeded);
+        TAUREON_REQUIRE(manager.snapshot().items.empty());
         const auto first = manager.add_file(fixture);
         TAUREON_REQUIRE(first);
         const auto duplicate = manager.add_file(fixture);
@@ -178,6 +187,7 @@ int main() {
         remove_file(malformed_path);
         remove_file(first_distinct_path);
         remove_file(second_distinct_path);
+        remove_file(oversized_path);
         std::filesystem::remove_all(no_output_parent, ignored);
     });
 }
