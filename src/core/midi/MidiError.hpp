@@ -18,8 +18,6 @@ enum class MidiErrorCode {
     native_api_error,
     shutdown_cancelled,
     invalid_state,
-    not_found,
-    invalid_argument,
     serialization_error,
     queue_overflow,
     malformed_data,
@@ -29,6 +27,9 @@ enum class MidiErrorCode {
     transfer_cancelled,
     transport_disconnected,
     resource_limit_exceeded,
+    // N-1: error codes are append-only so established ordinal values remain stable.
+    not_found,
+    invalid_argument,
 };
 
 struct MidiError {
