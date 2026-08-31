@@ -34,6 +34,7 @@ protected:
     void hideEvent(QHideEvent* event) override;
 
 private:
+    [[nodiscard]] app::DiagnosticExportPolicy effective_export_policy() const;
     void refresh();
     void poll();
     void present();
