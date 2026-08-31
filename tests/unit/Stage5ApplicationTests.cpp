@@ -7,6 +7,12 @@
 #include "gui/MonitorEventBridge.hpp"
 #include "transports/fake/FakeMidiTransport.hpp"
 
+#include <QApplication>
+#include <QItemSelectionModel>
+#include <QMetaObject>
+#include <QTableView>
+
+#include <memory>
 #include <string>
 
 using namespace taureon;
@@ -51,6 +57,55 @@ void connection_tests() {
     const auto failure = controller.select_route(missing);
     TAUREON_REQUIRE(!failure);
     TAUREON_REQUIRE(failure.error().code == midi::MidiErrorCode::endpoint_missing);
+}
+
+void selection_and_shutdown_tests() {
+    gui::MidiMonitorModel model(3);
+    QTableView table;
+    table.setModel(&model);
+
+    model.append_batch({monitor_event(1, 60), monitor_event(2, 61)});
+    table.selectionModel()->setCurrentIndex(
+        model.index(1, gui::MidiMonitorModel::Raw),
+        QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+    TAUREON_REQUIRE(table.selectionModel()->currentIndex().row() == 1);
+    TAUREON_REQUIRE(table.selectionModel()->selectedRows().size() == 1);
+
+    // Inserting after the selected event preserves its logical row.
+    model.append_batch({monitor_event(3, 62)});
+    TAUREON_REQUIRE(table.selectionModel()->currentIndex().row() == 1);
+    TAUREON_REQUIRE(table.selectionModel()->currentIndex().data(Qt::DisplayRole).toString() ==
+                    "90 3D 7F");
+
+    // Removing the oldest event updates selection to the same surviving event, never a stale row.
+    model.append_batch({monitor_event(4, 63)});
+    TAUREON_REQUIRE(model.rowCount() == 3);
+    TAUREON_REQUIRE(table.selectionModel()->currentIndex().isValid());
+    TAUREON_REQUIRE(table.selectionModel()->currentIndex().row() == 0);
+    TAUREON_REQUIRE(table.selectionModel()->currentIndex().data(Qt::DisplayRole).toString() ==
+                    "90 3D 7F");
+    for (const auto& index : table.selectionModel()->selectedRows()) {
+        TAUREON_REQUIRE(index.row() >= 0 && index.row() < model.rowCount());
+    }
+
+    // A reset clears the former selection deterministically.
+    model.append_batch({monitor_event(5, 64), monitor_event(6, 65), monitor_event(7, 66)});
+    TAUREON_REQUIRE(model.rowCount() == 3);
+    TAUREON_REQUIRE(!table.selectionModel()->currentIndex().isValid());
+    TAUREON_REQUIRE(table.selectionModel()->selectedRows().empty());
+
+    app::MonitorEventQueue pending_queue(4);
+    auto pending_model = std::make_unique<gui::MidiMonitorModel>(4);
+    gui::MonitorEventBridge bridge(pending_queue, *pending_model);
+    TAUREON_REQUIRE(pending_queue.push(monitor_event(8, 67)));
+    TAUREON_REQUIRE(QMetaObject::invokeMethod(&bridge, [&bridge] { bridge.drain_once(); },
+                                               Qt::QueuedConnection));
+    // QObject destruction synchronously closes the presentation gate before queued drain executes.
+    pending_model.reset();
+    QApplication::processEvents(QEventLoop::AllEvents);
+    TAUREON_REQUIRE(pending_queue.stats().current_size == 0);
+    TAUREON_REQUIRE(!pending_queue.push(monitor_event(9, 68)));
+    TAUREON_REQUIRE(pending_queue.stats().rejected_after_close == 1);
 }
 
 void queue_and_model_tests() {
@@ -101,9 +156,11 @@ void queue_and_model_tests() {
 
 } // namespace
 
-int main() {
+int main(int argc, char* argv[]) {
+    QApplication application(argc, argv);
     return test::run([] {
         connection_tests();
         queue_and_model_tests();
+        selection_and_shutdown_tests();
     });
 }
