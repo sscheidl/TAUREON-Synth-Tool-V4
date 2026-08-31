@@ -146,9 +146,11 @@ void LibrarianPanel::rebuild_from_provider() {
     const auto available = valid && snapshot_.semantic_support_available;
     support_->setText(available
         ? QStringLiteral("Semantic Librarian support is available from the active provider.")
-        : QString::fromStdString(snapshot_.unavailable_reason.empty()
-            ? "Semantic Librarian support is unavailable for this profile."
-            : snapshot_.unavailable_reason));
+        : !valid
+            ? QStringLiteral("Semantic Librarian provider snapshot is malformed.")
+            : QString::fromStdString(snapshot_.unavailable_reason.empty()
+                ? "Semantic Librarian support is unavailable for this profile."
+                : snapshot_.unavailable_reason));
     collection_selector_->blockSignals(true);
     collection_selector_->clear();
     for (const auto& collection : snapshot_.collections) {
@@ -179,7 +181,9 @@ void LibrarianPanel::select_bank(const int index) {
             snapshot_.collections.at(static_cast<std::size_t>(collection_index_)).banks.size())) {
         model_->replace_bank(std::nullopt);
         capacity_->setText("Capacity: unavailable");
-        operation_reason_->setText("Semantic actions are unavailable because no semantic provider is active.");
+        operation_reason_->setText(provider_
+            ? "Semantic actions are unavailable because no Librarian bank is selected."
+            : "Semantic actions are unavailable because no semantic provider is active.");
         rename_->setEnabled(false);
         return;
     }
