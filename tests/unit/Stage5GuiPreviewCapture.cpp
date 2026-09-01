@@ -94,7 +94,10 @@ int main(int argc, char* argv[]) {
 
         const QImage image = window.grab().toImage();
         if (image.size() != QSize{1920, 1080}) {
-            std::cerr << "Preview did not render at exactly 1920x1080.\n";
+            std::cerr << "Preview did not render at exactly 1920x1080 (widget "
+                      << window.width() << 'x' << window.height() << ", image "
+                      << image.width() << 'x' << image.height() << " at DPR "
+                      << image.devicePixelRatio() << ").\n";
             return 7;
         }
         if (!image.save(QString::fromStdString((output_directory / preview.file_name).string()), "PNG")) {
