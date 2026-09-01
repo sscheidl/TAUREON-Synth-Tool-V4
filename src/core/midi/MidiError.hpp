@@ -26,10 +26,11 @@ enum class MidiErrorCode {
     timeout,
     transfer_cancelled,
     transport_disconnected,
-    resource_limit_exceeded,
-    // N-1: error codes are append-only so established ordinal values remain stable.
+    // N-1: append post-Stage-4 codes after the original stable range.
     not_found,
     invalid_argument,
+    // L-3: this was appended after N-1 and remains the newest code.
+    resource_limit_exceeded,
 };
 
 struct MidiError {
