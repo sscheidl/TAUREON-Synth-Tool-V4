@@ -140,11 +140,16 @@ void fake_close_while_activity_is_in_flight() {
             gate->release_send = true;
         }
         gate->changed.notify_all();
+
+        // The production close path waits for the accepted in-flight send to reach a terminal
+        // state before it disconnects the transport. It is the deterministic synchronization
+        // boundary for the terminal snapshot; no sleep or timeout is involved.
+        TAUREON_REQUIRE(worker->disconnect().get());
         const auto terminal = worker->sysex_snapshot().get();
         TAUREON_REQUIRE(terminal &&
                         terminal.value().send_progress.state == transfer::TransferState::cancelled);
-        // ConnectionWorker destruction joins its worker after cancellation; no UI object is
-        // reachable because the bridge acceptance gate is already closed.
+        // ConnectionWorker destruction joins its worker; no UI object is reachable because the
+        // presentation acceptance gate is already closed.
     }
 
     TAUREON_REQUIRE(presentation_queue.stats().current_size == 0);
