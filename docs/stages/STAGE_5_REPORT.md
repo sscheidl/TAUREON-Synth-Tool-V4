@@ -540,8 +540,8 @@ B-3 remains **OUTSTANDING**: actual `QApplication` WMS/WinMM apartment, close-ac
 
 ## Block A — complete software finalization (PR #7)
 
-**Starting main:** `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`  
-**Branch:** `codex/stage5-software-finalization`  
+**Starting main:** `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`
+**Branch:** `codex/stage5-software-finalization`
 **Draft PR:** [#7](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/7)
 
 Block A closes only deterministic, cloud-verifiable software work. It neither changes the accepted Stage-2/3/4 contracts nor claims native WMS/WinMM, physical-device, timing, or visual Windows evidence.
