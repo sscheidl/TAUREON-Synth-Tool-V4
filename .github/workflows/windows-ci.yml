@@ -87,7 +87,7 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: |
           $previewDirectory = Join-Path $PWD "build/ci/stage5-gui-preview"
-          & ".\\build\\ci\\Debug\\stage5_gui_preview_capture.exe" $previewDirectory
+          & ".\\build\\ci\\tests\\Debug\\stage5_gui_preview_capture.exe" $previewDirectory
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
           $expected = @(
