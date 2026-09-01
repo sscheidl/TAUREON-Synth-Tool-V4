@@ -169,7 +169,7 @@ int main() {
             remove_file(rejected_output);
 
             auto malformed_bytes = original;
-            malformed_bytes.at(2) = 0x80;
+            // Keep one malformed large frame: an early status would intentionally split every\n            // following data byte into a separate out-of-frame malformed fragment.\n            malformed_bytes.back() = 0x80;
             write_bytes(malformed_input, malformed_bytes);
             const auto malformed_large = invalid_large_manager.add_file(malformed_input);
             TAUREON_REQUIRE(malformed_large);
