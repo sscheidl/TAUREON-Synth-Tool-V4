@@ -84,7 +84,7 @@ jobs:
       - name: Render Stage 5 GUI visual previews
         shell: pwsh
         env:
-          QT_QPA_PLATFORM: offscreen
+          QT_QPA_PLATFORM: 'offscreen:configfile=tests/fixtures/offscreen-1920x1080.json'
         run: |
           $previewDirectory = Join-Path $PWD "build/ci/stage5-gui-preview"
           & ".\\build\\ci\\tests\\Debug\\stage5_gui_preview_capture.exe" $previewDirectory
