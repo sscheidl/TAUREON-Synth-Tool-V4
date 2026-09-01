@@ -30,14 +30,16 @@ Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
 
 Stage 5 – Qt 6 Product GUI
-Status: ACTIVE / Block A merged; targeted F-1–F-5 follow-up pending
+Status: HOLD/ACTIVE — Block A and post-merge F-1–F-5 follow-up merged
 Gate: HOLD — Block B native/local/hardware/visual evidence remains outstanding
 Implementation lead: Codex
 ```
 
 ## Stage 5 readiness — Block A
 
-Slice 9a was merged at `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`. Block A was merged at `bd4dd4f26bf19c0bd25ef2f2136e70cb470365b8` from reviewed PR #7 head `a4627d9113fa9191423171616e56b0a267fee763`. Windows CI #220 passed at the merge head with a full Debug build and 24/24 CTest, 0 failed, 0 skipped. A separate targeted follow-up handles F-1 through F-5; F-6 is a structural retained-evidence mapping with no action.
+Slice 9a was merged at `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`. Block A was merged at `bd4dd4f26bf19c0bd25ef2f2136e70cb470365b8` from reviewed PR #7 head `a4627d9113fa9191423171616e56b0a267fee763`. Windows CI #220 passed at the merge head with a full Debug build and 24/24 CTest, 0 failed, 0 skipped. The targeted F-1 through F-5 follow-up was merged at `1ede95b8a7c3d8738999bc2f563aec23703968fe` from PR #8 head `cdd72d9a7b9a5fbef2ada50a4d2c16f962cc7e37`; Windows CI #226 passed at that exact head with whitespace PASS, full Debug build PASS, 24/24 CTest PASS, 0 failed, and 0 skipped. F-6 remains a structural retained-evidence mapping with no action.
+
+PR #9 was merged at `0ea82e526e89fddb2d6e8ae10a24b481c0937813`. Windows CI #236 passed at its exact head `434727d729097f844b42df7746e8d7b4b71b4d87` with whitespace PASS, Debug build PASS, capture/artifact upload PASS, and 24/24 CTest PASS, 0 failed, 0 skipped. The `stage5-gui-preview-1920x1080` artifact contains one capture of each actual workspace; the hosted offscreen raster was 2164×1080 at DPR 1.0. It is **VISUAL PREVIEW ONLY**, not Windows desktop, High-DPI, or Block-B evidence.
 
 Block A closes deterministic cloud/software evidence: N-1, N-2, N-3, N-6, S7-3, S7-4, the fake close-while-in-flight proof, large SysEx malformed/incomplete/tainted rejection, and Stage-5-specific large cancellation. L-3 is unchanged: 256 MiB per document and 512 MiB aggregate raw workspace payload are resource limits, not MIDI/SysEx protocol limits and not total-process-memory bounds. Detailed traceability is in [`STAGE_5_REPORT.md`](../stages/STAGE_5_REPORT.md).
 
@@ -183,7 +185,7 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Complete the comprehensive independent review of the frozen Block-A PR head after its final Windows CI is green. Do not merge and do not begin Stage 6. Block B remains the later real Windows/local/manual validation.
+Keep Stage 5 at **HOLD/ACTIVE** until Block B is executed on the Product Owner's Windows machine after 09.09.2026. Then collect the real QApplication WMS/WinMM lifetime and active-close evidence, approved runtime/port/device/loopback/timing evidence, and visual inspection at 1920×1080 with 125%, 150%, and 200% scaling. Do not begin Stage 6.
 
 ## Hardware validation
 
