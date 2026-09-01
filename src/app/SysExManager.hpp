@@ -53,6 +53,13 @@ struct SysExManagerItemSnapshot {
     [[nodiscard]] bool is_valid_for_transfer() const noexcept;
 };
 
+// N-2: one transfer-eligibility rule shared by stored and presentation items.
+template <typename Item>
+[[nodiscard]] constexpr bool item_is_valid_for_transfer(const Item& item) noexcept {
+    return !item.frames.empty() && item.incomplete_frames == 0 && item.malformed_frames == 0 &&
+           item.tainted_frames == 0 && item.complete_frames == item.frames.size();
+}
+
 struct SysExManagerTransferItem {
     std::string source_name;
     sysex::SyxDocument document;
@@ -70,7 +77,8 @@ public:
     explicit SysExManager(std::shared_ptr<const profiles::ProfileRegistry> registry = {});
 
     [[nodiscard]] midi::Result<std::uint64_t> add_file(const std::filesystem::path& path);
-    // Supports an already captured/imported document without exposing mutable workspace bytes.
+    // N-3: this admits the only testable tainted captured-document path. File loading cannot
+    // manufacture affected_by_data_loss; no production capture-to-workspace wiring is added here.
     [[nodiscard]] midi::Result<std::uint64_t> add_document(
         sysex::SyxDocument document, std::string source_name);
     [[nodiscard]] midi::Result<void> remove_item(std::uint64_t item_id);

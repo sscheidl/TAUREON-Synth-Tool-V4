@@ -18,8 +18,6 @@ enum class MidiErrorCode {
     native_api_error,
     shutdown_cancelled,
     invalid_state,
-    not_found,
-    invalid_argument,
     serialization_error,
     queue_overflow,
     malformed_data,
@@ -28,6 +26,10 @@ enum class MidiErrorCode {
     timeout,
     transfer_cancelled,
     transport_disconnected,
+    // N-1: append post-Stage-4 codes after the original stable range.
+    not_found,
+    invalid_argument,
+    // L-3: this was appended after N-1 and remains the newest code.
     resource_limit_exceeded,
 };
 

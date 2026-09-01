@@ -1,9 +1,13 @@
 #include "TestSupport.hpp"
 
 #include "app/SysExTransferSession.hpp"
+#include "core/transfer/TransferEngine.hpp"
+#include "transports/fake/FakeMidiTransport.hpp"
 
+#include <condition_variable>
 #include <filesystem>
 #include <memory>
+#include <mutex>
 
 using namespace taureon;
 
@@ -13,6 +17,21 @@ midi::MidiStreamEvent message_event(std::vector<std::uint8_t> bytes) {
     return {0, midi::NativeMidiMessage{midi::MidiBackend::winmm,
                                        midi::Midi1NativeMessage{std::move(bytes)},
                                        std::nullopt}};
+}
+
+std::vector<std::uint8_t> large_frame(const std::size_t bytes) {
+    std::vector<std::uint8_t> result(bytes, 0x01);
+    result.front() = 0xF0;
+    result.back() = 0xF7;
+    return result;
+}
+
+midi::MidiEndpointDescriptor output_endpoint() {
+    const midi::MidiRouteIdentity identity{
+        midi::MidiBackend::winmm, midi::MidiDirection::output,
+        midi::WinmmRouteIdentity{"large-cancellation-tx", 1, 2, 3}};
+    return {identity, "Large cancellation TX", midi::MidiProtocol::midi1,
+            {false, true, true, false}, std::nullopt, std::nullopt};
 }
 
 } // namespace
@@ -62,6 +81,98 @@ int main() {
         const auto& words = std::get<midi::UmpNativeMessage>(wms.value().front().data).words;
         TAUREON_REQUIRE(!words.empty());
         TAUREON_REQUIRE(((words.front() >> 24u) & 0x0fu) == 6);
+
+        // The Stage-5 transfer/encode path independently keeps invalid large data invalid.
+        for (const auto bytes : {64U * 1024U, 600U * 1024U, 900U * 1024U,
+                                 1024U * 1024U + 257U}) {
+            const auto original = large_frame(bytes);
+
+            auto malformed_bytes = original;
+            malformed_bytes.at(2) = 0x80;
+            sysex::SyxDocument malformed_document{
+                malformed_bytes,
+                {{sysex::SysExFrameStatus::malformed, malformed_bytes, "large malformed",
+                  std::nullopt, false}}};
+            const auto rejected_malformed =
+                session.load_document(std::move(malformed_document), "large-malformed.syx");
+            TAUREON_REQUIRE(!rejected_malformed);
+            TAUREON_REQUIRE(rejected_malformed.error().code == midi::MidiErrorCode::incomplete_data);
+
+            auto incomplete_bytes = original;
+            incomplete_bytes.pop_back();
+            sysex::SyxDocument incomplete_document{
+                incomplete_bytes,
+                {{sysex::SysExFrameStatus::incomplete, incomplete_bytes, "large incomplete",
+                  std::nullopt, false}}};
+            const auto rejected_incomplete =
+                session.load_document(std::move(incomplete_document), "large-incomplete.syx");
+            TAUREON_REQUIRE(!rejected_incomplete);
+            TAUREON_REQUIRE(rejected_incomplete.error().code == midi::MidiErrorCode::incomplete_data);
+
+            sysex::SyxDocument tainted_document{
+                original,
+                {{sysex::SysExFrameStatus::complete, original, "large data loss", std::nullopt, true}}};
+            const auto rejected_tainted =
+                session.load_document(std::move(tainted_document), "large-tainted.syx");
+            TAUREON_REQUIRE(!rejected_tainted);
+            TAUREON_REQUIRE(rejected_tainted.error().code == midi::MidiErrorCode::incomplete_data);
+        }
+
+        // Stage-5 large-data cancellation is a real in-flight transfer: the first large
+        // frame blocks in the fake transport until cancellation is requested, then the
+        // engine deterministically reaches cancelled before the test proceeds.
+        const auto cancellable_frame = large_frame(1024U * 1024U + 257U);
+        const std::vector<std::uint8_t> trailing_frame{0xF0, 0x7D, 0x55, 0xF7};
+        sysex::SyxDocument cancellable_document;
+        cancellable_document.raw_bytes = cancellable_frame;
+        cancellable_document.raw_bytes.insert(cancellable_document.raw_bytes.end(),
+                                               trailing_frame.begin(), trailing_frame.end());
+        cancellable_document.frames = {
+            {sysex::SysExFrameStatus::complete, cancellable_frame, {}, std::nullopt, false},
+            {sysex::SysExFrameStatus::complete, trailing_frame, {}, std::nullopt, false}};
+        TAUREON_REQUIRE(session.load_document(std::move(cancellable_document), "large-cancel.syx"));
+        const auto cancellable_messages = session.build_raw_send(midi::MidiBackend::winmm, std::nullopt);
+        TAUREON_REQUIRE(cancellable_messages && cancellable_messages.value().size() == 2);
+
+        struct SendGate {
+            std::mutex mutex;
+            std::condition_variable changed;
+            bool first_send_entered{};
+            bool release_first_send{};
+        };
+        auto gate = std::make_shared<SendGate>();
+        const auto tx = output_endpoint();
+        midi::FakeMidiTransport transport(midi::MidiBackend::winmm, {tx});
+        transport.set_send_hook([gate](const midi::NativeMidiMessage&) {
+            std::unique_lock lock(gate->mutex);
+            gate->first_send_entered = true;
+            gate->changed.notify_all();
+            gate->changed.wait(lock, [&] { return gate->release_first_send; });
+            return midi::Result<void>::success();
+        });
+        TAUREON_REQUIRE(transport.open({std::nullopt, tx.identity}));
+        transfer::TransferEngine engine(transport);
+        TAUREON_REQUIRE(engine.start(cancellable_messages.value()));
+        {
+            std::unique_lock lock(gate->mutex);
+            gate->changed.wait(lock, [&] { return gate->first_send_entered; });
+        }
+        TAUREON_REQUIRE(engine.state() == transfer::TransferState::running);
+        engine.request_cancel();
+        {
+            std::scoped_lock lock(gate->mutex);
+            gate->release_first_send = true;
+        }
+        gate->changed.notify_all();
+        const auto cancelled = engine.wait();
+        TAUREON_REQUIRE(cancelled.state == transfer::TransferState::cancelled);
+        TAUREON_REQUIRE(cancelled.progress.messages_total == 2);
+        TAUREON_REQUIRE(cancelled.progress.messages_accepted == 1);
+        TAUREON_REQUIRE(cancelled.progress.bytes_total ==
+                        cancellable_frame.size() + trailing_frame.size());
+        TAUREON_REQUIRE(cancelled.progress.bytes_accepted == cancellable_frame.size());
+        TAUREON_REQUIRE(transport.diagnostics().transmitted_messages == 1);
+        TAUREON_REQUIRE(transport.close());
 
         TAUREON_REQUIRE(session.begin_receive());
         const auto fresh_capture = session.snapshot();

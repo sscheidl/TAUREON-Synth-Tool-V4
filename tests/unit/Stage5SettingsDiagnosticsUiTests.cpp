@@ -71,6 +71,9 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(diagnostics.findChild<QPushButton*>("diagnosticsExportBundle") != nullptr);
         TAUREON_REQUIRE(settings.findChild<QPushButton*>("settingsSave") != nullptr);
         TAUREON_REQUIRE(settings.findChild<QLabel*>("settingsPreferredReceiveRoute")->text().contains("No exact"));
+        auto* application_scope = settings.findChild<QLabel*>("settingsApplicationScope");
+        TAUREON_REQUIRE(application_scope != nullptr &&
+                        application_scope->text().contains("not applied to the running application"));
 
         app::ConnectionSnapshot snapshot;
         snapshot.receive_route = endpoint(midi::MidiDirection::input).identity;
@@ -93,6 +96,14 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(export_policy->include_route_identity);
         TAUREON_REQUIRE(settings.save());
         TAUREON_REQUIRE(!export_policy->include_route_identity);
+
+        const auto default_bundle = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} /
+                                    "stage5-diagnostics-default-policy.txt";
+        std::filesystem::remove(default_bundle, error);
+        gui::DiagnosticsPanel default_policy_diagnostics(worker, queue, {});
+        TAUREON_REQUIRE(default_policy_diagnostics.export_bundle(default_bundle));
+        TAUREON_REQUIRE(std::filesystem::exists(default_bundle));
+        std::filesystem::remove(default_bundle, error);
 
         diagnostics.show();
         QEventLoop wait_for_visible_refresh;

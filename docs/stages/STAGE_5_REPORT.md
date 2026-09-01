@@ -512,11 +512,11 @@ The aggregate-budget test intentionally allocates roughly 512 MiB of real raw-by
 
 The Manager test imports and byte-exactly exports complete synthetic frames of 64 KiB, 600 KiB, 900 KiB, and 1 MiB + 257 bytes. At the observed peak after those four imports, alongside two 527-byte fixture documents, it asserts **6 workspace items, 6 frames, and 2,651,423 loaded raw bytes**. This is the measured Manager-workspace growth figure for the test, not a Monitor constant.
 
-Malformed, incomplete, and tainted save/merge/encode rejection remains covered by retained smaller-input tests. Large-size malformed/tainted variants are **not** added in Slice 9a and remain an explicitly outstanding test extension. The cancellation evidence reused here is the existing Stage-3 16×64 KiB transfer cancellation regression; it is pre-existing evidence, not Slice-9a-created evidence. Offscreen tests prove bounded work/state transitions, not machine wall-clock responsiveness.
+This retained Slice-9a statement is superseded by the Block-A evidence below. Offscreen tests prove bounded work/state transitions, not machine wall-clock responsiveness.
 
 ### Model/view scope stated honestly
 
-Slice 9a adds Librarian repeated-refresh evidence and the repaired Manager/Diagnostics UI tests only. Earlier Slice-5–8 tests provide the existing model-index, roles, headers, insert/remove/reset, filtering/sorting where exposed, keyboard, and extended-selection coverage. Slice 9a does **not** add selection-preservation across insert/remove/reset or model destruction while MonitorEventBridge queued batches are pending. Those two model/view extensions remain outstanding for the Stage-5 software follow-up owner after this targeted review; they are not claimed as completed evidence.
+This Slice-9a scope statement is superseded by the Block-A model/view evidence below. Earlier Slice-5–8 tests remain retained evidence for the other listed model, filtering, keyboard, and extended-selection behavior.
 
 ### Accepted targeted corrections
 
@@ -536,3 +536,53 @@ Slice 9a adds Librarian repeated-refresh evidence and the repaired Manager/Diagn
 [Windows CI #176](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33367640795) ran on targeted-repair head `e42d6e6b68b38e1dd875f7b827891f525dbd04c1`: full Windows Debug configure/build passed and **24/24 CTest tests passed, 0 failed, 0 skipped**.
 
 B-3 remains **OUTSTANDING**: actual `QApplication` WMS/WinMM apartment, close-active, and shutdown-lifetime evidence requires Slice 9b on the Product Owner's Windows hardware after 09.09.2026. The visual half of B-4 remains **OUTSTANDING**: 1920×1080 inspection at 125%, 150%, and 200% requires the same Slice 9b environment. The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**. Stage 5 remains **ACTIVE**; Stage 6 has not begun.
+
+
+## Block A — complete software finalization (PR #7)
+
+**Starting main:** `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`
+**Branch:** `codex/stage5-software-finalization`
+**Draft PR:** [#7](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/7)
+
+Block A closes only deterministic, cloud-verifiable software work. It neither changes the accepted Stage-2/3/4 contracts nor claims native WMS/WinMM, physical-device, timing, or visual Windows evidence.
+
+### Block-A implementation and retained-evidence disposition
+
+- **N-1 — error-code ordering:** established ordinal positions remain stable; the later L-3 `resource_limit_exceeded` code remains the newest enum value. `stage5_sysex_manager_unit` asserts the relevant values.
+- **N-2 — transfer eligibility:** stored and presentation Manager items use one shared verified-complete/unaffected eligibility rule. `stage5_sysex_manager_unit` covers Manager transfer admission and rejection.
+- **N-3 — tainted capture document:** the bounded `add_document` path admits an already captured document without mutable-workspace exposure; taint remains visible and rejects normal export, merge, and transfer. This is not a claim that file loading manufactures DataLoss.
+- **N-6 / §15.5 software half:** `stage5_application_unit` uses a real `QTableView`/selection model across insertion, removal, and reset, and destroys the monitored model before a queued bridge drain is processed. The bridge closes presentation acceptance synchronously, drains pending presentation work, and cannot call the destroyed model. The test uses neither `QPointer`, sleep, nor timeout-based synchronization.
+- **§15.1 fake close while in flight:** `stage5_application_unit` blocks the fake transport's first raw SysEx send, observes the running transfer state, closes the presentation acceptance gate, proves a later callback is rejected, requests cancellation, releases the gate, and lets `ConnectionWorker` join. It is fake/software evidence only, not Product-host WMS/WinMM evidence.
+- **§15.3 large SysEx:** `stage5_sysex_manager_unit` covers 64 KiB, 600 KiB, 900 KiB, and 1 MiB + 257 B valid input with byte-exact output, plus malformed, incomplete, and tainted variants at every size. The malformed variant keeps one large malformed frame by placing its invalid status at the terminal byte; it therefore tests large malformed data rather than manufacturing thousands of unrelated out-of-frame fragments. Verified-complete export/merge remains rejected for all invalid variants and raw bytes are not repaired, normalized, or silently truncated.
+- **§15.3 cancellation:** `stage5_sysex_transfer_session_unit` adds a Stage-5-specific in-flight cancellation of a >1 MiB first frame followed by a second frame. The fake send gate proves the transfer is running before cancellation; the terminal state is cancelled and only the accepted first message/bytes are counted.
+- **S7-3:** Settings state exactly which preferences are persisted only and which settings take effect in this foundation. `stage5_settings_diagnostics_ui_unit` asserts the disclosure.
+- **S7-4:** Diagnostics uses documented default export policy when the optional shared policy is absent. `stage5_settings_diagnostics_ui_unit` exercises that path.
+- **L-3:** unchanged: 256 MiB maximum raw bytes per document and 512 MiB aggregate loaded raw bytes are product resource limits, not protocol limits.
+
+### Gate and §23 traceability
+
+| Brief | Requirement | Test / evidence | Status |
+|---|---|---|---|
+| Gate 1–3 | Qt production host; Qt boundary; exact RX/TX routes | retained `stage5_gui_smoke`, `stage5_application_unit`, `stage5_connection_worker_unit`, `stage5_connection_ui_unit` | Block A fulfilled |
+| Gate 4 / §15.2 | bounded Monitor and 100,000-event evidence | retained `stage5_monitor_stress`; measured record above | Block A fulfilled |
+| Gate 5–6 / §15.3 | raw SysEx integrity; non-destructive Manager | retained `stage5_sysex_transfer_session_unit`, `stage5_sysex_manager_unit`; Block-A large invalid/cancellation evidence above | Block A fulfilled |
+| Gate 7–8 / §16 | profile evidence, override, explicit binding | retained `stage5_profile_followup_unit`, `stage5_profile_ui_unit` | Block A fulfilled |
+| Gate 9 | bounded Librarian without semantic overclaim | retained `stage5_librarian_unit` | Block A fulfilled |
+| Gate 10–11 | payload-free diagnostics; versioned settings | retained `stage5_settings_diagnostics_unit`, `stage5_settings_diagnostics_ui_unit` | Block A fulfilled |
+| §15.1 | close while activity is proven in flight | `stage5_application_unit` fake-transport gate/cancellation evidence | Block A fulfilled; not native evidence |
+| §15.5 software half | selection and queued Model destruction | `stage5_application_unit` real Qt model/event paths | Block A fulfilled |
+| §15.4 / Gate 12 | actual QApplication WMS/WinMM lifecycle and active close | Product Owner Windows runtime after 09.09.2026 | Block B outstanding |
+| §15.5 visual half / Gate 13 | 1920×1080 visual inspection at 125%, 150%, 200% | Product Owner Windows inspection after 09.09.2026 | Block B outstanding |
+| §15.6 / Gate 14 | cloud software build/regression | [Windows CI #215](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/33472607926) at `5a5e495bca30babb00b1a62119b8f247878d33b8`: whitespace PASS, Debug build PASS, 24/24 CTest PASS, 0 failed, 0 skipped | Code evidence fulfilled; final documentation revision must pass its own CI |
+| Gate 15 / §23 | honest limits and unresolved work | this report and `PROJECT_STATE.md` | Block A fulfilled |
+
+The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**. They are not cloud failures and are not represented as skipped coverage.
+
+### Block B — explicitly remaining
+
+- actual `QApplication` WMS/WinMM apartment, receive/send-active close, callback, queue, join, and resource-trend evidence;
+- actual WMS/WinMM runtime, port, device, loopback, and timing evidence;
+- physical MIDI/SysEx hardware evidence;
+- Windows 1920×1080 visual inspection at 125%, 150%, and 200% scaling.
+
+**Stage 5 remains HOLD/ACTIVE.** Block A is a review candidate only after the CI run attached to this documentation revision is green. No Stage 6 work has begun.

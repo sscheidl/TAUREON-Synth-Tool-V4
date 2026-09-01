@@ -44,6 +44,12 @@ std::vector<std::uint8_t> large_frame(const std::size_t bytes) {
 
 int main() {
     return test::run([] {
+        // N-1: the established codes retain their serialized ordinal positions; newer codes append.
+        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::serialization_error) == 11);
+        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::resource_limit_exceeded) == 21);
+        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::not_found) == 19);
+        TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::invalid_argument) == 20);
+
         const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
                              "novation_summit_crazy_sine.syx";
         const auto fixture_bytes = read_bytes(fixture);
@@ -148,6 +154,70 @@ int main() {
             TAUREON_REQUIRE(manager.snapshot().items.back().byte_count == original.size());
             TAUREON_REQUIRE(manager.export_frames(large_item.value(), {0}, output));
             TAUREON_REQUIRE(read_bytes(output) == original);
+
+            // Each required size also preserves its invalid state; no raw bytes are repaired,
+            // normalized, or admitted to verified-complete export/merge paths.
+            app::SysExManager invalid_large_manager(registry);
+            const auto malformed_input = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} /
+                ("stage5-manager-large-malformed-" + std::to_string(bytes) + ".syx");
+            const auto incomplete_input = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} /
+                ("stage5-manager-large-incomplete-" + std::to_string(bytes) + ".syx");
+            const auto rejected_output = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} /
+                ("stage5-manager-large-rejected-" + std::to_string(bytes) + ".syx");
+            remove_file(malformed_input);
+            remove_file(incomplete_input);
+            remove_file(rejected_output);
+
+            auto malformed_bytes = original;
+            // Keep one malformed large frame: an early status would intentionally split every
+            // following data byte into a separate out-of-frame malformed fragment.
+            malformed_bytes.back() = 0x80;
+            write_bytes(malformed_input, malformed_bytes);
+            const auto malformed_large = invalid_large_manager.add_file(malformed_input);
+            TAUREON_REQUIRE(malformed_large);
+            const auto malformed_large_snapshot = invalid_large_manager.snapshot().items.back();
+            TAUREON_REQUIRE(malformed_large_snapshot.byte_count == malformed_bytes.size());
+            TAUREON_REQUIRE(malformed_large_snapshot.malformed_frames == 1);
+            TAUREON_REQUIRE(!invalid_large_manager.export_frames(
+                malformed_large.value(), {0}, rejected_output));
+            TAUREON_REQUIRE(!std::filesystem::exists(rejected_output));
+            TAUREON_REQUIRE(invalid_large_manager.frame_bytes({malformed_large.value(), 0}).value() ==
+                            malformed_bytes);
+
+            auto incomplete_bytes = original;
+            incomplete_bytes.pop_back();
+            write_bytes(incomplete_input, incomplete_bytes);
+            const auto incomplete_large = invalid_large_manager.add_file(incomplete_input);
+            TAUREON_REQUIRE(incomplete_large);
+            const auto incomplete_large_snapshot = invalid_large_manager.snapshot().items.back();
+            TAUREON_REQUIRE(incomplete_large_snapshot.byte_count == incomplete_bytes.size());
+            TAUREON_REQUIRE(incomplete_large_snapshot.incomplete_frames == 1);
+            TAUREON_REQUIRE(!invalid_large_manager.merge_frames(
+                {{incomplete_large.value(), 0}}, rejected_output));
+            TAUREON_REQUIRE(!std::filesystem::exists(rejected_output));
+            TAUREON_REQUIRE(invalid_large_manager.frame_bytes({incomplete_large.value(), 0}).value() ==
+                            incomplete_bytes);
+
+            sysex::SyxDocument tainted_large_document;
+            tainted_large_document.raw_bytes = original;
+            tainted_large_document.frames.push_back(
+                {sysex::SysExFrameStatus::complete, original, "injected large data loss",
+                 std::nullopt, true});
+            const auto tainted_large = invalid_large_manager.add_document(
+                std::move(tainted_large_document), "captured-large-tainted.syx");
+            TAUREON_REQUIRE(tainted_large);
+            const auto tainted_large_snapshot = invalid_large_manager.snapshot().items.back();
+            TAUREON_REQUIRE(tainted_large_snapshot.byte_count == original.size());
+            TAUREON_REQUIRE(tainted_large_snapshot.tainted_frames == 1);
+            TAUREON_REQUIRE(!invalid_large_manager.export_frames(
+                tainted_large.value(), {0}, rejected_output));
+            TAUREON_REQUIRE(!std::filesystem::exists(rejected_output));
+            TAUREON_REQUIRE(invalid_large_manager.frame_bytes({tainted_large.value(), 0}).value() ==
+                            original);
+
+            remove_file(malformed_input);
+            remove_file(incomplete_input);
+            remove_file(rejected_output);
             remove_file(input);
             remove_file(output);
         }
