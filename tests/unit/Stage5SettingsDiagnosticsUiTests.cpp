@@ -73,7 +73,9 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(settings.findChild<QLabel*>("settingsPreferredReceiveRoute")->text().contains("No exact"));
         auto* application_scope = settings.findChild<QLabel*>("settingsApplicationScope");
         TAUREON_REQUIRE(application_scope != nullptr &&
-                        application_scope->text().contains("not applied to the running application"));
+                        application_scope->text().contains("every other preference") &&
+                        application_scope->text().contains("stored only") &&
+                        application_scope->text().contains("log rotation size"));
 
         app::ConnectionSnapshot snapshot;
         snapshot.receive_route = endpoint(midi::MidiDirection::input).identity;
