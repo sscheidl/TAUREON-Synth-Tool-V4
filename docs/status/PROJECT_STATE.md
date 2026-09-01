@@ -1,6 +1,6 @@
 # TAUREON V4 – Project State
 
-**Last updated:** 2026-08-24
+**Last updated:** 2026-09-01
 **Maintained by:** ChatGPT Classic / Project Manager
 
 ## Current stage
@@ -30,18 +30,18 @@ Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
 
 Stage 5 – Qt 6 Product GUI
-Status: ACTIVE / Slice 9a targeted repair in progress
-Gate: NOT COMPLETE — Draft PR #6 remains under independent review
+Status: ACTIVE / Block A review candidate pending comprehensive independent review
+Gate: HOLD — Block B native/local/hardware/visual evidence remains outstanding
 Implementation lead: Codex
 ```
 
-## Stage 5 readiness — Slice 9a
+## Stage 5 readiness — Block A
 
-Slice 8 was merged at `2ca2c246f15ab9ee5be6e9b04fb38e102d361032`. Slice 9a continues on `codex/stage5-software-completion` as [Draft PR #6](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/6). It is not merged and Stage 5 is not complete.
+Slice 9a was merged at `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`. The single Block-A completion branch is `codex/stage5-software-finalization` as [Draft PR #7](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/7). It remains unmerged.
 
-The software-side resource policy, Librarian/Manager/Diagnostics repair evidence, and documentation repair are under targeted re-review. L-3 remains a safety/resource policy: 256 MiB per document and 512 MiB aggregate raw workspace payload. Those values neither claim MIDI/SysEx protocol limits nor bound total process memory.
+Block A closes deterministic cloud/software evidence: N-1, N-2, N-3, N-6, S7-3, S7-4, the fake close-while-in-flight proof, large SysEx malformed/incomplete/tainted rejection, and Stage-5-specific large cancellation. L-3 is unchanged: 256 MiB per document and 512 MiB aggregate raw workspace payload are resource limits, not MIDI/SysEx protocol limits and not total-process-memory bounds. Detailed traceability is in [`STAGE_5_REPORT.md`](../stages/STAGE_5_REPORT.md).
 
-Deliberately outstanding for Slice 9b on the Product Owner's Windows machine after 09.09.2026:
+Still deliberately outstanding for Block B on the Product Owner's Windows machine after 09.09.2026:
 
 - B-3: actual `QApplication` WMS/WinMM apartment, active-close, and shutdown-lifetime evidence.
 - B-4 visual half: 1920×1080 Windows visual inspection at 125%, 150%, and 200% scaling.
@@ -183,8 +183,7 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Implement the approved Stage-5 vertical slices. Preserve FU-3 and all accepted route, taint, lifetime, and
-capability contracts. Do not begin Stage 6.
+Complete the comprehensive independent review of the frozen Block-A PR head after its final Windows CI is green. Do not merge and do not begin Stage 6. Block B remains the later real Windows/local/manual validation.
 
 ## Hardware validation
 
