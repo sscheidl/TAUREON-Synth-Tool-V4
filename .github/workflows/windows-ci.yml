@@ -81,6 +81,38 @@ jobs:
       - name: Build complete software configuration
         run: cmake --build build/ci --config Debug --parallel
 
+      - name: Render Stage 5 GUI visual previews
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: 'offscreen:configfile=tests/fixtures/offscreen-1920x1080.json'
+        run: |
+          $previewDirectory = Join-Path $PWD "build/ci/stage5-gui-preview"
+          & ".\\build\\ci\\tests\\Debug\\stage5_gui_preview_capture.exe" $previewDirectory
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $expected = @(
+            "01-midi-monitor.png",
+            "02-sysex-transfer.png",
+            "03-sysex-manager.png",
+            "04-librarian.png",
+            "05-devices-and-profiles.png",
+            "06-diagnostics.png",
+            "07-settings.png"
+          )
+          foreach ($fileName in $expected) {
+            if (-not (Test-Path (Join-Path $previewDirectory $fileName))) {
+              throw "Missing Stage 5 GUI preview: $fileName"
+            }
+          }
+
+      - name: Upload Stage 5 GUI visual previews
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02a # v4
+        with:
+          name: stage5-gui-preview-1920x1080
+          path: build/ci/stage5-gui-preview
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Enumerate configured tests
         shell: pwsh
         run: |
