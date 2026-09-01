@@ -4,7 +4,6 @@
 
 #include <QObject>
 
-#include <QMetaObject>
 
 class QTimer;
 
@@ -17,6 +16,7 @@ public:
     struct PresentationStats {
         std::uint64_t displayed{};
         std::uint64_t discarded_while_paused{};
+        std::uint64_t discarded_after_close{};
         bool paused{};
     };
 
@@ -33,7 +33,6 @@ private:
     app::MonitorEventQueue& queue_;
     MidiMonitorModel* model_{};
     QTimer* timer_{};
-    QMetaObject::Connection model_destroyed_connection_;
     bool accepting_gui_updates_{true};
     PresentationStats stats_;
 };

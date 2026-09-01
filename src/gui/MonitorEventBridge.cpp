@@ -13,7 +13,7 @@ MonitorEventBridge::MonitorEventBridge(app::MonitorEventQueue& queue, MidiMonito
     : QObject(parent), queue_(queue), model_(&model), timer_(new QTimer(this)) {
     // The model's same-thread destruction closes this bridge before its storage is released.
     // This is an explicit lifetime gate, not QPointer or an asynchronous raw-pointer handoff.
-    model_destroyed_connection_ = connect(&model, &QObject::destroyed, this, [this] {
+    connect(&model, &QObject::destroyed, this, [this] {
         model_ = nullptr;
         shutdown();
     });
@@ -48,7 +48,7 @@ void MonitorEventBridge::shutdown() noexcept {
     timer_->stop();
     queue_.close_acceptance();
     // A closed presentation discards already queued model work deterministically.
-    static_cast<void>(queue_.drain(std::numeric_limits<std::size_t>::max()));
+    stats_.discarded_after_close += queue_.drain(std::numeric_limits<std::size_t>::max()).size();
 }
 
 } // namespace taureon::gui

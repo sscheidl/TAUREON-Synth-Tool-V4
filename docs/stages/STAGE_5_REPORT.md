@@ -553,7 +553,7 @@ Block A closes only deterministic, cloud-verifiable software work. It neither ch
 - **N-3 — tainted capture document:** the bounded `add_document` path admits an already captured document without mutable-workspace exposure; taint remains visible and rejects normal export, merge, and transfer. This is not a claim that file loading manufactures DataLoss.
 - **N-6 / §15.5 software half:** `stage5_application_unit` uses a real `QTableView`/selection model across insertion, removal, and reset, and destroys the monitored model before a queued bridge drain is processed. The bridge closes presentation acceptance synchronously, drains pending presentation work, and cannot call the destroyed model. The test uses neither `QPointer`, sleep, nor timeout-based synchronization.
 - **§15.1 fake close while in flight:** `stage5_application_unit` blocks the fake transport's first raw SysEx send, observes the running transfer state, closes the presentation acceptance gate, proves a later callback is rejected, requests cancellation, releases the gate, and lets `ConnectionWorker` join. It is fake/software evidence only, not Product-host WMS/WinMM evidence.
-- **§15.3 large SysEx:** `stage5_sysex_manager_unit` covers 64 KiB, 600 KiB, 900 KiB, and 1 MiB + 257 B valid input with byte-exact output, plus malformed, incomplete, and tainted variants at every size. The malformed variant keeps one large malformed frame by placing its invalid status at the terminal byte; it therefore tests large malformed data rather than manufacturing thousands of unrelated out-of-frame fragments. Verified-complete export/merge remains rejected for all invalid variants and raw bytes are not repaired, normalized, or silently truncated.
+- **§15.3 large SysEx:** `stage5_sysex_manager_unit` covers 64 KiB, 600 KiB, 900 KiB, and 1 MiB + 257 B valid input with byte-exact output, plus malformed, incomplete, and tainted variants at every size. The four-size transfer-session rejection loop separately confirms the same status-based eligibility rejection for each representative input size; it is not evidence that rejection behavior varies by size. The malformed variant keeps one large malformed frame by placing its invalid status at the terminal byte; it therefore tests large malformed data rather than manufacturing thousands of unrelated out-of-frame fragments. Verified-complete export/merge remains rejected for all invalid variants and raw bytes are not repaired, normalized, or silently truncated.
 - **§15.3 cancellation:** `stage5_sysex_transfer_session_unit` adds a Stage-5-specific in-flight cancellation of a >1 MiB first frame followed by a second frame. The fake send gate proves the transfer is running before cancellation; the terminal state is cancelled and only the accepted first message/bytes are counted.
 - **S7-3:** Settings state exactly which preferences are persisted only and which settings take effect in this foundation. `stage5_settings_diagnostics_ui_unit` asserts the disclosure.
 - **S7-4:** Diagnostics uses documented default export policy when the optional shared policy is absent. `stage5_settings_diagnostics_ui_unit` exercises that path.
@@ -585,4 +585,15 @@ The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT
 - physical MIDI/SysEx hardware evidence;
 - Windows 1920×1080 visual inspection at 125%, 150%, and 200% scaling.
 
-**Stage 5 remains HOLD/ACTIVE.** Block A is a review candidate only after the CI run attached to this documentation revision is green. No Stage 6 work has begun.
+**Stage 5 remains HOLD/ACTIVE.** Block A was merged by commit `bd4dd4f26bf19c0bd25ef2f2136e70cb470365b8` after Windows CI #220 passed at that merge head (Debug build PASS; 24/24 CTest; 0 failed; 0 skipped). No Stage 6 work has begun.
+
+### Post-merge review follow-ups
+
+- **F-1:** Settings application-scope disclosure now covers every persisted-only preference; `stage5_settings_diagnostics_ui_unit` asserts the material wording.
+- **F-2:** Presentation shutdown now accounts for drained queued events in `PresentationStats::discarded_after_close`; `stage5_application_unit` asserts the final drain accounting.
+- **F-3:** The unused model-destruction connection handle was removed; QObject receiver-context disconnection remains the lifetime mechanism.
+- **F-4:** `stage5_application_unit` now asserts the terminal cancelled transfer snapshot after releasing the in-flight fake send gate.
+- **F-5:** The large SysEx description no longer implies size-dependent rejection evidence.
+- **F-6:** No code or documentation correction is required: the retained §15.6 CI #215 evidence remains structurally distinct from the final PR CI #219 and the post-merge CI #220.
+
+These changes do not alter a Stage-2/3/4 contract. Block B remains outstanding and the five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**.

@@ -140,8 +140,16 @@ void fake_close_while_activity_is_in_flight() {
             gate->release_send = true;
         }
         gate->changed.notify_all();
-        // ConnectionWorker destruction joins its worker after cancellation; no UI object is
-        // reachable because the bridge acceptance gate is already closed.
+
+        // The production close path waits for the accepted in-flight send to reach a terminal
+        // state before it disconnects the transport. It is the deterministic synchronization
+        // boundary for the terminal snapshot; no sleep or timeout is involved.
+        TAUREON_REQUIRE(worker->disconnect().get());
+        const auto terminal = worker->sysex_snapshot().get();
+        TAUREON_REQUIRE(terminal &&
+                        terminal.value().send_progress.state == transfer::TransferState::cancelled);
+        // ConnectionWorker destruction joins its worker; no UI object is reachable because the
+        // presentation acceptance gate is already closed.
     }
 
     TAUREON_REQUIRE(presentation_queue.stats().current_size == 0);
@@ -192,6 +200,7 @@ void selection_and_shutdown_tests() {
     // QObject destruction synchronously closes the presentation gate before queued drain executes.
     pending_model.reset();
     QApplication::processEvents(QEventLoop::AllEvents);
+    TAUREON_REQUIRE(bridge.presentation_stats().discarded_after_close == 1);
     TAUREON_REQUIRE(pending_queue.stats().current_size == 0);
     TAUREON_REQUIRE(!pending_queue.push(monitor_event(9, 68)));
     TAUREON_REQUIRE(pending_queue.stats().rejected_after_close == 1);

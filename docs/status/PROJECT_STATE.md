@@ -30,14 +30,14 @@ Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
 
 Stage 5 – Qt 6 Product GUI
-Status: ACTIVE / Block A review candidate pending comprehensive independent review
+Status: ACTIVE / Block A merged; targeted F-1–F-5 follow-up pending
 Gate: HOLD — Block B native/local/hardware/visual evidence remains outstanding
 Implementation lead: Codex
 ```
 
 ## Stage 5 readiness — Block A
 
-Slice 9a was merged at `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`. The single Block-A completion branch is `codex/stage5-software-finalization` as [Draft PR #7](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/7). It remains unmerged.
+Slice 9a was merged at `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`. Block A was merged at `bd4dd4f26bf19c0bd25ef2f2136e70cb470365b8` from reviewed PR #7 head `a4627d9113fa9191423171616e56b0a267fee763`. Windows CI #220 passed at the merge head with a full Debug build and 24/24 CTest, 0 failed, 0 skipped. A separate targeted follow-up handles F-1 through F-5; F-6 is a structural retained-evidence mapping with no action.
 
 Block A closes deterministic cloud/software evidence: N-1, N-2, N-3, N-6, S7-3, S7-4, the fake close-while-in-flight proof, large SysEx malformed/incomplete/tainted rejection, and Stage-5-specific large cancellation. L-3 is unchanged: 256 MiB per document and 512 MiB aggregate raw workspace payload are resource limits, not MIDI/SysEx protocol limits and not total-process-memory bounds. Detailed traceability is in [`STAGE_5_REPORT.md`](../stages/STAGE_5_REPORT.md).
 
