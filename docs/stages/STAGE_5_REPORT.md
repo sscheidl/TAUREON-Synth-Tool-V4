@@ -616,3 +616,36 @@ or Block-B evidence.
 
 Stage 5 remains **HOLD/ACTIVE**. The five hardware/loopback tests remain
 **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**.
+
+
+### Cloud-phase closure
+
+Enforced branch protection is not available for this private repository on the
+GitHub Free plan, so no protection rule or ruleset is enforced here.
+The standing control is therefore the manual pre-merge verification
+that has been applied to every Stage-5 pull request: the exact PR
+HEAD, a green Windows CI run identified by that `head_sha` rather
+than by a badge, and a conflict-free base. The PR whitespace check
+remains advisory. This is a plan limitation that has been assessed
+and accepted, not an unaddressed gap.
+
+B-5: the Stage-5 GUI preview captured 2164x1080 at DPR 1.0 although
+the offscreen screen was configured as 1920x1080 and `resize`
+requested 1920x1080. Because `resize` cannot go below
+`minimumSizeHint()` and no scaling factor applies at DPR 1.0, the
+most likely cause is that the MainWindow layout has an implicit
+minimum width of about 2164 px, not a hosted-runner artifact. If
+confirmed, the window does not fit a 1920x1080 desktop at 100% and
+is worse at 125%, 150% and 200%. Block B must measure
+`minimumSizeHint()` on the real Windows desktop before the visual
+inspection and record the actual value.
+
+Stage 5 cloud/software work is closed at
+d5f3a0bad140032fb6ef35c3cf5e1bb38c31d824. Everything that can be
+honestly proven without real Windows hardware has been implemented,
+tested and independently reviewed. Stage 5 remains HOLD/ACTIVE.
+Block B (B-3, B-4, B-5) is the only remaining Stage-5 work and
+requires the Product Owner's Windows machine after 09.09.2026.
+The five hardware/loopback tests remain
+NOT REGISTERED — NOT SKIPPED — NOT SIMULATED.
+Stage 6 has not begun.

@@ -41,12 +41,41 @@ Slice 9a was merged at `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`. Block A was m
 
 PR #9 was merged at `0ea82e526e89fddb2d6e8ae10a24b481c0937813`. Windows CI #236 passed at its exact head `434727d729097f844b42df7746e8d7b4b71b4d87` with whitespace PASS, Debug build PASS, capture/artifact upload PASS, and 24/24 CTest PASS, 0 failed, 0 skipped. The `stage5-gui-preview-1920x1080` artifact contains one capture of each actual workspace; the hosted offscreen raster was 2164×1080 at DPR 1.0. It is **VISUAL PREVIEW ONLY**, not Windows desktop, High-DPI, or Block-B evidence.
 
+Enforced branch protection is not available for this private repository on the
+GitHub Free plan, so no protection rule or ruleset is enforced here.
+The standing control is therefore the manual pre-merge verification
+that has been applied to every Stage-5 pull request: the exact PR
+HEAD, a green Windows CI run identified by that `head_sha` rather
+than by a badge, and a conflict-free base. The PR whitespace check
+remains advisory. This is a plan limitation that has been assessed
+and accepted, not an unaddressed gap.
+
+Stage 5 cloud/software work is closed at
+d5f3a0bad140032fb6ef35c3cf5e1bb38c31d824. Everything that can be
+honestly proven without real Windows hardware has been implemented,
+tested and independently reviewed. Stage 5 remains HOLD/ACTIVE.
+Block B (B-3, B-4, B-5) is the only remaining Stage-5 work and
+requires the Product Owner's Windows machine after 09.09.2026.
+The five hardware/loopback tests remain
+NOT REGISTERED — NOT SKIPPED — NOT SIMULATED.
+Stage 6 has not begun.
+
 Block A closes deterministic cloud/software evidence: N-1, N-2, N-3, N-6, S7-3, S7-4, the fake close-while-in-flight proof, large SysEx malformed/incomplete/tainted rejection, and Stage-5-specific large cancellation. L-3 is unchanged: 256 MiB per document and 512 MiB aggregate raw workspace payload are resource limits, not MIDI/SysEx protocol limits and not total-process-memory bounds. Detailed traceability is in [`STAGE_5_REPORT.md`](../stages/STAGE_5_REPORT.md).
 
 Still deliberately outstanding for Block B on the Product Owner's Windows machine after 09.09.2026:
 
 - B-3: actual `QApplication` WMS/WinMM apartment, active-close, and shutdown-lifetime evidence.
 - B-4 visual half: 1920×1080 Windows visual inspection at 125%, 150%, and 200% scaling.
+- B-5: the Stage-5 GUI preview captured 2164x1080 at DPR 1.0 although
+the offscreen screen was configured as 1920x1080 and `resize`
+requested 1920x1080. Because `resize` cannot go below
+`minimumSizeHint()` and no scaling factor applies at DPR 1.0, the
+most likely cause is that the MainWindow layout has an implicit
+minimum width of about 2164 px, not a hosted-runner artifact. If
+confirmed, the window does not fit a 1920x1080 desktop at 100% and
+is worse at 125%, 150% and 200%. Block B must measure
+`minimumSizeHint()` on the real Windows desktop before the visual
+inspection and record the actual value.
 
 The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**. No real MIDI device, port, WMS/WinMM runtime/timing, visual Windows quality, or High-DPI validation is claimed.
 
@@ -185,7 +214,7 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Keep Stage 5 at **HOLD/ACTIVE** until Block B is executed on the Product Owner's Windows machine after 09.09.2026. Then collect the real QApplication WMS/WinMM lifetime and active-close evidence, approved runtime/port/device/loopback/timing evidence, and visual inspection at 1920×1080 with 125%, 150%, and 200% scaling. Do not begin Stage 6.
+Keep Stage 5 at **HOLD/ACTIVE** until Block B is executed on the Product Owner's Windows machine after 09.09.2026. Then collect the real QApplication WMS/WinMM lifetime and active-close evidence, approved runtime/port/device/loopback/timing evidence, and visual inspection at 1920×1080 with 125%, 150%, and 200% scaling, including measurement of `minimumSizeHint()` before visual inspection. Do not begin Stage 6.
 
 ## Hardware validation
 
