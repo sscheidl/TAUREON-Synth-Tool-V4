@@ -597,3 +597,22 @@ The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT
 - **F-6:** No code or documentation correction is required: the retained §15.6 CI #215 evidence remains structurally distinct from the final PR CI #219 and the post-merge CI #220.
 
 These changes do not alter a Stage-2/3/4 contract. Block B remains outstanding and the five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**.
+
+### Post-merge status reconciliation
+
+The F-1 through F-5 changes were merged through PR #8 by commit
+`1ede95b8a7c3d8738999bc2f563aec23703968fe`. Windows CI #226 passed on the exact PR
+head `cdd72d9a7b9a5fbef2ada50a4d2c16f962cc7e37`: whitespace PASS, full Debug build PASS,
+24/24 CTest PASS, 0 failed, 0 skipped. F-6 remains the documented structural
+retained-evidence mapping and requires no action.
+
+PR #9 was merged by commit `0ea82e526e89fddb2d6e8ae10a24b481c0937813`. Windows CI #236 passed on the exact
+PR head `434727d729097f844b42df7746e8d7b4b71b4d87`: whitespace PASS, full Debug build
+PASS, capture and artifact upload PASS, 24/24 CTest PASS, 0 failed, 0 skipped. Its
+`stage5-gui-preview-1920x1080` artifact contains seven actual MainWindow workspace PNGs.
+The hosted Qt offscreen raster was 2164×1080 at DPR 1.0 despite the requested 1920×1080
+window. This is **VISUAL PREVIEW ONLY**; it is not Windows desktop, 125/150/200% High-DPI,
+or Block-B evidence.
+
+Stage 5 remains **HOLD/ACTIVE**. The five hardware/loopback tests remain
+**NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**.
