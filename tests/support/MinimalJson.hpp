@@ -18,10 +18,7 @@
 // JSON Schema engine; swap in a real library first if broader coverage is ever needed.
 
 #include <cctype>
-#include <map>
-#include <memory>
 #include <regex>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -156,8 +153,8 @@ private:
             skip_space();
             if (!consume(':')) fail("expected ':' after object key");
             skip_space();
-            for (const auto& [existing_key, _] : object) {
-                if (existing_key == key) fail("duplicate object key '" + key + "'");
+            for (const auto& entry : object) {
+                if (entry.first == key) fail("duplicate object key '" + key + "'");
             }
             object.emplace_back(std::move(key), parse_value());
             skip_space();

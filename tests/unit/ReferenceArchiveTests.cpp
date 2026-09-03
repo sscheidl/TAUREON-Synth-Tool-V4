@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -163,12 +165,20 @@ void test_invalid_instance_missing_required_field_is_rejected() {
 }
 
 void test_reference_and_fixture_data_do_not_leak_into_build_output() {
-    // (a) Neither the top-level nor the src/ CMake configuration references this archive
-    // at all today, so nothing in the current build can copy or install it. If a future
-    // change adds such a step, this text scan starts failing immediately.
+    // (a) No deployment/packaging command in the shipped build configuration may name
+    // reference/ or tests/. This deliberately matches only the commands that can put files
+    // into a deliverable (install/CPack/file(COPY)/copy_directory), so prose mentioning the
+    // word "reference" in a comment does not trip it, while a real leak does. Matching is
+    // whole-file rather than per-line so a multi-line install() cannot slip through.
+    static const std::regex deployment_leak(
+        R"((install\s*\([^)]*(reference|tests))"
+        R"(|copy_directory[^)]*(reference|tests))"
+        R"(|file\s*\(\s*COPY[^)]*(reference|tests))"
+        R"(|CPACK[^\n]*(reference|tests)))",
+        std::regex::icase);
     for (const auto& cmake_file : {source_root / "CMakeLists.txt", source_root / "src" / "CMakeLists.txt"}) {
         const auto text = read_text(cmake_file);
-        TAUREON_REQUIRE(text.find("reference") == std::string::npos);
+        TAUREON_REQUIRE(!std::regex_search(text, deployment_leak));
     }
 
     // (b) The actual deployable output directory next to taureon_app (where
