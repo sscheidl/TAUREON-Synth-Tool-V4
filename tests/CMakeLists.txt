@@ -41,6 +41,22 @@ endif()
 add_test(NAME stage4_profile_unit COMMAND stage4_profile_tests)
 set_tests_properties(stage4_profile_unit PROPERTIES LABELS "stage4;unit;ci")
 
+# Reference archive v1 (reference/README.md): schema/device.json/fixture data path only,
+# deliberately independent of taureon_midi_core and its ProfileLoader (see
+# tests/support/MinimalJson.hpp for why).
+add_executable(reference_archive_tests unit/ReferenceArchiveTests.cpp)
+target_include_directories(reference_archive_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_definitions(reference_archive_tests PRIVATE
+    TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    TAUREON_APP_OUTPUT_DIR="$<TARGET_FILE_DIR:taureon_app>")
+if(MSVC)
+    target_compile_options(reference_archive_tests PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(reference_archive_tests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME reference_archive_unit COMMAND reference_archive_tests)
+set_tests_properties(reference_archive_unit PROPERTIES LABELS "reference;unit;ci")
+
 find_package(Qt6 6.10 REQUIRED COMPONENTS Core Widgets)
 add_test(NAME stage5_gui_smoke COMMAND taureon_app --smoke-test)
 set_tests_properties(stage5_gui_smoke PROPERTIES

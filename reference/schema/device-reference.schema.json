@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://taureon.local/schema/device-reference-v1.json",
+  "title": "TAUREON Device Reference v1",
+  "description": "Development-only SysEx/MIDI reference entry for one device. Not a runtime device profile: see docs/architecture/PROFILE_SCHEMA_V1.md for that. This schema intentionally stays small; it records what is known, how confidently, and where the evidence lives.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "reference_id",
+    "manufacturer",
+    "model",
+    "midi_identity",
+    "dump_types",
+    "bank_organization",
+    "checksum",
+    "fixtures",
+    "external_sources",
+    "status_summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "reference_id": {
+      "type": "string",
+      "description": "Stable lowercase dotted identifier, e.g. novation.summit."
+    },
+    "manufacturer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status"],
+      "properties": {
+        "name": { "type": "string" },
+        "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+        "note": { "type": "string" }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status"],
+      "properties": {
+        "name": { "type": "string" },
+        "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+        "note": { "type": "string" }
+      }
+    },
+    "variant": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["name", "status"],
+      "properties": {
+        "name": { "type": "string" },
+        "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+        "note": { "type": "string" }
+      }
+    },
+    "firmware_reference": {
+      "type": ["string", "null"]
+    },
+    "midi_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manufacturer_id", "device_id_behavior"],
+      "properties": {
+        "manufacturer_id": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bytes", "status"],
+          "properties": {
+            "bytes": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 3,
+              "items": { "type": "integer", "minimum": 0, "maximum": 127 }
+            },
+            "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+            "note": { "type": "string" }
+          }
+        },
+        "family_id": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "bytes": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+            },
+            "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+            "note": { "type": "string" }
+          }
+        },
+        "model_id": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "bytes": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+            },
+            "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+            "note": { "type": "string" }
+          }
+        },
+        "device_id_behavior": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+            "note": { "type": "string" }
+          }
+        }
+      }
+    },
+    "dump_types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+          "header_bytes": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+          },
+          "size_bytes": { "type": ["integer", "null"] },
+          "size_range_bytes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": { "type": "integer", "minimum": 0 }
+          },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+          "header_bytes": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+          },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "bank_organization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+        "bank_count": { "type": ["integer", "null"], "minimum": 1 },
+        "slots_per_bank": { "type": ["integer", "null"], "minimum": 1 },
+        "note": { "type": "string" }
+      }
+    },
+    "checksum": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+        "algorithm": { "type": ["string", "null"] },
+        "note": { "type": "string" }
+      }
+    },
+    "fixtures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "sha256", "size_bytes", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path. Reuse an existing tests/fixtures entry rather than duplicating fixture bytes when one already exists."
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "size_bytes": { "type": "integer", "minimum": 1 },
+          "provenance_path": {
+            "type": "string",
+            "description": "Repository-relative path to the authoritative provenance record for this fixture."
+          },
+          "status": { "type": "string", "enum": ["confirmed", "observed", "inferred", "unknown"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "external_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source_url", "note"],
+        "properties": {
+          "source_url": { "type": "string" },
+          "original_filename": { "type": ["string", "null"] },
+          "size_bytes": { "type": ["integer", "null"] },
+          "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-fA-F]{64}$" },
+          "detected_dump_type": { "type": ["string", "null"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "status_summary": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

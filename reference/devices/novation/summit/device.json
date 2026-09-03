@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "reference_id": "novation.summit",
+  "manufacturer": {
+    "name": "Novation",
+    "status": "confirmed",
+    "note": "3-byte extended manufacturer ID 00 20 29 observed at offset 1..3 of the byte-exact fixture below; 00 20 29 is Novation Digital Music Systems' registered MIDI manufacturer ID."
+  },
+  "model": {
+    "name": "Summit",
+    "status": "confirmed",
+    "note": "Confirmed by the Product Owner as the source device of the fixture below; not derived from SysEx byte content alone."
+  },
+  "variant": null,
+  "firmware_reference": null,
+  "midi_identity": {
+    "manufacturer_id": {
+      "bytes": [0, 32, 41],
+      "status": "confirmed",
+      "note": "Offset 1..3 of the captured single-patch dump (F0 00 20 29 ...)."
+    },
+    "family_id": {
+      "bytes": [1],
+      "status": "observed",
+      "note": "Byte at offset 4 of the captured dump. Only ever observed as this one value in one capture; whether it is a family ID, a product ID, or something else is not established without Novation's official SysEx implementation chart."
+    },
+    "model_id": {
+      "bytes": [17, 1],
+      "status": "observed",
+      "note": "Bytes at offset 5..6 of the captured dump. Semantic meaning not established; recorded structurally only."
+    },
+    "device_id_behavior": {
+      "status": "unknown",
+      "note": "Only one static single-patch capture exists, with one fixed byte pattern throughout. Whether any of these bytes is a configurable MIDI Device ID (as opposed to a fixed product identifier) cannot be determined from a single capture; needs official documentation or a second capture taken with the Summit's Device ID changed."
+    }
+  },
+  "dump_types": [
+    {
+      "id": "single-patch",
+      "status": "confirmed",
+      "header_bytes": [240, 0, 32, 41, 1, 17, 1, 51],
+      "size_bytes": 527,
+      "note": "One complete F0..F7 frame; F0 at offset 0, F7 at offset 526. Matches the Stage 4 recognition fingerprint 'summit-single-patch-header' already declared in resources/device_profiles/novation-summit.profile.json. Observed on exactly one fixture; not yet confirmed as fixed-size across firmware revisions or patch content."
+    }
+  ],
+  "commands": [],
+  "bank_organization": {
+    "status": "unknown",
+    "note": "Not established. The only available fixture is a single-patch dump, not a bank dump, so bank/slot addressing has not been observed."
+  },
+  "checksum": {
+    "status": "unknown",
+    "algorithm": null,
+    "note": "Explicitly out of scope for the Stage 4 recognition work this entry is built on: tests/fixtures/novation_summit_crazy_sine.provenance.json records 'No checksum implementation' as a restriction on that fixture. No checksum algorithm has been derived or verified."
+  },
+  "fixtures": [
+    {
+      "id": "crazy-sine-single-patch",
+      "path": "tests/fixtures/novation_summit_crazy_sine.syx",
+      "sha256": "9FAECB1B98BC1926369528263B7CF7E9C9BFC7291A822F5E3BC38280D5BB7409",
+      "size_bytes": 527,
+      "provenance_path": "tests/fixtures/novation_summit_crazy_sine.provenance.json",
+      "status": "confirmed",
+      "note": "Reused from the existing, already byte-verified Stage 4 test fixture rather than duplicated here; that fixture is user-provided, private, and marked redistribution forbidden (see its provenance file and docs/reference/PROVENANCE.md)."
+    }
+  ],
+  "external_sources": [],
+  "status_summary": "Manufacturer ID and single-patch dump framing are confirmed byte-exact from one user-provided fixture. Family/model ID bytes are recorded structurally but not semantically interpreted. Device ID behavior, bank/slot organization, and checksum method are unknown. No official Novation documentation has been catalogued yet.",
+  "notes": "First reference-archive entry (v1 proof of concept). Deliberately thin: it exists to prove the reference/schema/device.json/fixture data path, not to be a complete Summit specification. Extend it only as further evidence (official documentation, additional captures) becomes available; do not upgrade any 'observed' or 'unknown' status to 'confirmed' without new evidence."
+}
