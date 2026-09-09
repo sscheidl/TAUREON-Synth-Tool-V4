@@ -17,6 +17,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStandardPaths>
@@ -200,7 +201,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
 
     auto* central = new QWidget(this);
     auto* layout = new QHBoxLayout(central);
-    layout->setContentsMargins(12, 12, 12, 12);
+    layout->setContentsMargins(8, 8, 8, 8);
 
     navigation_ = new QListWidget(central);
     navigation_->setObjectName("workspaceNavigation");
@@ -217,7 +218,12 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     monitor_bridge_ = new MonitorEventBridge(monitor_queue, *monitor_model_, this);
     workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_));
     sysex_transfer_panel_ = new SysExTransferPanel(connection_worker_);
-    workspace_stack_->addWidget(sysex_transfer_panel_);
+    auto* sysex_transfer_scroll = new QScrollArea(workspace_stack_);
+    sysex_transfer_scroll->setObjectName("sysExTransferScrollArea");
+    sysex_transfer_scroll->setFrameShape(QFrame::NoFrame);
+    sysex_transfer_scroll->setWidgetResizable(true);
+    sysex_transfer_scroll->setWidget(sysex_transfer_panel_);
+    workspace_stack_->addWidget(sysex_transfer_scroll);
     sysex_manager_panel_ = new SysExManagerPanel(
         profile_registry,
         [this](app::SysExManagerTransferItem item,
@@ -252,7 +258,12 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     settings_panel_ = new SettingsPanel(
         std::filesystem::path{settings_location.toStdWString()} / "taureon-settings.v1",
         diagnostics_log_, diagnostic_export_policy_, workspace_stack_);
-    workspace_stack_->addWidget(settings_panel_);
+    auto* settings_scroll = new QScrollArea(workspace_stack_);
+    settings_scroll->setObjectName("settingsScrollArea");
+    settings_scroll->setFrameShape(QFrame::NoFrame);
+    settings_scroll->setWidgetResizable(true);
+    settings_scroll->setWidget(settings_panel_);
+    workspace_stack_->addWidget(settings_scroll);
     content_layout->addWidget(workspace_heading_);
     content_layout->addWidget(workspace_stack_);
 

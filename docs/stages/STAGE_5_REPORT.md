@@ -649,3 +649,58 @@ requires the Product Owner's Windows machine after 09.09.2026.
 The five hardware/loopback tests remain
 NOT REGISTERED — NOT SKIPPED — NOT SIMULATED.
 Stage 6 has not begun.
+
+## Block B local Windows execution - 2026-09-09
+
+This section supersedes the earlier outstanding-state wording for B-3 and B-5. The
+work ran on the Product Owner's Windows machine from a fresh VS 2022 x64 Debug build
+using Qt 6.10.3 and Windows MIDI Services Console 1.0.17-rc.4.25. Local MIDI tests used
+only temporary, uniquely named WMS loopback endpoints. No physical MIDI endpoint was
+selected.
+
+### B-3 - PASS on the product host
+
+`stage5_local_product_host_lifecycle` is an opt-in local test around the production
+`QApplication`, `MainWindow`, `ConnectionWorker`, native transport factory, and actual
+WMS/WinMM backends. Its guarded PowerShell wrapper creates one temporary loopback pair,
+requires the names to be absent before creation, removes the pair in `finally`, and
+confirms absence through both backend enumerations afterward.
+
+For each backend the test completed 20 full create/connect/disconnect/destroy cycles,
+then destroyed the host during active receive and during a paced, partially completed
+256-frame Raw Send. Close and transport destruction were observed, shutdown remained
+below five seconds, no callback arrived after acceptance closed, no event was dropped,
+and the native process-handle trend was not sustained growth.
+
+```json
+{"event":"stage5_product_host","backend":"wms","cycles":20,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":1,"max_shutdown_ms":58,"steady_handle_min":461,"steady_handle_max":463,"steady_handle_slope":-0.193939,"sustained_handle_growth":false}
+{"event":"stage5_product_host","backend":"winmm","cycles":20,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":2,"max_shutdown_ms":23,"steady_handle_min":503,"steady_handle_max":503,"steady_handle_slope":0,"sustained_handle_growth":false}
+```
+
+The complete non-local suite passed 28/28. The final combined local suite passed 6/6
+in 341.55 seconds, comprising five retained MIDI regressions and the new product-host
+test. Handle sampling occurs behind complete per-cycle object destruction. This
+placement matters: the first diagnostic attempt sampled live test-owned objects and
+correctly refused to treat that count as a closed-cycle resource result.
+
+### B-4 and B-5 - responsive fix verified; native visual gate partial
+
+The real desktop is 1920x1200 at native Windows 125% scaling. Before correction,
+`MainWindow::minimumSizeHint()` was 1170x903 logical pixels and the requested physical
+1920x1080 capture became 1920x1129. Per-page measurement identified Settings as the
+height constraint and the SysEx action rows as the width constraint.
+
+Settings and SysEx Transfer now use scrollable workspaces at constrained heights,
+SysEx Transfer and Manager actions wrap over two rows, long Transfer evidence labels
+have safe wrapping, and the main content margin is eight logical pixels. The resulting
+minimum is 758x419. All seven actual workspaces were visually inspected at an exact
+1920x1080 capture size for native 125% (DPR 1.25), process-local simulated 150%
+(DPR 1.5), and process-local simulated 200% (DPR 2.0). The retained captures and exact
+measurements are in [`docs/evidence/stage5-block-b-20260909`](../evidence/stage5-block-b-20260909/README.md).
+
+B-5 is **CLOSED**: the implicit minimum-size defect is confirmed and corrected. B-4 is
+**PARTIAL**: native Windows 125% inspection passes and the simulated 150%/200% runs
+provide responsive-layout evidence, but simulations are not native OS display-scaling
+evidence. Native Windows 150% and 200% inspection remains outstanding, as does physical
+MIDI/SysEx hardware validation. Stage 5 therefore remains **HOLD/ACTIVE** and Stage 6
+has not begun.

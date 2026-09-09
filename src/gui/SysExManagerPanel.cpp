@@ -2,6 +2,7 @@
 
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QGridLayout>
 #include <QHeaderView>
 #include <QHBoxLayout>
 #include <QItemSelectionModel>
@@ -178,7 +179,7 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
     summary_label_->setWordWrap(true);
     root->addWidget(summary_label_);
 
-    auto* actions = new QHBoxLayout;
+    auto* actions = new QGridLayout;
     add_button_ = new QPushButton("Add .syx files…", this);
     add_button_->setObjectName("sysExManagerAdd");
     remove_button_ = new QPushButton("Remove from workspace", this);
@@ -189,11 +190,12 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
     merge_button_->setObjectName("sysExManagerMerge");
     open_transfer_button_ = new QPushButton("Open valid item in Transfer", this);
     open_transfer_button_->setObjectName("sysExManagerOpenTransfer");
-    actions->addWidget(add_button_);
-    actions->addWidget(remove_button_);
-    actions->addWidget(export_button_);
-    actions->addWidget(merge_button_);
-    actions->addWidget(open_transfer_button_);
+    actions->addWidget(add_button_, 0, 0);
+    actions->addWidget(remove_button_, 0, 1);
+    actions->addWidget(export_button_, 0, 2);
+    actions->addWidget(merge_button_, 1, 0, 1, 2);
+    actions->addWidget(open_transfer_button_, 1, 2);
+    for (int column = 0; column < 3; ++column) actions->setColumnStretch(column, 1);
     root->addLayout(actions);
 
     item_model_ = new SysExManagerItemModel(this);
