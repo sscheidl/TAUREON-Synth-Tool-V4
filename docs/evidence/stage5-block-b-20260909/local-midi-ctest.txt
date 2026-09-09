@@ -1,0 +1,30 @@
+Test project D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/vs2022-x64-block-b
+    Start 29: stage2_local_winmm_wms_loopback
+1/6 Test #29: stage2_local_winmm_wms_loopback ............   Passed    9.88 sec
+    Start 30: stage3_local_winmm_realtime
+2/6 Test #30: stage3_local_winmm_realtime ................   Passed    9.94 sec
+    Start 31: stage2_local_wms_lifecycle
+3/6 Test #31: stage2_local_wms_lifecycle .................   Passed  117.24 sec
+    Start 32: stage3_local_wms_realtime
+4/6 Test #32: stage3_local_wms_realtime ..................   Passed  119.29 sec
+    Start 33: stage2_local_stage1_winmm_byte_integrity
+5/6 Test #33: stage2_local_stage1_winmm_byte_integrity ...   Passed   17.56 sec
+    Start 34: stage5_local_product_host_lifecycle
+6/6 Test #34: stage5_local_product_host_lifecycle ........   Passed   67.63 sec
+
+100% tests passed out of 6
+
+Label Time Summary:
+byte-integrity     = 146.79 sec*proc (3 tests)
+gui                =  67.63 sec*proc (1 test)
+integration        = 341.54 sec*proc (6 tests)
+local-midi         = 341.54 sec*proc (6 tests)
+realtime           = 129.23 sec*proc (2 tests)
+stage1-evidence    =  17.56 sec*proc (1 test)
+stage2             = 144.68 sec*proc (3 tests)
+stage3             = 129.23 sec*proc (2 tests)
+stage5             =  67.63 sec*proc (1 test)
+winmm              =  87.45 sec*proc (3 tests)
+wms                = 304.16 sec*proc (3 tests)
+
+Total Test time (real) = 341.55 sec

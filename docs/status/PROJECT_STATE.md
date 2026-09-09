@@ -1,6 +1,6 @@
 # TAUREON V4 – Project State
 
-**Last updated:** 2026-09-01
+**Last updated:** 2026-09-09
 **Maintained by:** ChatGPT Classic / Project Manager
 
 ## Current stage
@@ -30,12 +30,12 @@ Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
 
 Stage 5 – Qt 6 Product GUI
-Status: HOLD/ACTIVE — Block A and post-merge F-1–F-5 follow-up merged
-Gate: HOLD — Block B native/local/hardware/visual evidence remains outstanding
+Status: HOLD/ACTIVE — Block A merged; Block B B-3 and B-5 completed locally
+Gate: HOLD — native 150%/200% visual and physical-hardware evidence remains outstanding
 Implementation lead: Codex
 ```
 
-## Stage 5 readiness — Block A
+## Stage 5 readiness — Block A and local Block B
 
 Slice 9a was merged at `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`. Block A was merged at `bd4dd4f26bf19c0bd25ef2f2136e70cb470365b8` from reviewed PR #7 head `a4627d9113fa9191423171616e56b0a267fee763`. Windows CI #220 passed at the merge head with a full Debug build and 24/24 CTest, 0 failed, 0 skipped. The targeted F-1 through F-5 follow-up was merged at `1ede95b8a7c3d8738999bc2f563aec23703968fe` from PR #8 head `cdd72d9a7b9a5fbef2ada50a4d2c16f962cc7e37`; Windows CI #226 passed at that exact head with whitespace PASS, full Debug build PASS, 24/24 CTest PASS, 0 failed, and 0 skipped. F-6 remains a structural retained-evidence mapping with no action.
 
@@ -51,33 +51,30 @@ remains advisory. This is a plan limitation that has been assessed
 and accepted, not an unaddressed gap.
 
 Stage 5 cloud/software work is closed at
-d5f3a0bad140032fb6ef35c3cf5e1bb38c31d824. Everything that can be
-honestly proven without real Windows hardware has been implemented,
-tested and independently reviewed. Stage 5 remains HOLD/ACTIVE.
-Block B (B-3, B-4, B-5) is the only remaining Stage-5 work and
-requires the Product Owner's Windows machine after 09.09.2026.
-The five hardware/loopback tests remain
-NOT REGISTERED — NOT SKIPPED — NOT SIMULATED.
-Stage 6 has not begun.
+`d5f3a0bad140032fb6ef35c3cf5e1bb38c31d824`. On 2026-09-09, local Block-B work was
+continued on the Product Owner's Windows machine. B-3 product-host lifecycle evidence
+passes for native WMS and WinMM, and B-5's minimum-size defect is corrected. B-4 passes
+at native 125%; process-local 150% and 200% simulations pass but do not replace native
+OS display-scaling inspection. Stage 5 remains HOLD/ACTIVE and Stage 6 has not begun.
 
 Block A closes deterministic cloud/software evidence: N-1, N-2, N-3, N-6, S7-3, S7-4, the fake close-while-in-flight proof, large SysEx malformed/incomplete/tainted rejection, and Stage-5-specific large cancellation. L-3 is unchanged: 256 MiB per document and 512 MiB aggregate raw workspace payload are resource limits, not MIDI/SysEx protocol limits and not total-process-memory bounds. Detailed traceability is in [`STAGE_5_REPORT.md`](../stages/STAGE_5_REPORT.md).
 
-Still deliberately outstanding for Block B on the Product Owner's Windows machine after 09.09.2026:
+Block-B disposition on the Product Owner's Windows machine:
 
-- B-3: actual `QApplication` WMS/WinMM apartment, active-close, and shutdown-lifetime evidence.
-- B-4 visual half: 1920×1080 Windows visual inspection at 125%, 150%, and 200% scaling.
-- B-5: the Stage-5 GUI preview captured 2164x1080 at DPR 1.0 although
-the offscreen screen was configured as 1920x1080 and `resize`
-requested 1920x1080. Because `resize` cannot go below
-`minimumSizeHint()` and no scaling factor applies at DPR 1.0, the
-most likely cause is that the MainWindow layout has an implicit
-minimum width of about 2164 px, not a hosted-runner artifact. If
-confirmed, the window does not fit a 1920x1080 desktop at 100% and
-is worse at 125%, 150% and 200%. Block B must measure
-`minimumSizeHint()` on the real Windows desktop before the visual
-inspection and record the actual value.
+- B-3 **PASS:** actual production `QApplication` and `MainWindow`, native WMS/WinMM,
+  20 lifecycle cycles per backend, receive-active close, send-active close, callback
+  closure, bounded queue, joined shutdown, and process-handle trend all pass.
+- B-4 **PARTIAL:** all seven 1920x1080 workspaces pass native Windows 125% inspection.
+  Effective 150% and 200% Qt simulations also fit and remain usable, but native Windows
+  150% and 200% inspection is still required.
+- B-5 **CLOSED:** the measured minimum changed from 1170x903 to 758x419 logical pixels;
+  captures at DPR 1.25, 1.5, and 2.0 are now exactly 1920x1080.
 
-The five hardware/loopback tests remain **NOT REGISTERED — NOT SKIPPED — NOT SIMULATED**. No real MIDI device, port, WMS/WinMM runtime/timing, visual Windows quality, or High-DPI validation is claimed.
+The opt-in local build registers five retained MIDI regressions plus the new product-host
+test. All retained tests pass, and the corrected product-host test passes with temporary
+loopback endpoints removed and confirmed absent. No physical MIDI device evidence is
+claimed. Detailed measurements and captures are in
+[`docs/evidence/stage5-block-b-20260909`](../evidence/stage5-block-b-20260909/README.md).
 
 ## Project location
 
@@ -201,8 +198,8 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
   bounded Summit profile, and the User-approved read-only fixture were accepted. FU-3 (P3) requires the future
   Stage-5 GUI to disclose a manual selection overridden by stronger fingerprint evidence and offer saved-binding
   promotion; the matching order itself remains unchanged.
-- **Stage 5:** Repeat apartment/lifetime/close-active/shutdown validation in the actual `QApplication` host
-  and measure actual active state at close.
+- **Stage 5:** Actual `QApplication` WMS/WinMM lifecycle and active-close validation passed
+  locally on 2026-09-09; native 150%/200% visual and physical-device evidence remains.
 
 ## Stage 0 evidence correction (2026-08-24)
 
@@ -214,10 +211,13 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Keep Stage 5 at **HOLD/ACTIVE** until Block B is executed on the Product Owner's Windows machine after 09.09.2026. Then collect the real QApplication WMS/WinMM lifetime and active-close evidence, approved runtime/port/device/loopback/timing evidence, and visual inspection at 1920×1080 with 125%, 150%, and 200% scaling, including measurement of `minimumSizeHint()` before visual inspection. Do not begin Stage 6.
+Keep Stage 5 at **HOLD/ACTIVE**. Perform native Windows 1920x1080 visual inspection at
+150% and 200% display scaling, then run the explicitly approved physical MIDI/SysEx
+hardware checks. Do not begin Stage 6.
 
 ## Hardware validation
 
-Not started for V4.
+Temporary WMS/WinMM loopback validation is complete. Physical MIDI/SysEx hardware
+validation has not started for V4.
 
 Previous hardware evidence belongs to the legacy/reference inventory until explicitly migrated as fixture/evidence.

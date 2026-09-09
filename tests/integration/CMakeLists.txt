@@ -67,3 +67,39 @@ if(TAUREON_BUILD_STAGE1_SPIKES)
         RESOURCE_LOCK "local-midi-environment"
         TIMEOUT 180)
 endif()
+
+if(TARGET taureon_wms_transport)
+    add_executable(stage5_product_host_local
+        Stage5ProductHostLocal.cpp
+        "${PROJECT_SOURCE_DIR}/src/app/ConnectionWorker.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/NativeTransportFactory.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/DiagnosticsPanel.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/MainWindow.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/LibrarianPanel.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorFilterModel.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/ProfileMatchPanel.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/SettingsPanel.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/SysExTransferPanel.cpp"
+        "${PROJECT_SOURCE_DIR}/src/gui/SysExManagerPanel.cpp")
+    set_target_properties(stage5_product_host_local PROPERTIES AUTOMOC ON)
+    target_include_directories(stage5_product_host_local PRIVATE
+        "${PROJECT_SOURCE_DIR}/tests")
+    target_link_libraries(stage5_product_host_local PRIVATE
+        taureon_midi_core taureon_winmm_transport taureon_wms_transport Qt6::Widgets)
+    target_compile_definitions(stage5_product_host_local PRIVATE
+        TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+        TAUREON_HAS_WMS_TRANSPORT=1)
+    target_compile_options(stage5_product_host_local PRIVATE /W4 /permissive- /EHsc)
+    add_test(NAME stage5_local_product_host_lifecycle
+        COMMAND "${TAUREON_PWSH_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
+                -File "${PROJECT_SOURCE_DIR}/tools/RunStage5ProductHostLoopback.ps1"
+                -Executable "$<TARGET_FILE:stage5_product_host_local>" -Cycles 20)
+    set_tests_properties(stage5_local_product_host_lifecycle PROPERTIES
+        LABELS "stage5;local-midi;integration;gui;winmm;wms"
+        RESOURCE_LOCK "local-midi-environment"
+        SKIP_RETURN_CODE 77
+        TIMEOUT 240
+        ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+endif()

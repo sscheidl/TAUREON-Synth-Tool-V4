@@ -86,6 +86,10 @@ int main(int argc, char* argv[]) {
         }, {}, profile_registry);
         app::MonitorEventQueue monitor_queue(32);
         gui::MainWindow window(monitor_queue, worker, profile_registry);
+        // Offscreen font metrics differ from the native Windows platform; retain the
+        // cross-platform guard against the original >1920-pixel minimum-size defect.
+        TAUREON_REQUIRE(window.minimumSizeHint().width() <= 1920);
+        TAUREON_REQUIRE(window.minimumSizeHint().height() <= 1080);
         window.show();
 
         auto* backend = window.findChild<QComboBox*>("backendSelector");
