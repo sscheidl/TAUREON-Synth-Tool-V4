@@ -121,3 +121,82 @@ jobs:
 
       - name: Test all cloud-capable software
         run: ctest --test-dir build/ci -C Debug -LE local-midi --output-on-failure
+
+      - name: Acquire pinned Windows MIDI Services build dependencies
+        shell: pwsh
+        run: .\tools\AcquireStage1Dependencies.ps1
+
+      - name: Configure internal hardware-test build
+        shell: pwsh
+        run: |
+          cmake -S . -B build/hardware-test -G "Visual Studio 17 2022" -A x64 -T v143 `
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
+            -DBUILD_TESTING=OFF `
+            -DTAUREON_BUILD_STAGE1_SPIKES=OFF `
+            -DTAUREON_ENABLE_WMS_TRANSPORT=ON `
+            -DTAUREON_BUILD_REVISION="${{ github.sha }}"
+
+      - name: Build internal hardware-test executable
+        run: cmake --build build/hardware-test --config RelWithDebInfo --target taureon_app --parallel
+
+      - name: Assemble and smoke-test portable hardware-test folder
+        shell: pwsh
+        run: |
+          $sourceExecutable = Join-Path $PWD "build\hardware-test\src\RelWithDebInfo\taureon_app.exe"
+          $bundleDirectory = Join-Path $PWD "build\TAUREON-V4-hardware-test-win64"
+          $bundleExecutable = Join-Path $bundleDirectory "TAUREON-Synth-Tool-V4.exe"
+
+          if (-not (Test-Path -LiteralPath $sourceExecutable -PathType Leaf)) {
+            throw "Hardware-test executable was not produced at $sourceExecutable"
+          }
+
+          New-Item -ItemType Directory -Force -Path $bundleDirectory | Out-Null
+          Copy-Item -LiteralPath $sourceExecutable -Destination $bundleExecutable
+          Copy-Item -LiteralPath (Join-Path (Split-Path $sourceExecutable) "resources") `
+            -Destination (Join-Path $bundleDirectory "resources") -Recurse
+
+          & windeployqt --release --no-translations --dir $bundleDirectory $bundleExecutable
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          $notice = @"
+          TAUREON Synth Tool V4 - internal hardware-test build
+
+          Revision: ${{ github.sha }}
+          Source branch: ${{ github.ref_name }}
+
+          Start TAUREON-Synth-Tool-V4.exe from this folder. Keep all DLL and
+          subfolders beside the EXE. This is an experimental validation build,
+          not a release. Real MIDI/SysEx behavior is not yet accepted until the
+          Product Owner records the physical-hardware results.
+
+          Windows MIDI Services requires the matching Windows MIDI Services
+          runtime already installed on the test PC. The WinMM backend remains
+          available independently.
+          "@
+          $notice.Trim() | Set-Content -LiteralPath (Join-Path $bundleDirectory "INTERNAL-TEST-BUILD.txt") -Encoding utf8
+
+          Push-Location $bundleDirectory
+          try {
+            & $bundleExecutable --smoke-test
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+            Get-ChildItem -File -Recurse |
+              Where-Object Name -ne "SHA256SUMS.txt" |
+              Sort-Object FullName |
+              ForEach-Object {
+                $relativePath = [IO.Path]::GetRelativePath($bundleDirectory, $_.FullName)
+                $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash.ToLowerInvariant()
+                "$hash  $relativePath"
+              } | Set-Content -LiteralPath (Join-Path $bundleDirectory "SHA256SUMS.txt") -Encoding ascii
+          }
+          finally {
+            Pop-Location
+          }
+
+      - name: Upload internal Windows hardware-test build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02a # v4
+        with:
+          name: TAUREON-V4-hardware-test-win64-${{ github.sha }}
+          path: build/TAUREON-V4-hardware-test-win64
+          if-no-files-found: error
+          retention-days: 14
