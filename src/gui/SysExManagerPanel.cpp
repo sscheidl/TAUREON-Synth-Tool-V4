@@ -205,6 +205,9 @@ SysExManagerPanel::SysExManagerPanel(std::shared_ptr<const profiles::ProfileRegi
     item_table_->setSelectionBehavior(QAbstractItemView::SelectRows);
     item_table_->setSelectionMode(QAbstractItemView::ExtendedSelection);
     item_table_->horizontalHeader()->setStretchLastSection(true);
+    item_table_->horizontalHeader()->resizeSection(
+        1, item_table_->horizontalHeader()->fontMetrics().horizontalAdvance(
+               QStringLiteral("Device / Manufacturer")) + 32);
     root->addWidget(item_table_, 2);
 
     frame_model_ = new SysExManagerFrameModel(this);

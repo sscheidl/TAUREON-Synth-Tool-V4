@@ -313,10 +313,19 @@ void SysExTransferPanel::set_pending(
 
 void SysExTransferPanel::poll_result() {
     using namespace std::chrono_literals;
+    if (refresh_pending_ && refresh_pending_->wait_for(0ms) == std::future_status::ready) {
+        auto refresh_result = refresh_pending_->get();
+        refresh_pending_.reset();
+        // A user action queued after this snapshot owns the next visible state.
+        if (!pending_) {
+            if (refresh_result) apply_snapshot(refresh_result.value());
+            else show_error(refresh_result.error());
+        }
+    }
     if (!pending_) {
-        if (++idle_ticks_ >= 10) {
+        if (!refresh_pending_ && ++idle_ticks_ >= 10) {
             idle_ticks_ = 0;
-            set_pending(worker_.sysex_snapshot(), PendingAction::refresh, "Refreshing transfer state…");
+            refresh_pending_ = worker_.sysex_snapshot();
         }
         return;
     }

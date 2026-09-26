@@ -11,6 +11,7 @@
 
 #include <QApplication>
 #include <QComboBox>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QLabel>
 #include <QListWidget>
@@ -118,6 +119,9 @@ int main(int argc, char* argv[]) {
         auto* transfer_panel = dynamic_cast<gui::SysExTransferPanel*>(
             window.findChild<QWidget*>("sysExTransferPanel"));
         auto* receive_sysex = window.findChild<QPushButton*>("sysExReceive");
+        auto* open_sysex = window.findChild<QPushButton*>("sysExOpen");
+        auto* clear_sysex = window.findChild<QPushButton*>("sysExClear");
+        auto* transfer_status = window.findChild<QLabel*>("sysExStatus");
         auto* raw_send = window.findChild<QPushButton*>("sysExRawSend");
         auto* validated_restore = window.findChild<QPushButton*>("sysExValidatedRestore");
         auto* frame_table = window.findChild<QTableView*>("sysExFrameTable");
@@ -126,12 +130,28 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(transfer_panel != nullptr);
         TAUREON_REQUIRE(transfer_panel->has_required_controls());
         TAUREON_REQUIRE(receive_sysex != nullptr);
+        TAUREON_REQUIRE(open_sysex != nullptr && clear_sysex != nullptr &&
+                        transfer_status != nullptr);
         TAUREON_REQUIRE(raw_send != nullptr);
         TAUREON_REQUIRE(validated_restore != nullptr);
         TAUREON_REQUIRE(frame_table != nullptr);
         TAUREON_REQUIRE(route_label != nullptr);
         TAUREON_REQUIRE(profile_label != nullptr);
         TAUREON_REQUIRE(!validated_restore->isEnabled());
+        int background_snapshots = 0;
+        QObject::connect(frame_table->model(), &QAbstractItemModel::modelReset, &window,
+                         [&] { ++background_snapshots; });
+        QElapsedTimer refresh_check;
+        refresh_check.start();
+        while (background_snapshots < 2 && refresh_check.elapsed() < 2000) {
+            QApplication::processEvents(QEventLoop::AllEvents);
+            TAUREON_REQUIRE(open_sysex->isEnabled());
+            TAUREON_REQUIRE(receive_sysex->isEnabled());
+            TAUREON_REQUIRE(clear_sysex->isEnabled());
+            TAUREON_REQUIRE(!transfer_status->text().contains("Refreshing transfer state"));
+            std::this_thread::yield();
+        }
+        TAUREON_REQUIRE(background_snapshots >= 2);
         auto* manager_panel = dynamic_cast<gui::SysExManagerPanel*>(
             window.findChild<QWidget*>("sysExManagerPanel"));
         TAUREON_REQUIRE(manager_panel != nullptr);
