@@ -7,11 +7,17 @@
 #include <QPlainTextEdit>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QScrollBar>
+#include <QSignalBlocker>
 #include <QSpinBox>
+#include <QStringList>
 #include <QTableView>
 #include <QTimer>
+#include <QTextCursor>
+#include <QTextDocument>
 #include <QVBoxLayout>
 
+#include <algorithm>
 #include <chrono>
 #include <type_traits>
 #include <variant>
@@ -240,7 +246,9 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
         set_pending(worker_.clear_sysex(), PendingAction::clear, "Clearing transfer workspace…");
     });
     connect(frame_table_->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
-            [this](const QModelIndex& current) { update_raw_inspector(current.row()); });
+            [this](const QModelIndex& current) {
+                if (!applying_snapshot_) update_raw_inspector(current.row());
+            });
 
     poll_timer_ = new QTimer(this);
     poll_timer_->setInterval(25);
@@ -302,6 +310,7 @@ void SysExTransferPanel::set_pending(
     if (pending_) return;
     pending_ = std::move(future);
     pending_action_ = action;
+    action_error_latched_ = false;
     status_label_->setText(std::move(status));
     open_button_->setEnabled(false);
     receive_button_->setEnabled(false);
@@ -358,8 +367,28 @@ void SysExTransferPanel::poll_result() {
 
 void SysExTransferPanel::apply_snapshot(const app::SysExTransferSnapshot& snapshot) {
     const auto selected_row = frame_table_->currentIndex().row();
+    const bool frames_changed = snapshot.frames != snapshot_.frames;
+    const bool log_changed = snapshot.log != snapshot_.log;
+    const bool log_appended = log_changed && snapshot.log.size() >= snapshot_.log.size() &&
+        std::equal(snapshot_.log.begin(), snapshot_.log.end(), snapshot.log.begin());
+    const auto previous_log_size = snapshot_.log.size();
     snapshot_ = snapshot;
-    frame_model_->set_frames(snapshot.frames);
+    if (frames_changed) {
+        auto* scroll = frame_table_->verticalScrollBar();
+        const int prior_scroll = scroll->value();
+        const bool was_at_bottom = prior_scroll >= scroll->maximum();
+        applying_snapshot_ = true;
+        {
+            const QSignalBlocker blocked_selection(frame_table_->selectionModel());
+            frame_model_->set_frames(snapshot.frames);
+            const int row = selected_row >= 0 && selected_row < frame_model_->rowCount() ?
+                selected_row : (frame_model_->rowCount() > 0 ? 0 : -1);
+            if (row >= 0) frame_table_->selectRow(row);
+            update_raw_inspector(row);
+        }
+        applying_snapshot_ = false;
+        scroll->setValue(was_at_bottom ? scroll->maximum() : prior_scroll);
+    }
     source_label_->setText(snapshot.source_name.empty() ? "No file or capture loaded" :
                                                         QString::fromStdString(snapshot.source_name));
     if (snapshot.manufacturer || snapshot.model) {
@@ -402,14 +431,26 @@ void SysExTransferPanel::apply_snapshot(const app::SysExTransferSnapshot& snapsh
     progress_->setValue(static_cast<int>((std::min<std::uint64_t>)(
         snapshot.send_progress.bytes_accepted,
         static_cast<std::uint64_t>(progress_->maximum()))));
-    transfer_log_->setPlainText(QString::fromStdString([&] {
-        std::string joined;
-        for (const auto& line : snapshot.log) {
-            if (!joined.empty()) joined += '\n';
-            joined += line;
+    if (log_changed) {
+        auto* scroll = transfer_log_->verticalScrollBar();
+        const int prior_scroll = scroll->value();
+        const bool was_at_bottom = prior_scroll >= scroll->maximum();
+        const auto prior_cursor = transfer_log_->textCursor();
+        if (log_appended) {
+            for (std::size_t index = previous_log_size; index < snapshot.log.size(); ++index) {
+                transfer_log_->appendPlainText(QString::fromStdString(snapshot.log.at(index)));
+            }
+        } else {
+            QStringList lines;
+            for (const auto& line : snapshot.log) lines.push_back(QString::fromStdString(line));
+            transfer_log_->setPlainText(lines.join('\n'));
         }
-        return joined;
-    }()));
+        if (prior_cursor.hasSelection() &&
+            prior_cursor.position() < transfer_log_->document()->characterCount()) {
+            transfer_log_->setTextCursor(prior_cursor);
+        }
+        scroll->setValue(was_at_bottom ? scroll->maximum() : prior_scroll);
+    }
     const bool active = transfer_active(snapshot.send_progress.state);
     open_button_->setEnabled(!snapshot.receiving && !active);
     receive_button_->setEnabled(!active);
@@ -423,18 +464,11 @@ void SysExTransferPanel::apply_snapshot(const app::SysExTransferSnapshot& snapsh
     cancel_button_->setEnabled(active);
     save_button_->setEnabled(snapshot.can_save_verified_received && !active);
     clear_button_->setEnabled(!snapshot.receiving && !active);
-    if (selected_row >= 0 && selected_row < frame_model_->rowCount()) {
-        frame_table_->selectRow(selected_row);
-        update_raw_inspector(selected_row);
-    } else if (frame_model_->rowCount() > 0) {
-        frame_table_->selectRow(0);
-        update_raw_inspector(0);
-    } else {
-        raw_bytes_->clear();
-    }
     if (snapshot_observer_) snapshot_observer_(snapshot_);
     if (snapshot.send_error) {
         show_error(*snapshot.send_error);
+    } else if (action_error_latched_) {
+        return;
     } else if (snapshot.receiving) {
         status_label_->setText("Receive capture active");
     } else {
@@ -463,10 +497,12 @@ void SysExTransferPanel::apply_snapshot(const app::SysExTransferSnapshot& snapsh
 
 void SysExTransferPanel::update_raw_inspector(const int row) {
     const auto* frame = frame_model_->frame(row);
-    raw_bytes_->setPlainText(frame ? bytes_hex(frame->bytes) : QString{});
+    const auto text = frame ? bytes_hex(frame->bytes) : QString{};
+    if (raw_bytes_->toPlainText() != text) raw_bytes_->setPlainText(text);
 }
 
 void SysExTransferPanel::show_error(const midi::MidiError& error) {
+    action_error_latched_ = true;
     status_label_->setText("Error: " + QString::fromStdString(error.message));
 }
 

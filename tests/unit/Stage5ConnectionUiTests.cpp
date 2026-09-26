@@ -15,6 +15,7 @@
 #include <QEventLoop>
 #include <QLabel>
 #include <QListWidget>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QStatusBar>
 #include <QTableView>
@@ -115,6 +116,15 @@ int main(int argc, char* argv[]) {
         connect->click();
         TAUREON_REQUIRE(process_until([&] { return connect->text() == "Disconnect"; }));
         TAUREON_REQUIRE(transmit->currentIndex() == 0);
+        window.statusBar()->showMessage("MIDI operation failed: retained test message");
+        QElapsedTimer status_check;
+        status_check.start();
+        while (status_check.elapsed() < 650) {
+            QApplication::processEvents(QEventLoop::AllEvents);
+            std::this_thread::yield();
+        }
+        TAUREON_REQUIRE(window.statusBar()->currentMessage() ==
+                        "MIDI operation failed: retained test message");
 
         auto* transfer_panel = dynamic_cast<gui::SysExTransferPanel*>(
             window.findChild<QWidget*>("sysExTransferPanel"));
@@ -143,7 +153,7 @@ int main(int argc, char* argv[]) {
                          [&] { ++background_snapshots; });
         QElapsedTimer refresh_check;
         refresh_check.start();
-        while (background_snapshots < 2 && refresh_check.elapsed() < 2000) {
+        while (refresh_check.elapsed() < 650) {
             QApplication::processEvents(QEventLoop::AllEvents);
             TAUREON_REQUIRE(open_sysex->isEnabled());
             TAUREON_REQUIRE(receive_sysex->isEnabled());
@@ -151,7 +161,7 @@ int main(int argc, char* argv[]) {
             TAUREON_REQUIRE(!transfer_status->text().contains("Refreshing transfer state"));
             std::this_thread::yield();
         }
-        TAUREON_REQUIRE(background_snapshots >= 2);
+        TAUREON_REQUIRE(background_snapshots == 0);
         auto* manager_panel = dynamic_cast<gui::SysExManagerPanel*>(
             window.findChild<QWidget*>("sysExManagerPanel"));
         TAUREON_REQUIRE(manager_panel != nullptr);
@@ -171,6 +181,20 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(process_until([&] {
             return frame_table->model()->rowCount() == 1 && navigation->currentRow() == 1;
         }));
+        auto* raw_bytes = window.findChild<QPlainTextEdit*>("sysExRawBytes");
+        TAUREON_REQUIRE(raw_bytes != nullptr);
+        frame_table->selectRow(0);
+        const auto inspected_bytes = raw_bytes->toPlainText();
+        TAUREON_REQUIRE(!inspected_bytes.isEmpty());
+        const int model_resets_after_load = background_snapshots;
+        refresh_check.restart();
+        while (refresh_check.elapsed() < 650) {
+            QApplication::processEvents(QEventLoop::AllEvents);
+            std::this_thread::yield();
+        }
+        TAUREON_REQUIRE(background_snapshots == model_resets_after_load);
+        TAUREON_REQUIRE(frame_table->currentIndex().row() == 0);
+        TAUREON_REQUIRE(raw_bytes->toPlainText() == inspected_bytes);
         {
             std::scoped_lock lock(transport_mutex);
             TAUREON_REQUIRE(transport_ptr->diagnostics().transmitted_messages == 0);

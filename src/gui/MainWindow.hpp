@@ -9,6 +9,7 @@
 #include <future>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 class QLabel;
@@ -43,10 +44,11 @@ private:
     void begin_backend_selection(int index);
     void begin_connect_toggle();
     void poll_connection_result();
-    void apply_connection_snapshot(const app::ConnectionSnapshot& snapshot, bool repopulate);
+    void apply_connection_snapshot(const app::ConnectionSnapshot& snapshot, bool repopulate,
+                                   bool user_action);
     void set_connection_busy(bool busy);
 
-    enum class PendingConnectionAction { backend, connect, disconnect, snapshot };
+    enum class PendingConnectionAction { backend, connect, disconnect };
 
     QListWidget* navigation_{};
     QStackedWidget* workspace_stack_{};
@@ -67,7 +69,11 @@ private:
     QPushButton* connect_button_{};
     QTimer* connection_poll_timer_{};
     std::optional<std::future<midi::Result<app::ConnectionSnapshot>>> pending_connection_;
+    std::optional<std::future<midi::Result<app::ConnectionSnapshot>>> refresh_pending_;
     PendingConnectionAction pending_action_{PendingConnectionAction::backend};
+    std::optional<app::ConnectionPresentationState> last_connection_state_;
+    std::string last_connection_detail_;
+    bool connection_error_latched_{};
     std::vector<midi::MidiRouteIdentity> receive_routes_;
     std::vector<midi::MidiRouteIdentity> transmit_routes_;
     bool connected_{};

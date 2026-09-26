@@ -4,6 +4,7 @@
 #include <QLabel>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QScrollBar>
 #include <QHideEvent>
 #include <QShowEvent>
 #include <QTimer>
@@ -93,6 +94,7 @@ DiagnosticsPanel::DiagnosticsPanel(app::ConnectionWorker& worker, app::MonitorEv
             this, "Export Diagnostic Bundle", "taureon-diagnostics.txt", "Text files (*.txt)");
         if (selected.isEmpty()) return;
         const auto saved = export_bundle(std::filesystem::path{selected.toStdWString()});
+        export_status_latched_ = true;
         status_->setText(saved ? "Diagnostic bundle exported without user payloads."
                                : "Diagnostic bundle export failed: " + QString::fromStdString(saved.error().message));
     });
@@ -159,8 +161,15 @@ void DiagnosticsPanel::present() {
     const auto snapshot = app::DiagnosticBundle::make_snapshot(
         connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION,
         effective_export_policy());
-    details_->setPlainText(format_snapshot(snapshot));
-    if (have_connection_ || have_transfer_) {
+    const auto text = format_snapshot(snapshot);
+    if (details_->toPlainText() != text) {
+        auto* scroll = details_->verticalScrollBar();
+        const int prior_scroll = scroll->value();
+        const bool was_at_bottom = prior_scroll >= scroll->maximum();
+        details_->setPlainText(text);
+        scroll->setValue(was_at_bottom ? scroll->maximum() : prior_scroll);
+    }
+    if (!export_status_latched_ && (have_connection_ || have_transfer_)) {
         status_->setText("Safe snapshots refreshed; unavailable values are not inferred.");
     }
 }

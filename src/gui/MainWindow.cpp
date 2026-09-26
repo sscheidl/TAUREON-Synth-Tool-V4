@@ -18,6 +18,7 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QSignalBlocker>
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStandardPaths>
@@ -312,13 +313,18 @@ void MainWindow::select_workspace(const int index) {
 
 void MainWindow::begin_backend_selection(const int index) {
     if (pending_connection_) return;
+    connection_error_latched_ = false;
     connected_ = false;
     receive_routes_.clear();
     transmit_routes_.clear();
-    receive_selector_->clear();
-    transmit_selector_->clear();
-    receive_selector_->addItem("No input selected");
-    transmit_selector_->addItem("No output selected");
+    {
+        const QSignalBlocker block_receive(receive_selector_);
+        const QSignalBlocker block_transmit(transmit_selector_);
+        receive_selector_->clear();
+        transmit_selector_->clear();
+        receive_selector_->addItem("No input selected");
+        transmit_selector_->addItem("No output selected");
+    }
     if (index == 0) {
         receive_selector_->setEnabled(false);
         transmit_selector_->setEnabled(false);
@@ -337,6 +343,7 @@ void MainWindow::begin_backend_selection(const int index) {
 
 void MainWindow::begin_connect_toggle() {
     if (pending_connection_) return;
+    connection_error_latched_ = false;
     if (connected_) {
         pending_connection_ = connection_worker_.disconnect();
         pending_action_ = PendingConnectionAction::disconnect;
@@ -366,11 +373,26 @@ void MainWindow::begin_connect_toggle() {
 
 void MainWindow::poll_connection_result() {
     using namespace std::chrono_literals;
+    if (refresh_pending_ && refresh_pending_->wait_for(0ms) == std::future_status::ready) {
+        auto refresh_result = refresh_pending_->get();
+        refresh_pending_.reset();
+        // A later user request must not be replaced by an older background snapshot.
+        if (!pending_connection_) {
+            if (refresh_result) {
+                apply_connection_snapshot(refresh_result.value(), false, false);
+                set_connection_busy(false);
+            } else {
+                connection_error_latched_ = true;
+                statusBar()->showMessage("MIDI status refresh failed: " +
+                                         QString::fromStdString(refresh_result.error().message));
+            }
+        }
+    }
     if (!pending_connection_) {
-        if (backend_selector_->currentIndex() > 0 && ++idle_poll_ticks_ >= 10) {
+        if (!refresh_pending_ && backend_selector_->currentIndex() > 0 &&
+            ++idle_poll_ticks_ >= 10) {
             idle_poll_ticks_ = 0;
-            pending_connection_ = connection_worker_.snapshot();
-            pending_action_ = PendingConnectionAction::snapshot;
+            refresh_pending_ = connection_worker_.snapshot();
         }
         return;
     }
@@ -381,36 +403,46 @@ void MainWindow::poll_connection_result() {
     if (!result) {
         connected_ = false;
         set_connection_busy(false);
+        connection_error_latched_ = true;
         statusBar()->showMessage("MIDI operation failed: " + QString::fromStdString(result.error().message));
         return;
     }
-    apply_connection_snapshot(result.value(), action == PendingConnectionAction::backend);
+    apply_connection_snapshot(result.value(), action == PendingConnectionAction::backend, true);
     set_connection_busy(false);
 }
 
 void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapshot,
-                                           const bool repopulate) {
+                                           const bool repopulate, const bool user_action) {
     if (settings_panel_) settings_panel_->set_connection_snapshot(snapshot);
     if (repopulate) {
         receive_routes_.clear();
         transmit_routes_.clear();
-        receive_selector_->clear();
-        transmit_selector_->clear();
-        receive_selector_->addItem("No input selected");
-        transmit_selector_->addItem("No output selected");
-        for (const auto& endpoint : snapshot.endpoints) {
-            if (endpoint.identity.direction == midi::MidiDirection::input) {
-                receive_routes_.push_back(endpoint.identity);
-                receive_selector_->addItem(endpoint_label(endpoint));
-            } else {
-                transmit_routes_.push_back(endpoint.identity);
-                transmit_selector_->addItem(endpoint_label(endpoint));
+        {
+            const QSignalBlocker block_receive(receive_selector_);
+            const QSignalBlocker block_transmit(transmit_selector_);
+            receive_selector_->clear();
+            transmit_selector_->clear();
+            receive_selector_->addItem("No input selected");
+            transmit_selector_->addItem("No output selected");
+            for (const auto& endpoint : snapshot.endpoints) {
+                if (endpoint.identity.direction == midi::MidiDirection::input) {
+                    receive_routes_.push_back(endpoint.identity);
+                    receive_selector_->addItem(endpoint_label(endpoint));
+                } else {
+                    transmit_routes_.push_back(endpoint.identity);
+                    transmit_selector_->addItem(endpoint_label(endpoint));
+                }
             }
         }
     }
+    const bool state_changed = !last_connection_state_ ||
+        *last_connection_state_ != snapshot.state || last_connection_detail_ != snapshot.detail;
+    last_connection_state_ = snapshot.state;
+    last_connection_detail_ = snapshot.detail;
     connected_ = snapshot.state == app::ConnectionPresentationState::connected ||
                  snapshot.state == app::ConnectionPresentationState::degraded;
     connect_button_->setText(connected_ ? "Disconnect" : "Connect");
+    if ((!user_action && !state_changed) || (!user_action && connection_error_latched_)) return;
     switch (snapshot.state) {
     case app::ConnectionPresentationState::connected:
         statusBar()->showMessage("Connected to the exact selected RX/TX routes.");
@@ -420,6 +452,7 @@ void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapsh
         break;
     case app::ConnectionPresentationState::error:
         statusBar()->showMessage("MIDI error: " + QString::fromStdString(snapshot.detail));
+        connection_error_latched_ = true;
         break;
     case app::ConnectionPresentationState::ready:
         statusBar()->showMessage("Backend ready — select exact RX/TX routes.");

@@ -95,6 +95,8 @@ private:
     std::function<void(bool loaded)> load_completion_;
     std::function<void(const app::SysExTransferSnapshot&)> snapshot_observer_;
     int idle_ticks_{};
+    bool applying_snapshot_{};
+    bool action_error_latched_{};
 };
 
 } // namespace taureon::gui

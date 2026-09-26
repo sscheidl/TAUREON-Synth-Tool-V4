@@ -52,6 +52,7 @@ private:
     app::SysExTransferSnapshot transfer_;
     bool have_connection_{};
     bool have_transfer_{};
+    bool export_status_latched_{};
 };
 
 } // namespace taureon::gui
