@@ -1,0 +1,7 @@
+# Preserve byte-exact diagnostic evidence without treating tool-emitted whitespace as source errors.
+docs/evidence/reconstruction-20260926/configure.log -diff
+docs/evidence/reconstruction-20260926/local-changes-before.patch -diff
+docs/evidence/reconstruction-20260926/pr12-ci.log -diff
+docs/evidence/reconstruction-20260926/product-host-loopback.log -diff
+docs/evidence/reconstruction-20260926/recovered-product-host-20260912.log -diff
+docs/evidence/reconstruction-20260926/summit-passive-wms-monitor.txt -diff
