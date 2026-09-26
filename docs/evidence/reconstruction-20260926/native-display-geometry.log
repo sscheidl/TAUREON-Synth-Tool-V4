@@ -1,0 +1,17 @@
+Qt platform windows; screen logical 1536x960; available logical 1536x912; DPR 1.25; logical DPI 96; physical DPI 75.2883.
+MainWindow minimumSizeHint 758x419; sizeHint 872x853; requested logical 1536x864.
+MainWindow actual logical 1536x864; frame logical 1536x894.
+Workspace 0 minimumSizeHint 614x108; sizeHint 692x242.
+Captured 01-midi-monitor.png at 1920x1080 (DPR 1.25).
+Workspace 1 minimumSizeHint 54x54; sizeHint 554x384.
+Captured 02-sysex-transfer.png at 1920x1080 (DPR 1.25).
+Workspace 2 minimumSizeHint 429x312; sizeHint 429x746.
+Captured 03-sysex-manager.png at 1920x1080 (DPR 1.25).
+Workspace 3 minimumSizeHint 293x206; sizeHint 293x372.
+Captured 04-librarian.png at 1920x1080 (DPR 1.25).
+Workspace 4 minimumSizeHint 217x152; sizeHint 217x152.
+Captured 05-devices-and-profiles.png at 1920x1080 (DPR 1.25).
+Workspace 5 minimumSizeHint 227x152; sizeHint 274x350.
+Captured 06-diagnostics.png at 1920x1080 (DPR 1.25).
+Workspace 6 minimumSizeHint 54x54; sizeHint 499x384.
+Captured 07-settings.png at 1920x1080 (DPR 1.25).

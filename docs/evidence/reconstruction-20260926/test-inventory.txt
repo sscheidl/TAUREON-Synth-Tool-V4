@@ -1,0 +1,37 @@
+Test project D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/.work/reconstruction-20260926
+  Test  #1: taureon_bootstrap_runs
+  Test  #2: stage1_wms_identity_logic
+  Test  #3: stage1_qt_wms_start_stop
+  Test  #4: stage1_qt_wms_close_active
+  Test  #5: stage1_winmm_identity_logic
+  Test  #6: stage2_core_unit
+  Test  #7: stage3_midi_sysex_unit
+  Test  #8: stage3_syx_file_unit
+  Test  #9: stage3_transfer_unit
+  Test #10: stage3_large_sysex_unit
+  Test #11: stage3_handle_growth_unit
+  Test #12: stage4_profile_unit
+  Test #13: stage5_gui_smoke
+  Test #14: stage5_application_unit
+  Test #15: stage5_profile_followup_unit
+  Test #16: stage5_profile_ui_unit
+  Test #17: stage5_monitor_stress
+  Test #18: stage5_connection_worker_unit
+  Test #19: stage5_connection_ui_unit
+  Test #20: stage5_sysex_transfer_session_unit
+  Test #21: stage5_sysex_manager_unit
+  Test #22: stage5_sysex_manager_ui_unit
+  Test #23: stage5_settings_diagnostics_unit
+  Test #24: stage5_settings_diagnostics_ui_unit
+  Test #25: stage5_librarian_unit
+  Test #26: stage2_winmm_header_unit
+  Test #27: stage2_winmm_transport_unit
+  Test #28: stage3_winmm_transport_unit
+  Test #29: stage2_local_winmm_wms_loopback
+  Test #30: stage3_local_winmm_realtime
+  Test #31: stage2_local_wms_lifecycle
+  Test #32: stage3_local_wms_realtime
+  Test #33: stage2_local_stage1_winmm_byte_integrity
+  Test #34: stage5_local_product_host_lifecycle
+
+Total Tests: 34

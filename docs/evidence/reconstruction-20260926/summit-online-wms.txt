@@ -1,0 +1,300 @@
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+Enumerating endpoints...
+╭───────────────────────┬───────────┬───────────────────┬──────────────────────╮
+│ UMP Endpoints for     │ Transport │ MIDI 2.0 Protocol │ Manufacturer         │
+│ Windows MIDI Services │           │                   │                      │
+├───────────────────────┼───────────┼───────────────────┼──────────────────────┤
+│ 🎹 AF16Rig MIDI       │ KSA       │                   │ Arturia              │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _ksa_1073501915162575 │           │                   │                      │
+│ 3892#{e7cce071-3c03-4 │           │                   │                      │
+│ 23f-88d3-f1045d02552b │           │                   │                      │
+│ }                     │           │                   │                      │
+│ ╭──────┬──────┬─────╮ │           │                   │                      │
+│ │ Name │ Dir… │ Gr… │ │           │                   │                      │
+│ ├──────┼──────┼─────┤ │           │                   │                      │
+│ │ AF16 │ Bloc │ Gro │ │           │                   │                      │
+│ │ Rig  │ kOut │ up  │ │           │                   │                      │
+│ │ DIN  │ put  │ 1   │ │           │                   │                      │
+│ │ 1 In │      │     │ │           │                   │                      │
+│ │ AF16 │ Bloc │ Gro │ │           │                   │                      │
+│ │ Rig  │ kOut │ up  │ │           │                   │                      │
+│ │ Usb  │ put  │ 2   │ │           │                   │                      │
+│ │ Host │      │     │ │           │                   │                      │
+│ │ In 2 │      │     │ │           │                   │                      │
+│ │ AF16 │ Bloc │ Gro │ │           │                   │                      │
+│ │ Rig  │ kInp │ up  │ │           │                   │                      │
+│ │ DIN  │ ut   │ 1   │ │           │                   │                      │
+│ │ 1    │      │     │ │           │                   │                      │
+│ │ Out  │      │     │ │           │                   │                      │
+│ │ AF16 │ Bloc │ Gro │ │           │                   │                      │
+│ │ Rig  │ kInp │ up  │ │           │                   │                      │
+│ │ DIN  │ ut   │ 2   │ │           │                   │                      │
+│ │ 2    │      │     │ │           │                   │                      │
+│ │ Out  │      │     │ │           │                   │                      │
+│ │ 2    │      │     │ │           │                   │                      │
+│ │ AF16 │ Bloc │ Gro │ │           │                   │                      │
+│ │ Rig  │ kInp │ up  │ │           │                   │                      │
+│ │ Usb  │ ut   │ 3   │ │           │                   │                      │
+│ │ Host │      │     │ │           │                   │                      │
+│ │ Out  │      │     │ │           │                   │                      │
+│ │ 3    │      │     │ │           │                   │                      │
+│ │ AF16 │ Bloc │ Gro │ │           │                   │                      │
+│ │ Rig  │ kInp │ up  │ │           │                   │                      │
+│ │ Cloc │ ut   │ 4   │ │           │                   │                      │
+│ │ k    │      │     │ │           │                   │                      │
+│ │ Out  │      │     │ │           │                   │                      │
+│ │ 4    │      │     │ │           │                   │                      │
+│ │ AF16 │ Bloc │ Gro │ │           │                   │                      │
+│ │ Rig  │ kInp │ up  │ │           │                   │                      │
+│ │ Mixe │ ut   │ 5   │ │           │                   │                      │
+│ │ r    │      │     │ │           │                   │                      │
+│ │ Cont │      │     │ │           │                   │                      │
+│ │ rol  │      │     │ │           │                   │                      │
+│ │ 5    │      │     │ │           │                   │                      │
+│ ╰──────┴──────┴─────╯ │           │                   │                      │
+│                       │           │                   │                      │
+│                       │           │                   │                      │
+│ 🎹 ESI M8U eX         │ KSA       │                   │ ESI Audiotechnik     │
+│                       │           │                   │ GmbH                 │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _ksa_6080130142804196 │           │                   │                      │
+│ 953#{e7cce071-3c03-42 │           │                   │                      │
+│ 3f-88d3-f1045d02552b} │           │                   │                      │
+│ ╭──────┬──────┬─────╮ │           │                   │                      │
+│ │ Name │ Dir… │ Gr… │ │           │                   │                      │
+│ ├──────┼──────┼─────┤ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 1 │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 1   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 2 │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 2   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 3 │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 3   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 4 │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 4   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 5 │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 5   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 6 │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 6   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 7 │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 7   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 8 │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 8   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 9 │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 9   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kOut │ up  │ │           │                   │                      │
+│ │ 10   │ put  │ 10  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kOut │ up  │ │           │                   │                      │
+│ │ 11   │ put  │ 11  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kOut │ up  │ │           │                   │                      │
+│ │ 12   │ put  │ 12  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kOut │ up  │ │           │                   │                      │
+│ │ 13   │ put  │ 13  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kOut │ up  │ │           │                   │                      │
+│ │ 14   │ put  │ 14  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kOut │ up  │ │           │                   │                      │
+│ │ 15   │ put  │ 15  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kOut │ up  │ │           │                   │                      │
+│ │ 16   │ put  │ 16  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 1 │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 1   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 2 │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 2   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 3 │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 3   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 4 │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 4   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 5 │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 5   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 6 │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 6   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 7 │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 7   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 8 │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 8   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX 9 │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 9   │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kInp │ up  │ │           │                   │                      │
+│ │ 10   │ ut   │ 10  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kInp │ up  │ │           │                   │                      │
+│ │ 11   │ ut   │ 11  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kInp │ up  │ │           │                   │                      │
+│ │ 12   │ ut   │ 12  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kInp │ up  │ │           │                   │                      │
+│ │ 13   │ ut   │ 13  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kInp │ up  │ │           │                   │                      │
+│ │ 14   │ ut   │ 14  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kInp │ up  │ │           │                   │                      │
+│ │ 15   │ ut   │ 15  │ │           │                   │                      │
+│ │ M8U  │ Bloc │ Gro │ │           │                   │                      │
+│ │ eX   │ kInp │ up  │ │           │                   │                      │
+│ │ 16   │ ut   │ 16  │ │           │                   │                      │
+│ ╰──────┴──────┴─────╯ │           │                   │                      │
+│                       │           │                   │                      │
+│                       │           │                   │                      │
+│ 🎹 KONTROL S61 MK3    │ KSA       │                   │ (Standard-USB-Audio) │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _ksa_7042593043182509 │           │                   │                      │
+│ 155#{e7cce071-3c03-42 │           │                   │                      │
+│ 3f-88d3-f1045d02552b} │           │                   │                      │
+│ ╭──────┬──────┬─────╮ │           │                   │                      │
+│ │ Name │ Dir… │ Gr… │ │           │                   │                      │
+│ ├──────┼──────┼─────┤ │           │                   │                      │
+│ │ KONT │ Bloc │ Gro │ │           │                   │                      │
+│ │ ROL  │ kOut │ up  │ │           │                   │                      │
+│ │ S61  │ put  │ 1   │ │           │                   │                      │
+│ │ MK3  │      │     │ │           │                   │                      │
+│ │ Main │      │     │ │           │                   │                      │
+│ │ KONT │ Bloc │ Gro │ │           │                   │                      │
+│ │ ROL  │ kOut │ up  │ │           │                   │                      │
+│ │ S61  │ put  │ 2   │ │           │                   │                      │
+│ │ MK3  │      │     │ │           │                   │                      │
+│ │ DAW  │      │     │ │           │                   │                      │
+│ │ KONT │ Bloc │ Gro │ │           │                   │                      │
+│ │ ROL  │ kOut │ up  │ │           │                   │                      │
+│ │ S61  │ put  │ 3   │ │           │                   │                      │
+│ │ MK3  │      │     │ │           │                   │                      │
+│ │ Ext  │      │     │ │           │                   │                      │
+│ │ KONT │ Bloc │ Gro │ │           │                   │                      │
+│ │ ROL  │ kInp │ up  │ │           │                   │                      │
+│ │ S61  │ ut   │ 1   │ │           │                   │                      │
+│ │ MK3  │      │     │ │           │                   │                      │
+│ │ Main │      │     │ │           │                   │                      │
+│ │ KONT │ Bloc │ Gro │ │           │                   │                      │
+│ │ ROL  │ kInp │ up  │ │           │                   │                      │
+│ │ S61  │ ut   │ 2   │ │           │                   │                      │
+│ │ MK3  │      │     │ │           │                   │                      │
+│ │ DAW  │      │     │ │           │                   │                      │
+│ │ KONT │ Bloc │ Gro │ │           │                   │                      │
+│ │ ROL  │ kInp │ up  │ │           │                   │                      │
+│ │ S61  │ ut   │ 3   │ │           │                   │                      │
+│ │ MK3  │      │     │ │           │                   │                      │
+│ │ Ext  │      │     │ │           │                   │                      │
+│ ╰──────┴──────┴─────╯ │           │                   │                      │
+│                       │           │                   │                      │
+│                       │           │                   │                      │
+│ 🎹 MODEL D            │ KSA       │                   │ (Standard-USB-Audio) │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _ksa_7545070063141299 │           │                   │                      │
+│ 352#{e7cce071-3c03-42 │           │                   │                      │
+│ 3f-88d3-f1045d02552b} │           │                   │                      │
+│ ╭──────┬──────┬─────╮ │           │                   │                      │
+│ │ Name │ Dir… │ Gr… │ │           │                   │                      │
+│ ├──────┼──────┼─────┤ │           │                   │                      │
+│ │ MODE │ Bloc │ Gro │ │           │                   │                      │
+│ │ L D  │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 1   │ │           │                   │                      │
+│ │ MODE │ Bloc │ Gro │ │           │                   │                      │
+│ │ L D  │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 1   │ │           │                   │                      │
+│ ╰──────┴──────┴─────╯ │           │                   │                      │
+│                       │           │                   │                      │
+│                       │           │                   │                      │
+│ 🎹 MiniFreak          │ KSA       │                   │ (Standard-USB-Audio) │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _ksa_8745784369346682 │           │                   │                      │
+│ 120#{e7cce071-3c03-42 │           │                   │                      │
+│ 3f-88d3-f1045d02552b} │           │                   │                      │
+│ ╭──────┬──────┬─────╮ │           │                   │                      │
+│ │ Name │ Dir… │ Gr… │ │           │                   │                      │
+│ ├──────┼──────┼─────┤ │           │                   │                      │
+│ │ Mini │ Bloc │ Gro │ │           │                   │                      │
+│ │ Frea │ kOut │ up  │ │           │                   │                      │
+│ │ k    │ put  │ 1   │ │           │                   │                      │
+│ │ MIDI │      │     │ │           │                   │                      │
+│ │ Mini │ Bloc │ Gro │ │           │                   │                      │
+│ │ Frea │ kInp │ up  │ │           │                   │                      │
+│ │ k    │ ut   │ 1   │ │           │                   │                      │
+│ │ MIDI │      │     │ │           │                   │                      │
+│ ╰──────┴──────┴─────╯ │           │                   │                      │
+│                       │           │                   │                      │
+│                       │           │                   │                      │
+│ 🛠️ Service Test       │ DIAG      │ Yes               │ Microsoft            │
+│ Loopback A            │           │                   │                      │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _diag_loopback_a#{e7c │           │                   │                      │
+│ ce071-3c03-423f-88d3- │           │                   │                      │
+│ f1045d02552b}         │           │                   │                      │
+│ Diagnostics loopback  │           │                   │                      │
+│ endpoint. For testing │           │                   │                      │
+│ and development       │           │                   │                      │
+│ purposes.             │           │                   │                      │
+│                       │           │                   │                      │
+│                       │           │                   │                      │
+│ 🛠️ Service Test       │ DIAG      │ Yes               │ Microsoft            │
+│ Loopback B            │           │                   │                      │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _diag_loopback_b#{e7c │           │                   │                      │
+│ ce071-3c03-423f-88d3- │           │                   │                      │
+│ f1045d02552b}         │           │                   │                      │
+│ Diagnostics loopback  │           │                   │                      │
+│ endpoint. For testing │           │                   │                      │
+│ and development       │           │                   │                      │
+│ purposes.             │           │                   │                      │
+│                       │           │                   │                      │
+│                       │           │                   │                      │
+│ ⚙ Service Test Ping   │ DIAG      │                   │ Microsoft            │
+│ (Internal)            │           │                   │                      │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _diag_ping#{e7cce071- │           │                   │                      │
+│ 3c03-423f-88d3-f1045d │           │                   │                      │
+│ 02552b}               │           │                   │                      │
+│ Internal UMP Ping     │           │                   │                      │
+│ endpoint. Do not send │           │                   │                      │
+│ messages to this      │           │                   │                      │
+│ endpoint.             │           │                   │                      │
+│                       │           │                   │                      │
+│                       │           │                   │                      │
+│ 🎹 Summit             │ KSA       │                   │ Novation DMS, Ltd.   │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _ksa_7469713634660520 │           │                   │                      │
+│ 082#{e7cce071-3c03-42 │           │                   │                      │
+│ 3f-88d3-f1045d02552b} │           │                   │                      │
+│ ╭──────┬──────┬─────╮ │           │                   │                      │
+│ │ Name │ Dir… │ Gr… │ │           │                   │                      │
+│ ├──────┼──────┼─────┤ │           │                   │                      │
+│ │ Summ │ Bloc │ Gro │ │           │                   │                      │
+│ │ it   │ kOut │ up  │ │           │                   │                      │
+│ │      │ put  │ 1   │ │           │                   │                      │
+│ │ Summ │ Bloc │ Gro │ │           │                   │                      │
+│ │ it   │ kInp │ up  │ │           │                   │                      │
+│ │      │ ut   │ 1   │ │           │                   │                      │
+│ ╰──────┴──────┴─────╯ │           │                   │                      │
+│                       │           │                   │                      │
+│                       │           │                   │                      │
+╰───────────────────────┴───────────┴───────────────────┴──────────────────────╯

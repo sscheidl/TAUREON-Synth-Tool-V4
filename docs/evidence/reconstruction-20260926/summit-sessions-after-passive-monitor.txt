@@ -1,0 +1,20 @@
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+╭────────────────────┬─────────────────────────────────────────────────────────╮
+│ Processes          │ Sessions                                                │
+├────────────────────┼─────────────────────────────────────────────────────────┤
+│ MidiSrv.exe [5140] │ Session MIDI 2.0 Protocol Manager open since Samstag,   │
+│                    │ 26. September 2026 11:04:59                             │
+│                    │ Connected to 1 endpoint:                                │
+│                    │                                                         │
+│                    │ 🎹 Iridium                                              │
+│                    │                                                         │
+│                    │ \\?\swd#midisrv#midiu_ks_4113926610698897938_outpin.0_i │
+│                    │ npin.2#{e7cce071-3c03-423f-88d3-f1045d02552b}           │
+│                    │                                                         │
+│                    │                                                         │
+╰────────────────────┴─────────────────────────────────────────────────────────╯
+Enumerating sessions...

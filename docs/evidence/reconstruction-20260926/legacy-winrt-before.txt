@@ -1,0 +1,192 @@
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ MIDI 1.0 Byte Format Endpoints for older MIDI APIs                           │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  0 : M8U eX 1                           Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_0#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  1 : M8U eX 2                           Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_1#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  2 : M8U eX 3                           Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_2#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  3 : M8U eX 4                           Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_3#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  4 : M8U eX 5                           Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_4#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  5 : M8U eX 6                           Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_5#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  6 : M8U eX 7                           Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_6#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  7 : M8U eX 8                           Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_7#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  8 : M8U eX 9                           Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_8#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  9 : M8U eX 10                          Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_9#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 10 : M8U eX 11                          Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_10#{504be32c-ccf6-4d2c-b73f │
+│ -6f8b3747e22b}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 11 : M8U eX 12                          Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_11#{504be32c-ccf6-4d2c-b73f │
+│ -6f8b3747e22b}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 12 : M8U eX 13                          Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_12#{504be32c-ccf6-4d2c-b73f │
+│ -6f8b3747e22b}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 13 : M8U eX 14                          Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_13#{504be32c-ccf6-4d2c-b73f │
+│ -6f8b3747e22b}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 14 : M8U eX 15                          Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_14#{504be32c-ccf6-4d2c-b73f │
+│ -6f8b3747e22b}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 15 : M8U eX 16                          Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_0_15#{504be32c-ccf6-4d2c-b73f │
+│ -6f8b3747e22b}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 16 : KONTROL S61 MK3                    Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_7042593043182509155_0_0#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 17 : MIDIIN2 (KONTROL S61 MK3)          Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_7042593043182509155_0_1#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 18 : MIDIIN3 (KONTROL S61 MK3)          Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_7042593043182509155_0_2#{504be32c-ccf6-4d2c-b73f- │
+│ 6f8b3747e22b}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 19 : AF16Rig DIN 1 In                   Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_10735019151625753892_0_0#{504be32c-ccf6-4d2c-b73f │
+│ -6f8b3747e22b}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 20 : AF16Rig Usb Host In                Message Source (MIDI In)        │
+│ \\?\swd#mmdevapi#midiu_ksa_10735019151625753892_0_1#{504be32c-ccf6-4d2c-b73f │
+│ -6f8b3747e22b}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port    : Microsoft GS Wavetable Synthesizer Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#microsoftgswavetablesynth#{6dc23320-ab33-4ce4-80d4-bbb3ebbf │
+│ 2814}                                                                        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  1 : M8U eX 1                           Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_0#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  2 : M8U eX 2                           Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_1#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  3 : M8U eX 3                           Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_2#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  4 : M8U eX 4                           Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_3#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  5 : M8U eX 5                           Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_4#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  6 : M8U eX 6                           Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_5#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  7 : M8U eX 7                           Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_6#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  8 : M8U eX 8                           Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_7#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port  9 : M8U eX 9                           Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_8#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 10 : M8U eX 10                          Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_9#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 11 : M8U eX 11                          Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_10#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 12 : M8U eX 12                          Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_11#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 13 : M8U eX 13                          Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_12#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 14 : M8U eX 14                          Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_13#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 15 : M8U eX 15                          Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_14#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 16 : M8U eX 16                          Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_6080130142804196953_1_15#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 17 : KONTROL S61 MK3                    Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_7042593043182509155_1_0#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 18 : MIDIOUT2 (KONTROL S61 MK3)         Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_7042593043182509155_1_1#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 19 : MIDIOUT3 (KONTROL S61 MK3)         Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_7042593043182509155_1_2#{6dc23320-ab33-4ce4-80d4- │
+│ bbb3ebbf2814}                                                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 20 : AF16Rig DIN 1 Out                  Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_10735019151625753892_1_0#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 21 : AF16Rig DIN 2 Out                  Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_10735019151625753892_1_1#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 22 : AF16Rig Usb Host Out               Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_10735019151625753892_1_2#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 23 : AF16Rig Clock Out                  Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_10735019151625753892_1_3#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Port 24 : AF16Rig Mixer Control              Message Destination (MIDI Out)  │
+│ \\?\swd#mmdevapi#midiu_ksa_10735019151625753892_1_4#{6dc23320-ab33-4ce4-80d4 │
+│ -bbb3ebbf2814}                                                               │
+╰──────────────────────────────────────────────────────────────────────────────╯

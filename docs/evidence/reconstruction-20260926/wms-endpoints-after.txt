@@ -1,0 +1,52 @@
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+Enumerating endpoints...
+╭───────────────────────┬───────────┬───────────────────┬──────────────────────╮
+│ UMP Endpoints for     │ Transport │ MIDI 2.0 Protocol │ Manufacturer         │
+│ Windows MIDI Services │           │                   │                      │
+├───────────────────────┼───────────┼───────────────────┼──────────────────────┤
+│ 🎹 AF16Rig MIDI       │ KSA       │                   │ Arturia              │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _ksa_1073501915162575 │           │                   │                      │
+│ 3892#{e7cce071-3c03-4 │           │                   │                      │
+│ 23f-88d3-f1045d02552b │           │                   │                      │
+│ }                     │           │                   │                      │
+│                       │           │                   │                      │
+│ 🎹 ESI M8U eX         │ KSA       │                   │ ESI Audiotechnik     │
+│                       │           │                   │ GmbH                 │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _ksa_6080130142804196 │           │                   │                      │
+│ 953#{e7cce071-3c03-42 │           │                   │                      │
+│ 3f-88d3-f1045d02552b} │           │                   │                      │
+│                       │           │                   │                      │
+│ 🎹 KONTROL S61 MK3    │ KSA       │                   │ (Standard-USB-Audio) │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _ksa_7042593043182509 │           │                   │                      │
+│ 155#{e7cce071-3c03-42 │           │                   │                      │
+│ 3f-88d3-f1045d02552b} │           │                   │                      │
+│                       │           │                   │                      │
+│ 🛠️ Service Test       │ DIAG      │ Yes               │ Microsoft            │
+│ Loopback A            │           │                   │                      │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _diag_loopback_a#{e7c │           │                   │                      │
+│ ce071-3c03-423f-88d3- │           │                   │                      │
+│ f1045d02552b}         │           │                   │                      │
+│                       │           │                   │                      │
+│ 🛠️ Service Test       │ DIAG      │ Yes               │ Microsoft            │
+│ Loopback B            │           │                   │                      │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _diag_loopback_b#{e7c │           │                   │                      │
+│ ce071-3c03-423f-88d3- │           │                   │                      │
+│ f1045d02552b}         │           │                   │                      │
+│                       │           │                   │                      │
+│ ⚙ Service Test Ping   │ DIAG      │                   │ Microsoft            │
+│ (Internal)            │           │                   │                      │
+│ \\?\swd#midisrv#midiu │           │                   │                      │
+│ _diag_ping#{e7cce071- │           │                   │                      │
+│ 3c03-423f-88d3-f1045d │           │                   │                      │
+│ 02552b}               │           │                   │                      │
+│                       │           │                   │                      │
+╰───────────────────────┴───────────┴───────────────────┴──────────────────────╯

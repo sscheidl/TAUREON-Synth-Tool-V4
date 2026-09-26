@@ -1,0 +1,160 @@
+cdc38f6489d6067df6145a45e44c6e7950cc5cf1 2026-09-10T09:54:27+02:00 tAUREON ci: package internal Windows hardware-test build
+bc52f5255d294918195641e572775f9ab4e2c630 2026-09-10T09:53:45+02:00 tAUREON build: embed source revision in diagnostics
+7dc09c9bd241cb773b25b41402d1aea892926d3f 2026-09-09T21:09:39+02:00 sscheidl Complete Stage 5 Windows Block B evidence
+69dadd3a51c30deba5216e20016d9bffd88c11de 2026-09-03T18:14:17Z Claude Harden reference-archive release tripwire and tidy the test JSON helper
+df404830fc7916d1ec12fcc06956e068cfe3145b 2026-09-03T14:58:13Z Claude Add SysEx/MIDI reference archive v1 (schema, first device, tests)
+d04e99c08d9d7f4134b7040a3e8abba9654045eb 2026-09-02T09:55:27+02:00 tAUREON Merge pull request #11 from sscheidl/codex/stage5-cloud-phase-close
+ff0ed90f48570e7ad90c0e12210e35f83de23f1e 2026-09-02T09:43:13+02:00 tAUREON docs(stage5): close the cloud phase and record B-5
+d5f3a0bad140032fb6ef35c3cf5e1bb38c31d824 2026-09-02T06:47:17+02:00 tAUREON Merge pull request #10 — Stage 5 status reconciliation
+502a21d019af28efd1d2715a53e48d987c1e35b8 2026-09-01T22:24:53+02:00 tAUREON docs(stage5): record follow-up and preview merges
+42a2954daf9bdb5f048fbcb45dc6a7fb7d392bf6 2026-09-01T22:24:28+02:00 tAUREON docs(stage5): reconcile post-merge status
+0ea82e526e89fddb2d6e8ae10a24b481c0937813 2026-09-01T21:33:35+02:00 tAUREON Merge pull request #9 from sscheidl/codex/stage5-gui-preview-artifact
+1ede95b8a7c3d8738999bc2f563aec23703968fe 2026-09-01T21:27:09+02:00 tAUREON Merge pull request #8 from sscheidl/codex/stage5-block-a-followups
+434727d729097f844b42df7746e8d7b4b71b4d87 2026-09-01T20:53:42+02:00 tAUREON test(gui): accept valid headless preview raster size
+d26036dcfdd9bb45b345aa3a29a9373f7549a7a8 2026-09-01T20:52:27+02:00 tAUREON test(gui): report offscreen preview geometry on mismatch
+1bfd6003497ad64737aab529cafb2668b2b3f11d 2026-09-01T20:44:59+02:00 tAUREON fix(ci): configure offscreen preview canvas at 1920x1080
+a4b30aafcec39b41af23590ceafe60135f3a9469 2026-09-01T20:44:42+02:00 tAUREON test(gui): configure deterministic 1920x1080 offscreen preview
+71c974f60d34da5b82b5de0606f755e8a9a5412f 2026-09-01T20:36:46+02:00 tAUREON fix(ci): run GUI preview capture from test output directory
+cdd72d9a7b9a5fbef2ada50a4d2c16f962cc7e37 2026-09-01T18:31:02+02:00 tAUREON fix(stage5): synchronize close-in-flight terminal state assertion
+8edf617700321ed2ee074b3d9e020d4392e4987d 2026-09-01T14:01:28+02:00 tAUREON test(stage5): publish GUI visual preview artifact
+280044bfba267a67e398a4db4c07e0585ddffb0f 2026-09-01T13:58:53+02:00 tAUREON fix(stage5): close Block A review follow-ups F-1 to F-5
+bd4dd4f26bf19c0bd25ef2f2136e70cb470365b8 2026-09-01T08:58:40+02:00 tAUREON Merge pull request #7 — Stage 5 Block A: software finalization
+a4627d9113fa9191423171616e56b0a267fee763 2026-09-01T08:18:51+02:00 tAUREON Stage 5: fix Block A report whitespace
+1edcd2cda37f9fb7df8b509d55e1e75e4ca44494 2026-09-01T08:16:24+02:00 tAUREON Stage 5: consolidate Block A gate traceability
+5a5e495bca30babb00b1a62119b8f247878d33b8 2026-09-01T07:10:56+02:00 tAUREON Fix Stage 5 large malformed test input
+db222ecceaa743396c102cc44dd7a465f22f2092 2026-09-01T07:02:25+02:00 tAUREON Stage 5: keep large malformed SysEx evidence bounded
+ede6a658e4baa29d14562bfb7583bbd490191f05 2026-09-01T06:29:19+02:00 tAUREON stage5: assert invalid large Manager handoff rejection
+6485ff0bb241e5804153b7f68d9b95de16b77d81 2026-09-01T06:28:40+02:00 tAUREON stage5: preserve L-3 enum-tail convention
+98c5e804aa7b4a9061e7284d3faa0658551f1f1a 2026-08-31T22:03:05+02:00 tAUREON stage5: link close-in-flight test to production worker
+8dacbc4a6f930c899717692c3f22829a571c3257 2026-08-31T21:55:57+02:00 tAUREON stage5: assert retained L-3 error-code ordinal
+a1b338a37f510323a524d4dc78d2391e18c29356 2026-08-31T21:55:42+02:00 tAUREON stage5: retain L-3 error code as enum tail
+bad911c825ff4c1f1374c6e2d5a76f67673a2060 2026-08-31T21:50:44+02:00 tAUREON stage5: remove obsolete monitor model reference
+95ea680cb65de4ed1e19aad14822d22f8b281960 2026-08-31T21:43:21+02:00 tAUREON stage5: prove fake close while transfer activity is in flight
+6e796159db810ff89d1aa4392256071eb3fcd0d7 2026-08-31T21:42:17+02:00 tAUREON stage5: prove deterministic large SysEx cancellation
+593713a19bd27b4aac0f2a84908bffcf97e1ecb0 2026-08-31T21:40:48+02:00 tAUREON stage5: assert stable MIDI error-code ordering
+a837d0c989fa76308fdf7cc66c78a8d5b7733d68 2026-08-31T21:40:26+02:00 tAUREON stage5: verify Settings scope and Diagnostics default policy
+59d5c623cb6d2c19dc51003f37da1877c9a6144f 2026-08-31T21:39:13+02:00 tAUREON stage5: reject invalid large SysEx at transfer encode boundary
+d7d36dfaf610b3e32a25b89e361c697fbb46decf 2026-08-31T21:38:41+02:00 tAUREON stage5: cover large malformed incomplete and tainted SysEx
+7e19eba5ad99438649afc44719851c5ac448e2df 2026-08-31T21:37:56+02:00 tAUREON stage5: prove monitor selection and queued teardown safety
+1a1e246b4915f986b0914396a5fe6d7c681a490f 2026-08-31T21:37:18+02:00 tAUREON stage5: run application model tests through QWidget selection paths
+31baaf0924fa226d5088cffdb2212b72e6aef623 2026-08-31T21:36:35+02:00 tAUREON stage5: discard pending monitor batches on presentation close
+c4376c604dd94e6e47cccdc5f1919489bf192bba 2026-08-31T21:36:27+02:00 tAUREON stage5: gate queued monitor updates at model teardown
+d392619a65b65aa609bec583e33ca23b8b843729 2026-08-31T21:34:42+02:00 tAUREON stage5: state Settings application scope explicitly
+f7a1ee7436fd11d08bd0d3e8ee8edf8a2437b73a 2026-08-31T21:34:34+02:00 tAUREON stage5: guard Diagnostics default export policy
+0669b78dc408ced7cdae76334544c943b4c596c1 2026-08-31T21:34:26+02:00 tAUREON stage5: make Diagnostics export policy defensive
+d3199d475ba7d74a5f651d8b36dfdfcf80eefb8f 2026-08-31T21:34:17+02:00 tAUREON stage5: reuse SysEx transfer eligibility rule
+31ebb264672325b5bcaab52ee107dc2a91ed0641 2026-08-31T21:34:08+02:00 tAUREON stage5: centralize SysEx transfer eligibility
+872069acd7e03523fdc33b1e555d70de340cf5dd 2026-08-31T21:33:32+02:00 tAUREON stage5: preserve MIDI error-code ordinal stability
+6b6b4d9191e592826afa1bfa2ea7f0ad5703e562 2026-08-31T15:07:00+02:00 tAUREON Merge pull request #6 — Stage 5 Slice 9a: software completion and gate evidence
+e3b3ce71e5bbcc7741ce9e9a6d8cdc479dcc527b 2026-08-31T14:26:17+02:00 tAUREON ci: verify pull request diff whitespace
+4cb179ea5f05cc5630b24c31d4c449e0b7285390 2026-08-31T09:24:25+02:00 tAUREON docs(stage5): record targeted repair CI evidence
+e42d6e6b68b38e1dd875f7b827891f525dbd04c1 2026-08-31T09:16:12+02:00 tAUREON docs(status): restore project history and record Slice 9a repair
+ff43d58b158863744df147b4ae1964f9d7b70f7b 2026-08-31T09:15:38+02:00 tAUREON docs(stage5): restore evidence chain and add Slice 9a repair record
+cea1a42c7134b7c505e946692ac9358d86443e71 2026-08-31T09:14:48+02:00 tAUREON test(sysex-manager): measure large workflow workspace growth
+87957f185d04c42185fe684b8f5ddba69ad26d72 2026-08-31T09:14:12+02:00 tAUREON test(sysex-manager): distinguish pre-read resource rejection
+5eb8189acb5e391c873b7c8c48160a27dbe891f3 2026-08-31T09:13:54+02:00 tAUREON fix(sysex-manager): reject unreadable file-size metadata
+5d8f20279553cf6d9a90d25345b101af681953ba 2026-08-31T08:05:35+02:00 tAUREON docs(status): record Stage 5 Slice 9a readiness
+b142b0ab01906843542ad7874cb50e69ce78b2ff 2026-08-31T08:05:12+02:00 tAUREON docs(stage5): consolidate software completion evidence
+3318d1ec9a7a08eacbca19411ebac98d328046e5 2026-08-31T07:05:39+02:00 tAUREON Stage 5: exercise large SysEx Manager workflow
+967890810f469148c3d38b00e2bafd16223a2b20 2026-08-31T07:05:05+02:00 tAUREON Stage 5: test queued Manager handoff teardown
+eefe59097a475e4542faf262d83edbc030ef956a 2026-08-31T06:57:38+02:00 tAUREON Stage 5: test SysEx aggregate budget release
+bd7f6c34d5108b3649b29985da1e012e1104c1f8 2026-08-31T06:56:46+02:00 tAUREON Stage 5: clear cross-panel snapshot observer on teardown
+6e6777b090d8934711f012aa5c85b6612e2a91a1 2026-08-31T06:56:26+02:00 tAUREON Stage 5: test Librarian unavailable causes
+64c2af5eae28d2844213417e5301345ce36d00f3 2026-08-31T06:51:42+02:00 tAUREON Stage 5: prove visible Diagnostics refreshes
+0163fc6488b051dd2238ef355ec0ae0625d51fb0 2026-08-31T06:51:25+02:00 tAUREON Stage 5: poll Diagnostics only while visible
+a95fd38ce3afbd79ecf13ca98974611cd12e571e 2026-08-31T06:51:10+02:00 tAUREON Stage 5: make Diagnostics refresh visibility-aware
+5b52fbc24ba87fc9c76515623c6f67daea2a3dc6 2026-08-31T06:50:35+02:00 tAUREON Stage 5: test bounded Librarian refresh
+60d9e3e90d05f7975274ab7513c5931b72da73a7 2026-08-31T06:50:20+02:00 tAUREON Stage 5: report actual Librarian unavailable causes
+95aaf71ba420d0032fba111ee8db88f2d99de616 2026-08-31T06:50:05+02:00 tAUREON Stage 5: document deferred Librarian capabilities
+261f856fab6c6f68429c36188e6edba6951cc42f 2026-08-31T06:48:14+02:00 tAUREON Stage 5: test SysEx document limit before read
+17fa90af0d3edfc6c6a28d50b010a8cc3f61d151 2026-08-30T23:24:05+02:00 tAUREON Stage 5: show SysEx Manager resource limits
+391668fe5c30231878b7ad2944d439728e5289fa 2026-08-30T23:23:49+02:00 tAUREON Stage 5: bound SysEx Manager raw payloads
+de391f4267035abea1f01a674104a228d938b71d 2026-08-30T23:23:10+02:00 tAUREON Stage 5: define SysEx Manager resource limits
+c1ecc99f62e2d338a20dfa781e0462a1cb4675b8 2026-08-30T23:22:54+02:00 tAUREON Stage 5: add resource-limit MIDI error
+2ca2c246f15ab9ee5be6e9b04fb38e102d361032 2026-08-30T23:03:19+02:00 tAUREON Stage 5: bounded Librarian foundation
+f747edc58cdc36e771c93be7cf3f22711ed5d2f6 2026-08-30T22:33:34+02:00 tAUREON Stage 5: record S8-1 Librarian repair evidence
+0e154d5f9e2f7e0737aca405ff1d0a7423989b6d 2026-08-30T22:26:34+02:00 tAUREON Stage 5: cover Librarian capacity and validity repair
+4e40e256ce0f17e249a71965eb20b8f810e0142f 2026-08-30T22:25:55+02:00 tAUREON Stage 5: distinguish writable Librarian slots
+14fb61a05c122c11afde816740b4ca305a5012d5 2026-08-30T21:50:22+02:00 tAUREON Stage 5: record Slice 8 CI evidence
+a033b8a86472b5df336fc2fb6ba6ffc2939251c3 2026-08-30T21:41:58+02:00 tAUREON Stage 5: provide fixture root to Librarian test
+299a7bcf2c08c58e8e8a9e06fbf7ef036abe0e0f 2026-08-30T21:41:44+02:00 tAUREON Stage 5: test recognized SysEx stays non-semantic
+357290819930cfbb1dccfe38df8b465fa93df978 2026-08-30T21:41:11+02:00 tAUREON Stage 5: link librarian panel into connection UI test
+041fc4305958009ea2a25cfc022a382545577d85 2026-08-30T21:32:14+02:00 tAUREON Stage 5: keep librarian tests Qt macro safe
+65770b268e03a53e6a0f5ff6b5c46dfe5e907d32 2026-08-30T21:32:01+02:00 tAUREON Stage 5: use Qt-safe librarian entry storage
+be175ff967ab5725f78e483e3751022f13f19b07 2026-08-30T21:31:48+02:00 tAUREON Stage 5: use Qt-safe librarian entry storage
+d6c3cc5b8b3081cdac8824d69ea078ae2917157d 2026-08-30T21:31:37+02:00 tAUREON Stage 5: avoid Qt slots macro in librarian domain
+1f4f1f81475a84081199bbbb0787e555705fdd75 2026-08-30T21:27:09+02:00 tAUREON Docs: record Slice 8 librarian evidence
+182f40dd9529dc2f388e3adbbfe2ba4a8eab9e73 2026-08-30T21:24:06+02:00 tAUREON Stage 5: register librarian model view tests
+94085e719c4a350e4bd48073cf4746465b51ab13 2026-08-30T21:23:40+02:00 tAUREON Stage 5: add librarian model and interaction tests
+f00954b8fe6f5bb19d5a1223dd884291df256b2b 2026-08-30T21:22:56+02:00 tAUREON Stage 5: replace librarian placeholder
+88cd758b69aa21d0403073d0a5b745b5a0a79909 2026-08-30T21:22:43+02:00 tAUREON Stage 5: build librarian foundation
+9b2f7e7931e033235c260d1ced00d5175ea7e1cc 2026-08-30T21:22:27+02:00 tAUREON Stage 5: implement bounded librarian workspace
+3fe4290cabd184655f6c965ccc02f167f02a3e69 2026-08-30T21:21:43+02:00 tAUREON Stage 5: add reusable librarian model interface
+15f1ba721fe38b88f2079341e7e92807399ef1b0 2026-08-30T21:21:20+02:00 tAUREON Stage 5: validate librarian snapshots
+f0d2d81a131761e9a67154abfbc11b4742f0f96a 2026-08-30T21:21:04+02:00 tAUREON Stage 5: add librarian domain contract
+2c6b2cfd65782c3e87931a0740e91bb4d3bc131a 2026-08-30T13:02:00Z Claude Code Stage 5: close N-1, N-2, N-3, S7-3 and S7-4 before the gate
+d0de6306782797455779e70f63b2d7c90d550a31 2026-08-30T14:02:24+02:00 tAUREON Merge pull request #4 from sscheidl/codex/stage5-diagnostics-settings
+7d56552c84e1abd5b714c96b88ec4c5c8b8a0684 2026-08-30T12:22:53+02:00 tAUREON Docs: record S7-1 repair evidence
+b061dda4f0f649f6622c8eda8b45712f368d534c 2026-08-30T07:05:30+02:00 tAUREON Stage 5: complete diagnostic export policy flow
+1717d2e4edc77f18358e67be89675a3bedd7546e 2026-08-30T06:56:27+02:00 tAUREON Stage 5: honor diagnostic route export setting
+350e76aa783715ec50653c93b440d933fe2beb07 2026-08-30T06:40:09+02:00 tAUREON Stage 5: add explicit diagnostic export policy
+8e1520aced11c8a68d269a2f4f7071afc4dd6546 2026-08-29T20:18:57+02:00 tAUREON Docs: record Slice 6 closure and Slice 7 evidence
+d5f10b3ddb90a9d4348f94ccf4757e63a7dfeba7 2026-08-29T20:10:04+02:00 tAUREON Stage 5: correct diagnostics snapshot metadata mapping
+cbafb4ad12244a4943f30751b34320195f425c0b 2026-08-29T20:08:14+02:00 tAUREON Stage 5: implement Diagnostics and Settings workspaces
+50fa74e7ffbde8c759b2a7044c98130041ce27be 2026-08-29T20:01:59+02:00 tAUREON Stage 5: add versioned settings and safe diagnostics core
+e2719ee5f73bac79da781c539efc3cb9fdd733f6 2026-08-29T17:23:46+02:00 tAUREON Merge pull request #3 from sscheidl/codex/stage5-devices-profiles
+c90fdb700ca9dea134a9d810c3abbe87454334c2 2026-08-29T11:25:45+02:00 tAUREON build: scope AUTOMOC to Qt handoff targets
+28dc6dcaa5cefcdd3442e17619bb3d95ac92923b 2026-08-29T11:17:26+02:00 tAUREON Stage 5: make Manager transfer completion lifetime deterministic
+6e47c6c45b0eca091401eb85d0a7bbb5cfdbc089 2026-08-29T09:48:04+02:00 tAUREON docs: record Stage 5 profile composition evidence
+7548ea725655abe46cb4b8ecbad68babab772a2d 2026-08-29T09:41:30+02:00 tAUREON Stage 5: retain profile evidence state across workspace navigation
+421b0aec834b3979bc61c6c6f1ff3540da1634b7 2026-08-29T09:34:37+02:00 tAUREON Stage 5: connect profile workflow to transfer evidence
+a7630fafcaffa38044f66cbc13462ace799f8e00 2026-08-29T09:10:47+02:00 tAUREON Merge pull request #2 from sscheidl/codex/stage5-sysex-manager
+caf256355817b860b71a5cbde8ca94c80dd4825c 2026-08-29T07:04:07+02:00 tAUREON Stage 5: record SysEx Manager follow-up CI evidence
+e870611b7d854a23e5464c12ce2526c7a2bc9a17 2026-08-29T06:57:19+02:00 tAUREON Stage 5: retain SysEx Manager preview-size indicator
+17933c54a21ea93ca49b0451696244320e563041 2026-08-29T06:51:11+02:00 tAUREON Stage 5: drive raw inspector through its selection model
+574fd77f0fa898bffef087d0b0505fa4525dc191 2026-08-29T06:44:59+02:00 tAUREON Stage 5: verify raw preview against selected frame size
+d558efe3629c7b905c1c787f1d604e787913a26f 2026-08-29T06:38:38+02:00 tAUREON Stage 5: drive Manager raw-preview interaction explicitly
+56d155e28d8b55a1090b0c846b45f96f27e945a0 2026-08-29T06:32:07+02:00 tAUREON Stage 5: fix bounded raw-preview newline literal
+865457ea716a5e5e13394041a68925f8655a7f13 2026-08-29T06:26:23+02:00 tAUREON Stage 5: record SysEx Manager review follow-up status
+36ba1b3ed1475fef4f0aa969092d73a52abc107b 2026-08-29T06:25:24+02:00 tAUREON Stage 5: report rejected document handoff accurately
+7e9f89f90566946caaf89ea985e94e2b4097e73d 2026-08-29T06:25:03+02:00 tAUREON Stage 5: prove rejected handoff preserves active capture
+a3d98e9183e821c61f77509352010e80c0d670c0 2026-08-29T06:24:33+02:00 tAUREON Stage 5: prove Manager handoff neither sends nor overwrites
+0966781a860156ae030d91b0e6d13fe9aa34d3ef 2026-08-29T06:23:40+02:00 tAUREON Stage 5: prove bounded Manager hex preview keeps full bytes
+80c6c120e644d90010436e7d6fa476d6372fd245 2026-08-29T06:23:11+02:00 tAUREON Stage 5: add SysEx Manager negative integrity evidence
+3369327f9e4c63877bece88766a33a8911b1e3f9 2026-08-29T06:22:09+02:00 tAUREON Stage 5: navigate only after accepted Manager handoff
+8c94caf9f90f4c964424c057040581495d7aff31 2026-08-29T06:21:52+02:00 tAUREON Stage 5: defer handoff success until worker acceptance
+28454023f52e2070fa13ad346b0e6c96ac0b80c6 2026-08-29T06:21:27+02:00 tAUREON Stage 5: make transfer handoff acceptance observable
+230846562de5047016a4c37ab1705628cb5782ad 2026-08-29T06:21:11+02:00 tAUREON Stage 5: bound SysEx Manager inspection and overwrite handling
+1966bc17a8c7ad86133e681562843da8eb5ece4c 2026-08-29T06:19:32+02:00 tAUREON Stage 5: report actual SysEx Manager handoff outcomes
+031f5bd5704cc789e4813db65de2e292a0e68c44 2026-08-29T06:19:04+02:00 tAUREON Stage 5: enforce Manager validation and lightweight snapshots
+9997daf7ac8ceb4781fc59d5961f6f3f77406767 2026-08-29T06:17:49+02:00 tAUREON Stage 5: keep SysEx Manager refresh metadata lightweight
+7fd2ea03807f407d4badfb8912b62b5233da3966 2026-08-29T06:17:14+02:00 tAUREON Stage 5: classify SysEx Manager selection errors
+6706ef930b18f0fcb0f769a46e89662bbbd4812e 2026-08-29T03:43:34+02:00 tAUREON Stage 5: assert SysEx Manager device metadata
+321d154f4eb7197f64ad502691a0ad3563c0dff4 2026-08-29T03:36:34+02:00 tAUREON Stage 5: preserve inspected SysEx Manager bytes
+68862ffb2033123b7e48a541774f54b49d622c23 2026-08-28T21:07:54+02:00 tAUREON Stage 5: link SysEx Manager UI test target
+6ec6e91d93f5f1df8f8a5c38730b21774ea0ad84 2026-08-28T21:00:59+02:00 tAUREON Stage 5: add generic SysEx Manager workspace
+deb3d1b77f30ccff9c8a326b690ade19b32e6ca9 2026-08-28T21:17:59+03:00 tAUREON Merge pull request #1 from codex/cloud-ci-readiness
+a846230adf6673a87e315827d9e1ffc3fdbc19a1 2026-08-28T18:48:43+03:00 tAUREON CI: restore reproducible Windows Qt build
+bfd108e26f18474520339123427185b414f1b45a 2026-08-25T08:54:33+02:00 sscheidl Stage 5: preserve application loss event sequence
+dbdda997f1a06d92f788a1b2d344f45d5c931be7 2026-08-25T08:21:56+02:00 sscheidl Stage 5: add safe SysEx transfer workspace
+438ccfee019a332931a9a255ebdb87795406f5e6 2026-08-24T23:52:40+02:00 sscheidl Stage 5: checkpoint asynchronous connection bar
+04b96e15e0ac1ad19c8aca569d5af363a276ab64 2026-08-24T23:34:53+02:00 sscheidl Stage 5: add monitor controls and stress evidence
+8f13db85e8a37509d4cc4a6fd9a352587fc542ff 2026-08-24T23:28:07+02:00 sscheidl Stage 5: complete overridden profile evidence follow-up
+e64433d33cb0bbb8a3f71bbdf7bdae3d54c6485c 2026-08-24T23:23:30+02:00 sscheidl Stage 5: add bounded monitor and connection control
+852ad169e04540abe2d97c84a9d229c3f7ab0b21 2026-08-24T23:08:36+02:00 sscheidl Stage 5: add Qt Widgets product host shell
+db607ee3cf9570446e154e3fd96383f489f4431a 2026-08-24T23:01:51+02:00 sscheidl Stage 5: activate approved Qt product GUI brief
+070cf6be1c4f562d7a3b8455616204e45b3f6d85 2026-08-24T22:59:43+02:00 sscheidl Docs: close Stage 4 and hand off FU-3 to Stage 5
+986115dd76c0c6980ce9a120582e2b7edd57280e 2026-08-24T22:54:22+02:00 sscheidl Stage 4: implement profile isolation proof (review pending)
+5994ea6b92d6431c6988045f0e841fa1e14bacfe 2026-08-24T21:51:53+02:00 sscheidl Add approved Stage 4 brief
+5430fabe3c87b6618dbcaaf282d1b7db63cf0a9d 2026-08-24T21:47:37+02:00 sscheidl Close Stage 3 transport loss remediation
+8030c20f4de1f621401a86c84994b408fba91817 2026-08-24T20:05:38+02:00 sscheidl Stage 3: implement generic MIDI SysEx and transfer engine
+3b8774ff5e607e08128cdd95a6fa600cdd359fde 2026-08-24T19:27:32+02:00 sscheidl Close Stage 2 and activate Stage 3
+3e9c2783e9598a52d6d560cf0d7854222f99dce7 2026-08-24T18:39:30+02:00 sscheidl Stage 2: close WinMM partial-open P1
+9bcbf0d825627461a285529c18484e5eae77eb7d 2026-08-24T17:45:48+02:00 sscheidl Stage 2: implement MIDI core and transport architecture
+fb543a5689d5e5e9ef0903cf42c4f1e3d13879bf 2026-08-24T16:53:48+02:00 sscheidl Stage 1: complete native transport spikes
+eb63c4a9bf77da05c6b053a853151105615b88ef 2026-08-24T12:31:25+02:00 sscheidl Correct Stage 0 WMS evidence and activate Stage 1
+df0f5f327d6a235ab9b2fafcd407d16f222c0e69 2026-08-24T12:20:02+02:00 sscheidl Normalize Stage 0 and Stage 1 brief formatting
+f0c2cec42af4b1dd1078d991f1255d380517963c 2026-08-24T12:18:25+02:00 sscheidl Close Stage 0 and prepare Stage 1 review brief
+14aae7e9bc5530bd9baaf3d2a4f6d78a05d8c936 2026-08-24T10:20:18+02:00 sscheidl Record private V4 GitHub repository decision
+39ad616c5ce6552d96268527ff9ecc9a32bf1560 2026-08-24T08:36:41+02:00 sscheidl Align Stage 0 documents with confirmed project path
+efa71b68236ab3648551439b7aaae5fbea1b3152 2026-08-24T08:35:28+02:00 sscheidl Bootstrap TAUREON V4 Stage 0 baseline

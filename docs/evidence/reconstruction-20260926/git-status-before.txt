@@ -1,0 +1,9 @@
+## codex/stage5-block-b-windows-evidence...origin/codex/stage5-block-b-windows-evidence
+ M src/transports/IMidiTransport.hpp
+ M src/transports/wms/CMakeLists.txt
+ M src/transports/wms/WmsTransport.cpp
+ M tests/integration/CMakeLists.txt
+ M tests/integration/Stage5ProductHostLocal.cpp
+ M tools/RunStage5ProductHostLoopback.ps1
+?? .work/
+?? docs/evidence/reconstruction-20260926/

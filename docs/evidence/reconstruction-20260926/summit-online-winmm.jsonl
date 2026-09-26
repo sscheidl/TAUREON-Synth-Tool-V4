@@ -1,0 +1,53 @@
+{"event":"winmm_input","index_hint":0,"name":"M8U eX 1","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":1,"name":"M8U eX 2","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":2,"name":"M8U eX 3","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":3,"name":"M8U eX 4","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":4,"name":"M8U eX 5","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":5,"name":"M8U eX 6","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":6,"name":"M8U eX 7","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":7,"name":"M8U eX 8","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":8,"name":"M8U eX 9","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":9,"name":"M8U eX 10","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":10,"name":"M8U eX 11","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":11,"name":"M8U eX 12","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":12,"name":"M8U eX 13","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":13,"name":"M8U eX 14","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":14,"name":"M8U eX 15","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":15,"name":"M8U eX 16","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":16,"name":"KONTROL S61 MK3","wMid":1,"wPid":103,"driver_version":532}
+{"event":"winmm_input","index_hint":17,"name":"MIDIIN2 (KONTROL S61 MK3)","wMid":1,"wPid":103,"driver_version":532}
+{"event":"winmm_input","index_hint":18,"name":"MIDIIN3 (KONTROL S61 MK3)","wMid":1,"wPid":103,"driver_version":532}
+{"event":"winmm_input","index_hint":19,"name":"AF16Rig DIN 1 In","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":20,"name":"AF16Rig Usb Host In","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_input","index_hint":21,"name":"MiniFreak","wMid":1,"wPid":103,"driver_version":20480}
+{"event":"winmm_input","index_hint":22,"name":"MODEL D","wMid":1,"wPid":103,"driver_version":1}
+{"event":"winmm_input","index_hint":23,"name":"Summit","wMid":1,"wPid":25,"driver_version":256}
+{"event":"winmm_output","index_hint":0,"name":"Microsoft GS Wavetable Synth","wMid":1,"wPid":27,"driver_version":256}
+{"event":"winmm_output","index_hint":1,"name":"M8U eX 1","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":2,"name":"M8U eX 2","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":3,"name":"M8U eX 3","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":4,"name":"M8U eX 4","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":5,"name":"M8U eX 5","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":6,"name":"M8U eX 6","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":7,"name":"M8U eX 7","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":8,"name":"M8U eX 8","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":9,"name":"M8U eX 9","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":10,"name":"M8U eX 10","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":11,"name":"M8U eX 11","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":12,"name":"M8U eX 12","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":13,"name":"M8U eX 13","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":14,"name":"M8U eX 14","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":15,"name":"M8U eX 15","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":16,"name":"M8U eX 16","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":17,"name":"KONTROL S61 MK3","wMid":1,"wPid":102,"driver_version":532}
+{"event":"winmm_output","index_hint":18,"name":"MIDIOUT2 (KONTROL S61 MK3)","wMid":1,"wPid":102,"driver_version":532}
+{"event":"winmm_output","index_hint":19,"name":"MIDIOUT3 (KONTROL S61 MK3)","wMid":1,"wPid":102,"driver_version":532}
+{"event":"winmm_output","index_hint":20,"name":"AF16Rig DIN 1 Out","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":21,"name":"AF16Rig DIN 2 Out","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":22,"name":"AF16Rig Usb Host Out","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":23,"name":"AF16Rig Clock Out","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":24,"name":"AF16Rig Mixer Control","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_output","index_hint":25,"name":"MiniFreak","wMid":1,"wPid":102,"driver_version":20480}
+{"event":"winmm_output","index_hint":26,"name":"MODEL D","wMid":1,"wPid":102,"driver_version":1}
+{"event":"winmm_output","index_hint":27,"name":"Summit","wMid":1,"wPid":26,"driver_version":256}
+{"event":"winmm_enumeration_summary","inputs":24,"outputs":28}

@@ -1,0 +1,78 @@
+UpdateCTestConfiguration  from :D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/.work/reconstruction-20260926/DartConfiguration.tcl
+Parse Config file:D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/.work/reconstruction-20260926/DartConfiguration.tcl
+Test project D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/.work/reconstruction-20260926
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 34
+    Start 34: stage5_local_product_host_lifecycle
+
+34: Test command: C:\Users\ssche\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\powershell\pwsh.exe "-NoProfile" "-ExecutionPolicy" "Bypass" "-File" "D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tools/RunStage5ProductHostLoopback.ps1" "-Executable" "D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/.work/reconstruction-20260926/tests/integration/Debug/stage5_product_host_local.exe" "-Cycles" "5"
+34: Working Directory: D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/.work/reconstruction-20260926/tests/integration
+34: Environment variable modifications: 
+34:  PATH=path_list_prepend:C:/Qt/6.10.3/msvc2022_64/bin
+34: Test timeout computed to be: 120
+34: PASS
+34: 
+34: Microsoft Windows MIDI Services Console
+34: SDK Release Candidate 4 (GitHub Preview)
+34: 1.0.17-rc.4.25
+34: 
+34: Loopback endpoints created.
+34: 
+34: Unlike classic MIDI 1.0 loopbacks, these are fully MIDI 2.0-compatible 
+34: bidirectional endpoints. Messages sent to Loopback A will be received by 
+34: Loopback B. Messages sent by B will be received by A. MIDI 1.0 apps will see 4 
+34: created ports (2 sources, 2 destinations) as a result.
+34: 
+34: These endpoints will disappear when the service or PC is restarted. To create 
+34: permanent loopback endpoints, use the MIDI Settings app.
+34: 
+34: ╭────────────────┬─────────────────────────────────────────────────────────────╮
+34: │ Endpoint A     │ TAUREON S5 WMS A 83AAD3                                     │
+34: │                │ \\?\swd#midisrv#midiu_loop_a_taureonstage59e199f71b4e840f89 │
+34: │                │ 6bcdcaa843afdf8#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
+34: │                │                                                             │
+34: │ Endpoint B     │ TAUREON S5 WMS B 83AAD3                                     │
+34: │                │ \\?\swd#midisrv#midiu_loop_b_taureonstage59e199f71b4e840f89 │
+34: │                │ 6bcdcaa843afdf8#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
+34: │                │                                                             │
+34: │ Association Id │ 575a6c11-b839-4bef-861f-bbc58f3a726c                        │
+34: ╰────────────────┴─────────────────────────────────────────────────────────────╯
+34: 
+34: PASS
+34: {"event":"stage5_gui_apartment","type":"main_sta","qualifier":0}
+34: {"event":"stage5_product_host_handle_trend","backend":"wms","steady_slope":0,"new_steady_high":false,"sustained_growth":false,"gate_applied":false,"handle_samples":[464,466,466,466,466]}
+34: {"event":"stage5_product_host","backend":"wms","cycles":5,"receive_active_callbacks":1,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":1,"max_shutdown_ms":63,"steady_handle_min":466,"steady_handle_max":466,"steady_handle_slope":0,"handle_growth_gate_applied":false,"sustained_handle_growth":false}
+34: PASS
+34: {"event":"stage5_gui_apartment","type":"main_sta","qualifier":0}
+34: {"event":"stage5_product_host_handle_trend","backend":"winmm","steady_slope":0,"new_steady_high":false,"sustained_growth":false,"gate_applied":false,"handle_samples":[485,486,486,486,486]}
+34: {"event":"stage5_product_host","backend":"winmm","cycles":5,"receive_active_callbacks":3,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":2,"max_shutdown_ms":37,"steady_handle_min":486,"steady_handle_max":486,"steady_handle_slope":0,"handle_growth_gate_applied":false,"sustained_handle_growth":false}
+34: PASS
+34: 
+34: Microsoft Windows MIDI Services Console
+34: SDK Release Candidate 4 (GitHub Preview)
+34: 1.0.17-rc.4.25
+34: 
+34: Loopback endpoint pair removed.
+34: 
+34: PASS
+1/1 Test #34: stage5_local_product_host_lifecycle ...   Passed   34.65 sec
+
+The following tests passed:
+	stage5_local_product_host_lifecycle
+
+100% tests passed out of 1
+
+Label Time Summary:
+gui            =  34.65 sec*proc (1 test)
+integration    =  34.65 sec*proc (1 test)
+local-midi     =  34.65 sec*proc (1 test)
+stage5         =  34.65 sec*proc (1 test)
+winmm          =  34.65 sec*proc (1 test)
+wms            =  34.65 sec*proc (1 test)
+
+Total Test time (real) =  34.66 sec

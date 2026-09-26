@@ -658,7 +658,7 @@ using Qt 6.10.3 and Windows MIDI Services Console 1.0.17-rc.4.25. Local MIDI tes
 only temporary, uniquely named WMS loopback endpoints. No physical MIDI endpoint was
 selected.
 
-### B-3 - PASS on the product host
+### B-3 - historical PASS claim (superseded on 2026-09-26)
 
 `stage5_local_product_host_lifecycle` is an opt-in local test around the production
 `QApplication`, `MainWindow`, `ConnectionWorker`, native transport factory, and actual
@@ -704,3 +704,78 @@ provide responsive-layout evidence, but simulations are not native OS display-sc
 evidence. Native Windows 150% and 200% inspection remains outstanding, as does physical
 MIDI/SysEx hardware validation. Stage 5 therefore remains **HOLD/ACTIVE** and Stage 6
 has not begun.
+
+## Block-B B-3 targeted P1 remediation — 2026-09-26
+
+This section supersedes the current B-3 disposition above without rewriting the
+historical 2026-09-09 run. PR #12 at branch HEAD
+`7dc09c9bd241cb773b25b41402d1aea892926d3f` has three unresolved P1 review threads:
+
+1. receive-active close did not first prove native receive activity;
+2. teardown did not require successful native close and final state `closed`;
+3. the product-host evidence did not observe the GUI apartment or WMS worker MTA.
+
+The local dirty worktree contains a bounded six-file remediation:
+
+- `MidiTransportDiagnostics` exposes whether the WMS worker actually observed MTA;
+- the WMS worker checks `CoGetApartmentType` after MTA initialization and fails if the
+  observed apartment is not MTA;
+- the product-host executable checks GUI `STA`/`MAINSTA`, records and requires successful
+  closes plus final `closed`, sends one temporary-loopback receive probe, waits for native
+  callback/delivery and a complete captured frame, and then closes the active receiver;
+- WMS and WinMM run in separate product-host processes;
+- the ordinary regression uses five cycles per backend; only an explicit run with at
+  least 100 cycles applies the retained directional process-handle-growth gate;
+- the Stage-2 WMS lifecycle timeout is 180 seconds and the short Stage-5 gate timeout is
+  120 seconds. These are execution bounds, not race fixes.
+
+Fresh VS-2022-x64 Debug verification used Qt 6.10.3, Windows SDK 10.0.26100.0 and the
+already present WMS SDK/Console 1.0.17-rc.4.25. The dirty snapshot configured and built,
+then passed 28/28 non-local tests in 10.29 seconds. The corrected product-host test passed
+1/1 in 34.65 seconds with five cycles per backend:
+
+```json
+{"event":"stage5_gui_apartment","type":"main_sta","qualifier":0}
+{"event":"stage5_product_host","backend":"wms","cycles":5,"receive_active_callbacks":1,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":1,"max_shutdown_ms":63,"steady_handle_min":466,"steady_handle_max":466,"steady_handle_slope":0,"handle_growth_gate_applied":false,"sustained_handle_growth":false}
+{"event":"stage5_gui_apartment","type":"main_sta","qualifier":0}
+{"event":"stage5_product_host","backend":"winmm","cycles":5,"receive_active_callbacks":3,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":2,"max_shutdown_ms":37,"steady_handle_min":486,"steady_handle_max":486,"steady_handle_slope":0,"handle_growth_gate_applied":false,"sustained_handle_growth":false}
+```
+
+The assertions additionally require every recorded close to succeed, zero failed closes,
+final state `closed`, and WMS-worker MTA observation. The temporary loopback pair was
+removed and both backend enumerations matched their pre-test state. The six modified
+source/test files remained byte-identical to their pre-verification SHA-256 baseline.
+
+The short run deliberately does **not** claim long-term leak evidence. A separate
+100-cycle soak pass is described in the recovered task history, but no raw soak log is
+retained in the repository evidence folder. The targeted reviewer must decide whether
+that history is sufficient or a fresh 100-cycle run with a retained log is required.
+The five other long local regressions were not rerun on 2026-09-26, so there is no new
+combined 6/6 claim.
+
+The focused review packet is
+[`docs/evidence/reconstruction-20260926/P1_REVIEW_HANDOFF.md`](../evidence/reconstruction-20260926/P1_REVIEW_HANDOFF.md).
+
+The targeted independent review accepted all three P1 code corrections and found no
+further blocking code change. It nevertheless returned **HOLD** because the remediation
+was not yet bound to an immutable pushed commit with green Windows CI and because the
+changed measurement context has no retained current-code 100-cycle soak log. The full
+result is
+[`P1_REVIEW_RESULT.md`](../evidence/reconstruction-20260926/P1_REVIEW_RESULT.md).
+Current B-3 status is therefore **P1 CODE CORRECTIONS ACCEPTED / EVIDENCE HOLD**, not
+final PASS.
+
+### Physical receive-only diagnostic boundary
+
+After the software verification, the Product Owner generated channel-MIDI events on
+three explicitly identified USB devices while the Microsoft WMS console monitored only
+their receive endpoints. Summit yielded 905 messages, KONTROL S61 MK3 Main 232, and
+MiniFreak 789; Note On/Off and controller data were decoded. No output route or request
+was opened. This proves those Windows WMS receive substrates only. It is not V4
+product-path, SysEx, WinMM, losslessness, latency, or Stage-5 acceptance evidence. Two
+separately coordinated Summit WinMM helper runs yielded zero bytes, so the WinMM
+physical compatibility path remains unconfirmed. Full details and limits are in
+[`docs/evidence/reconstruction-20260926/STATUSBERICHT.md`](../evidence/reconstruction-20260926/STATUSBERICHT.md).
+
+B-4 remains **PARTIAL**, B-5 remains **CLOSED**, Stage 5 remains **HOLD/ACTIVE**, and
+Stage 6 has not begun.
