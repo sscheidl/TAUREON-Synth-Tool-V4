@@ -779,3 +779,30 @@ physical compatibility path remains unconfirmed. Full details and limits are in
 
 B-4 remains **PARTIAL**, B-5 remains **CLOSED**, Stage 5 remains **HOLD/ACTIVE**, and
 Stage 6 has not begun.
+
+## B-3 immutable-SHA closure evidence — 2026-09-26
+
+This section supersedes the B-3 evidence HOLD above. The reviewed remediation was
+committed and pushed, and both Windows-CI runs completed successfully on immutable code
+commit `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f`:
+
+- push run `36251221880`: success;
+- pull-request run `36251226065`: success.
+
+On the same SHA, the retained `-Cycles 100` product-host soak completed in 192.285
+seconds with exit code 0. Both backend processes observed GUI `main_sta`, retained the
+reviewed active-receive/close/final-state assertions, and produced an active handle gate:
+
+```json
+{"event":"stage5_product_host","backend":"wms","cycles":100,"receive_active_callbacks":1,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":1,"max_shutdown_ms":53,"steady_handle_min":425,"steady_handle_max":429,"steady_handle_slope":-0.0937335,"handle_growth_gate_applied":true,"sustained_handle_growth":false}
+{"event":"stage5_product_host","backend":"winmm","cycles":100,"receive_active_callbacks":3,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":2,"max_shutdown_ms":24,"steady_handle_min":453,"steady_handle_max":455,"steady_handle_slope":-0.0135414,"handle_growth_gate_applied":true,"sustained_handle_growth":false}
+```
+
+The wrapper removed the temporary loopback and returned final PASS. Before/after
+endpoint snapshots are byte-identical with SHA-256
+`B01E22F08C8FA3E7A3C3A1EB63ACD8FEC2032EFB8C9093358E00A22E7B3AD548`.
+
+The independent review's technical conditions for B-3 closure are satisfied. B-3 is
+**PASS-READY / FORMAL PR-THREAD RESOLUTION PENDING** because the three GitHub review
+threads have not been resolved automatically. B-4 remains **PARTIAL**, B-5 remains
+**CLOSED**, Stage 5 remains **HOLD/ACTIVE**, and Stage 6 has not begun.

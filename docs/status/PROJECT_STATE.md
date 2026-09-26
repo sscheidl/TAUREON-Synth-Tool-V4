@@ -30,8 +30,8 @@ Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
 
 Stage 5 – Qt 6 Product GUI
-Status: HOLD/ACTIVE — Block A merged; B-3 P1 code corrections accepted by targeted review but evidence remains incomplete; B-5 closed
-Gate: HOLD — immutable-SHA CI and retained 100-cycle B-3 soak, native 150%/200% visual inspection, and product-path hardware evidence remain
+Status: HOLD/ACTIVE — Block A merged; B-3 technical closure evidence complete with formal PR-thread resolution pending; B-5 closed
+Gate: HOLD — formal PR-#12 thread resolution, native 150%/200% visual inspection, and product-path hardware evidence remain
 Implementation lead: Codex
 ```
 
@@ -56,8 +56,10 @@ continued on the Product Owner's Windows machine. PR #12 subsequently received t
 P1 findings against the B-3 evidence. Their six-file remediation is present only in the
 dirty worktree at branch HEAD `7dc09c9bd241cb773b25b41402d1aea892926d3f` and passed
 fresh local verification on 2026-09-26. Independent targeted review accepted all three
-code corrections but held B-3 closure pending an immutable pushed SHA with green Windows
-CI and a retained new 100-cycle soak on exactly that SHA.
+code corrections. Commit `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f` then passed
+both push and pull-request Windows CI plus a retained new 100-cycle soak per backend.
+The review's technical closure conditions are complete; formal PR-thread resolution
+remains pending.
 B-5's minimum-size defect is corrected. B-4 passes at native 125%; process-local 150%
 and 200% simulations pass but do not replace native OS display-scaling inspection.
 Stage 5 remains HOLD/ACTIVE and Stage 6 has not begun.
@@ -66,14 +68,14 @@ Block A closes deterministic cloud/software evidence: N-1, N-2, N-3, N-6, S7-3, 
 
 Block-B disposition on the Product Owner's Windows machine:
 
-- B-3 **P1 CODE CORRECTIONS ACCEPTED / EVIDENCE HOLD:** the regular product-host gate now runs
+- B-3 **PASS-READY / FORMAL PR-THREAD RESOLUTION PENDING:** the regular product-host gate runs
   five cycles per backend, proves real receive activity before receive-active close,
   requires every native close to succeed with final state `closed`, observes GUI
   `MAINSTA` and WMS-worker MTA, and runs WMS and WinMM in separate processes. The short
-  run records but does not gate process-handle growth. A 100-cycle soak is the only path
-  that applies the retained directional handle-growth criterion; its earlier pass is
-  present in task history but no raw soak log is retained in the repository evidence.
-  Targeted review requires a fresh retained soak on the immutable pushed code SHA.
+  run records but does not gate process-handle growth. A retained 100-cycle soak on
+  immutable code SHA `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f` applied the gate
+  for both backends and passed with negative slopes, no sustained growth, zero drops and
+  zero late callbacks. Both Windows-CI runs on the same SHA are green.
 - B-4 **PARTIAL:** all seven 1920x1080 workspaces pass native Windows 125% inspection.
   Effective 150% and 200% Qt simulations also fit and remain usable, but native Windows
   150% and 200% inspection is still required.
@@ -182,13 +184,12 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-PR #12 has three unresolved P1 review threads. Targeted independent review accepted the
-local code corrections for measurable receive-active shutdown, successful close/final
-`closed`, and GUI/WMS apartment observation. Closure remains blocked until the reviewed
-delta is bound to an immutable pushed SHA with green Windows CI and a fresh 100-cycle
-soak on that SHA retains its raw log. The short five-cycle gate intentionally does not
-establish long-term handle stability. These are evidence/stage-gate blockers, not a
-currently reproduced runtime failure.
+PR #12 has three formally unresolved P1 review threads. Targeted independent review
+accepted the code corrections for measurable receive-active shutdown, successful
+close/final `closed`, and GUI/WMS apartment observation. Its two evidence conditions are
+now fulfilled: both Windows-CI runs are green and the retained 100-cycle soak passes on
+immutable SHA `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f`. Only formal thread
+resolution remains; there is no currently reproduced runtime failure.
 
 No known Stage-4 implementation P0/P1 exists. Stage 4 is PASS/CLOSED at revision `986115d` after the mandatory
 Claude Code architecture review, with FU-3 carried forward as a non-blocking Stage-5 GUI/evidence refinement.
@@ -222,9 +223,9 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
   Stage-5 GUI to disclose a manual selection overridden by stronger fingerprint evidence and offer saved-binding
   promotion; the matching order itself remains unchanged.
 - **Stage 5:** Targeted review accepts the code remediation for all three PR-#12 B-3 P1
-  findings. Immutable-SHA CI and a retained new 100-cycle soak remain required before
-  B-3 may pass. Native 150%/200% visual inspection and product-path physical-device
-  evidence also remain.
+  findings, and its immutable-SHA CI plus retained 100-cycle-soak conditions now pass.
+  Formal review-thread resolution remains. Native 150%/200% visual inspection and
+  product-path physical-device evidence also remain.
 
 ## Stage 0 evidence correction (2026-08-24)
 
@@ -236,12 +237,11 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Keep Stage 5 at **HOLD/ACTIVE**. Commit and push the reviewed remediation, require green
-non-local Windows CI on that immutable SHA, then run and retain the explicit 100-cycle
-product-host soak on exactly that SHA. Only after its handle-growth and cleanup evidence
-passes may B-3 close. Then perform native Windows 1920x1080 visual inspection at 150%
-and 200% display scaling. Any later product-path physical MIDI/SysEx work still requires
-its own safe, explicit scope. Do not begin Stage 6.
+Keep Stage 5 at **HOLD/ACTIVE**. Present the immutable-SHA CI and retained 100-cycle
+evidence for formal resolution of the three PR-#12 threads. Then perform native Windows
+1920x1080 visual inspection at 150% and 200% display scaling. Any later product-path
+physical MIDI/SysEx work still requires its own safe, explicit scope. Do not begin
+Stage 6.
 
 ## Hardware validation
 

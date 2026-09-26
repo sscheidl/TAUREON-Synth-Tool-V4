@@ -85,3 +85,25 @@ The review does not establish native Windows 150%/200% visual acceptance, V4 phy
 MIDI/SysEx product-path validation, a new combined 6/6 local result, Stage-5 closure or
 Stage-6 readiness. Passive Summit, KONTROL S61 MK3 and MiniFreak WMS reception remains
 substrate evidence only.
+
+## Post-review fulfillment
+
+Both blocking evidence conditions were satisfied for immutable code commit
+`7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f`:
+
+- push CI run `36251221880` and pull-request CI run `36251226065` both completed with
+  `success` on that exact SHA;
+- a fresh 100-cycle run per backend completed in 192.285 seconds with exit code 0;
+- WMS reported `gate_applied:true`, slope `-0.0937335`,
+  `sustained_growth:false`, zero drops and zero late callbacks;
+- WinMM reported `gate_applied:true`, slope `-0.0135414`,
+  `sustained_growth:false`, zero drops and zero late callbacks;
+- both backends retained active-receive delivery, successful close/final-state and GUI
+  apartment assertions; WMS retained its worker-MTA assertion;
+- the wrapper removed the temporary loopback and returned final PASS;
+- endpoint snapshots before and after the run are byte-identical with SHA-256
+  `B01E22F08C8FA3E7A3C3A1EB63ACD8FEC2032EFB8C9093358E00A22E7B3AD548`.
+
+The review's technical conditions for B-3 closure are therefore fulfilled. The three
+GitHub review threads remain open for formal reviewer/maintainer resolution; no thread
+was resolved automatically.

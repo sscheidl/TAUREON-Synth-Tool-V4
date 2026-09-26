@@ -1,0 +1,52 @@
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+DESCRIPTION:
+Perform operations on a single endpoint, including reporting details, sending 
+messages, monitoring, and more. If you leave out the Instance Id, you will be 
+prompted to select from a list
+
+USAGE:
+    midi endpoint [Endpoint Device Id] [OPTIONS] <COMMAND>
+
+EXAMPLES:
+    midi endpoint properties
+    midi endpoint send-message 0x21234567
+
+ARGUMENTS:
+    [Endpoint Device Id]    Endpoint Id (also called a Device Instance Id) of   
+                            the endpoint as used in Windows.Devices.Enumeration.
+                            This includes the MIDI interface GUID at the end of 
+                            the string. You can find the Endpoint Ids by        
+                            enumerating endpoints through this app. If you leave
+                            off the Id, we'll re-enumerate them and provide a   
+                            list for you to pick from                           
+
+OPTIONS:
+    -h, --help    Prints help information
+
+COMMANDS:
+    monitor                           Monitors a UMP endpoint for incoming      
+                                      messages and optionally displays them as  
+                                      they arrive                               
+    send-message <MIDI Words>         Send a single message to a UMP endpoint as
+                                      a list of up to four 32 bit MIDI words    
+    send-message-file <Input File>    Sends a text file of UMP MIDI words to the
+                                      specified endpoint. See arguments and     
+                                      options for format and delimiters         
+    send-sysex-file <Input File>      (Experimental Feature) Send a file of MIDI
+                                      1.0 or MIDI 2.0 SysEx messages (7 or 8    
+                                      bit, binary or text) to a compatible      
+                                      endpoint                                  
+    play-notes <indexes>              Send MIDI 1.0 or 2.0 note on and off      
+                                      messages to the endpoint                  
+    properties                        List out system-captured metadata         
+                                      properties for the specified endpoint     
+    send-beat-clock                   (Experimental Feature) Send MIDI beat     
+                                      clock to one or more groups on an endpoint
+    request                           Send requests for specified MIDI 2.0      
+                                      in-protocol data from an endpoint. Use a  
+                                      separate console or application to view   
+                                      the responses                             

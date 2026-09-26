@@ -5,3 +5,6 @@ docs/evidence/reconstruction-20260926/pr12-ci.log -diff
 docs/evidence/reconstruction-20260926/product-host-loopback.log -diff
 docs/evidence/reconstruction-20260926/recovered-product-host-20260912.log -diff
 docs/evidence/reconstruction-20260926/summit-passive-wms-monitor.txt -diff
+docs/evidence/reconstruction-20260926/p1-soak-100cycles.log -diff
+docs/evidence/reconstruction-20260926/p1-soak-endpoints-before.txt -diff
+docs/evidence/reconstruction-20260926/p1-soak-endpoints-after.txt -diff

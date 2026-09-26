@@ -1,0 +1,32 @@
+{
+  "EvidenceForCodeCommit": "7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f",
+  "PullRequest": 12,
+  "PushCi": {
+    "RunId": 36251221880,
+    "Conclusion": "success",
+    "Url": "https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/36251221880"
+  },
+  "PullRequestCi": {
+    "RunId": 36251226065,
+    "Conclusion": "success",
+    "Url": "https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/36251226065"
+  },
+  "Soak": {
+    "CyclesPerBackend": 100,
+    "DurationSeconds": 192.285,
+    "ExitCode": 0,
+    "WmsGateApplied": true,
+    "WmsSustainedGrowth": false,
+    "WmsDropped": 0,
+    "WmsLate": 0,
+    "WinmmGateApplied": true,
+    "WinmmSustainedGrowth": false,
+    "WinmmDropped": 0,
+    "WinmmLate": 0
+  },
+  "EndpointSnapshotsMatch": true,
+  "EndpointSnapshotSha256": "B01E22F08C8FA3E7A3C3A1EB63ACD8FEC2032EFB8C9093358E00A22E7B3AD548",
+  "TemporaryMidiEndpointsRemoved": true,
+  "Disposition": "B-3 evidence conditions satisfied; formal PR thread resolution pending",
+  "Stage5": "HOLD/ACTIVE"
+}

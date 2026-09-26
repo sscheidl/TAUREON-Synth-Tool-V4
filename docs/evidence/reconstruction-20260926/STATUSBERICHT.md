@@ -198,3 +198,37 @@ vollständigem Rohlog erforderlich; beide Backends müssen den aktiven Handle-Gr
 ohne anhaltendes Wachstum bestehen, und die temporären Endpoints müssen nachweislich
 entfernt sein. Der normal registrierte Fünf-Zyklen-Lauf ist bewusst kein Langzeit-
 Ressourcennachweis. Details stehen in `P1_REVIEW_RESULT.md`.
+
+## 13. Unveränderliche SHA, CI und 100-Zyklen-Soak, 26.09.2026
+
+Die geprüfte Sechs-Dateien-Korrektur samt Dokumentation wurde auf Commit
+`7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f` gebunden und gepusht. Die Windows-CI lief
+für Push `36251221880` und Pull Request `36251226065` auf genau dieser SHA vollständig
+grün durch. Build, GUI-Preview-Erzeugung, Testinventur und alle cloudfähigen Softwaretests
+bestanden in beiden Läufen.
+
+Ein erster Soak-Versuch kollidierte mit einer parallel verwendeten externen MIDI-
+Anwendung. WMS hatte bereits 100 Zyklen bestanden; WinMM fand anschließend seine Route
+nicht, und das Microsoft-Tool hing beim Cleanup in einem dienstweiten `STOP_PENDING`.
+Der testzugehörige Prozessbaum wurde begrenzt beendet. Nach einem vom Product Owner
+ausgeführten Neustart waren `MidiSrv` und Ping gesund und das temporäre Loopback weg.
+Dieser unterbrochene Lauf wird nicht als Produktfehler oder Abnahmeevidenz gewertet.
+
+Der danach ohne parallele MIDI-Anwendung wiederholte Lauf bestand vollständig auf SHA
+`7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f`:
+
+- WMS: 100 Zyklen, Gate aktiv, Steigung `-0.0937335`, kein anhaltendes Wachstum,
+  Drops/Late 0/0, maximaler Shutdown 53 ms;
+- WinMM: 100 Zyklen, Gate aktiv, Steigung `-0.0135414`, kein anhaltendes Wachstum,
+  Drops/Late 0/0, maximaler Shutdown 24 ms;
+- beide GUI-Prozesse beobachteten `main_sta`; aktive Empfangszustellung und die bereits
+  reviewten Close-/Final-State-/MTA-Assertions bestanden;
+- Gesamtdauer 192.285 Sekunden, Exitcode 0;
+- der Wrapper entfernte das Loopback und meldete final PASS;
+- Endpointlisten vor und nach dem Lauf sind byteidentisch, SHA-256
+  `B01E22F08C8FA3E7A3C3A1EB63ACD8FEC2032EFB8C9093358E00A22E7B3AD548`.
+
+Damit sind beide vom gezielten Review genannten technischen B-3-Blocker erfüllt. Die
+drei GitHub-Reviewthreads bleiben bis zur formalen Auflösung durch Reviewer oder
+Maintainer offen. Stage 5 bleibt unabhängig davon wegen nativer 150-/200-Prozent-
+Sichtprüfung und Produktpfad-Hardwareevidenz HOLD/ACTIVE.
