@@ -229,6 +229,32 @@ void queue_and_model_tests() {
     TAUREON_REQUIRE(model.data(model.index(0, gui::MidiMonitorModel::Raw), Qt::DisplayRole).toString() ==
                     "90 3D 7F");
     TAUREON_REQUIRE(model.data(model.index(1, gui::MidiMonitorModel::Channel), Qt::DisplayRole).toInt() == 1);
+    gui::MidiMonitorModel details(5);
+    details.append_batch({
+        {10, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x90, 60, 127}}, std::nullopt}},
+        {11, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xB1, 74, 64}}, std::nullopt}},
+        {12, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xE0, 0, 64}}, std::nullopt}},
+        {13, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x20903C7F}}, std::nullopt}},
+        {14, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x90, 60}}, std::nullopt}},
+    });
+    const auto cell = [&details](const int row, const gui::MidiMonitorModel::Column column) {
+        return details.data(details.index(row, column), Qt::DisplayRole).toString();
+    };
+    TAUREON_REQUIRE(cell(0, gui::MidiMonitorModel::Event) == "Note 60");
+    TAUREON_REQUIRE(cell(0, gui::MidiMonitorModel::Value) == "127");
+    TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Channel) == "2");
+    TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Event) == "CC 74");
+    TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Value) == "64");
+    TAUREON_REQUIRE(cell(2, gui::MidiMonitorModel::Value) == "8192");
+    TAUREON_REQUIRE(cell(3, gui::MidiMonitorModel::Type) == "Note On");
+    TAUREON_REQUIRE(cell(3, gui::MidiMonitorModel::Event) == "Note 60");
+    TAUREON_REQUIRE(cell(3, gui::MidiMonitorModel::Value) == "127");
+    TAUREON_REQUIRE(cell(4, gui::MidiMonitorModel::Event) == "—");
     TAUREON_REQUIRE(queue.stats().current_size == 0);
     model.clear();
     TAUREON_REQUIRE(model.rowCount() == 0);
