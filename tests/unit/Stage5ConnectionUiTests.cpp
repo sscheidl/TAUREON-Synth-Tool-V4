@@ -104,6 +104,15 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(receive != nullptr);
         TAUREON_REQUIRE(transmit != nullptr);
         TAUREON_REQUIRE(connect != nullptr);
+        int padded_midi_captions = 0;
+        for (auto* caption : window.findChildren<QLabel*>("connectionCaption")) {
+            if (caption->text() == "MIDI Input" || caption->text() == "MIDI Output") {
+                TAUREON_REQUIRE(caption->contentsMargins().left() == 6);
+                TAUREON_REQUIRE(caption->contentsMargins().right() == 6);
+                ++padded_midi_captions;
+            }
+        }
+        TAUREON_REQUIRE(padded_midi_captions == 2);
 
         backend->setCurrentIndex(1);
         TAUREON_REQUIRE(process_until([&] {

@@ -51,9 +51,10 @@ constexpr auto kWorkspaceNames = std::array{
     "Settings",
 };
 
-QLabel* add_caption(QToolBar& bar, const QString& caption) {
+QLabel* add_caption(QToolBar& bar, const QString& caption, const int horizontal_padding = 0) {
     auto* label = new QLabel(caption, &bar);
     label->setObjectName("connectionCaption");
+    label->setContentsMargins(horizontal_padding, 0, horizontal_padding, 0);
     bar.addWidget(label);
     return label;
 }
@@ -178,12 +179,12 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     backend_selector_->setObjectName("backendSelector");
     backend_selector_->setAccessibleName("MIDI backend");
     backend_selector_->setToolTip("Auto restores only an exactly resolvable saved route; none is saved yet.");
-    add_caption(*connection_bar, "MIDI Input");
+    add_caption(*connection_bar, "MIDI Input", 6);
     receive_selector_ = add_selector(*connection_bar, {"No input selected"});
     receive_selector_->setObjectName("receiveRouteSelector");
     receive_selector_->setAccessibleName("MIDI input route");
     receive_selector_->setEnabled(false);
-    add_caption(*connection_bar, "MIDI Output");
+    add_caption(*connection_bar, "MIDI Output", 6);
     transmit_selector_ = add_selector(*connection_bar, {"No output selected"});
     transmit_selector_->setObjectName("transmitRouteSelector");
     transmit_selector_->setAccessibleName("MIDI output route");
