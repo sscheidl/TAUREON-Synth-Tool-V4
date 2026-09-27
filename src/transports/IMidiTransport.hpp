@@ -36,6 +36,19 @@ using MidiMessageHandler = std::function<void(const NativeMidiMessage&)>;
 using MidiStreamEventHandler = std::function<void(const MidiStreamEvent&)>;
 using EndpointChangeHandler = std::function<void(const EndpointChange&)>;
 
+// Implementer/caller contract (the callback thread is intentionally unspecified):
+// - The owner serializes enumerate/open/close/send and destruction; none is called
+//   from a handler. No method may race with destruction.
+// - A handler may run on a transport worker or synchronously on a caller thread.
+//   It must not throw, block on a transport control call, or destroy its transport.
+// - Handler replacement is thread-safe against dispatch, but an already copied
+//   handler may still run after set_* returns. Clearing a handler is not a join.
+// - close() may deliver already-queued events while it runs. This experimental
+//   interface does not yet promise callback quiescence at close() return; keep
+//   handler-captured state alive until the transport has been safely destroyed.
+//   A failed close() is never evidence that native callbacks have stopped.
+// - Implementations must publish events in stream sequence order and never call
+//   user handlers while holding a lock needed by set_* or control methods.
 class IMidiTransport {
 public:
     virtual ~IMidiTransport() = default;

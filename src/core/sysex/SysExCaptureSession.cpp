@@ -9,6 +9,16 @@ std::vector<SysExFrame> SysExCaptureSession::consume(const midi::MidiStreamEvent
         if (!loss->affects_sysex) return {};
         if (loss->backend == midi::MidiBackend::winmm) {
             midi1_parser_.notify_data_loss();
+        } else if (loss->backend == midi::MidiBackend::external) {
+            // External transports may carry MIDI 1 bytes or UMP; taint both paths.
+            midi1_parser_.notify_data_loss();
+            if (loss->group) {
+                sysex7_assembler_.notify_data_loss(*loss->group);
+            } else {
+                for (std::uint8_t group = 0; group < 16; ++group) {
+                    sysex7_assembler_.notify_data_loss(group);
+                }
+            }
         } else if (loss->group) {
             sysex7_assembler_.notify_data_loss(*loss->group);
         }

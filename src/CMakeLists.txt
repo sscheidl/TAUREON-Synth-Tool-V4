@@ -1,7 +1,7 @@
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 find_package(Threads REQUIRED)
-set(TAUREON_MIDI_ENGINE_VERSION 0.2.0)
+set(TAUREON_MIDI_ENGINE_VERSION 0.3.0)
 string(REPLACE "." ";" engine_version_parts "${TAUREON_MIDI_ENGINE_VERSION}")
 list(GET engine_version_parts 0 TAUREON_MIDI_ENGINE_VERSION_MAJOR)
 list(GET engine_version_parts 1 TAUREON_MIDI_ENGINE_VERSION_MINOR)
@@ -37,12 +37,28 @@ endif()
 
 install(TARGETS taureon_midi_engine EXPORT TaureonMidiEngineTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/src/core/"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/core" FILES_MATCHING PATTERN "*.hpp")
-install(FILES "${PROJECT_SOURCE_DIR}/src/transports/IMidiTransport.hpp"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/transports")
+# The source tree keeps short internal paths; the installed API is always
+# taureon-prefixed, including includes made by one public header from another.
+file(GLOB_RECURSE engine_public_headers CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/src/core/*.hpp")
+list(APPEND engine_public_headers "${PROJECT_SOURCE_DIR}/src/transports/IMidiTransport.hpp")
+set(engine_public_root "${CMAKE_CURRENT_BINARY_DIR}/generated-public/taureon")
+foreach(header IN LISTS engine_public_headers)
+    file(RELATIVE_PATH relative_header "${PROJECT_SOURCE_DIR}/src" "${header}")
+    get_filename_component(relative_directory "${relative_header}" DIRECTORY)
+    file(MAKE_DIRECTORY "${engine_public_root}/${relative_directory}")
+    file(READ "${header}" public_header_contents)
+    string(REPLACE "#include \"core/" "#include \"taureon/core/"
+        public_header_contents "${public_header_contents}")
+    string(REPLACE "#include \"transports/" "#include \"taureon/transports/"
+        public_header_contents "${public_header_contents}")
+    file(WRITE "${engine_public_root}/${relative_header}" "${public_header_contents}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${header}")
+endforeach()
+install(DIRECTORY "${engine_public_root}/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/taureon" FILES_MATCHING PATTERN "*.hpp")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/core/midi/EngineVersion.hpp"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/core/midi")
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/taureon/core/midi")
 set(engine_package_dir "${CMAKE_INSTALL_LIBDIR}/cmake/TaureonMidiEngine")
 configure_package_config_file(
     "${PROJECT_SOURCE_DIR}/cmake/TaureonMidiEngineConfig.cmake.in"

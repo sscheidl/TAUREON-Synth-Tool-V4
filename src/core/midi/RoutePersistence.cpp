@@ -123,6 +123,9 @@ Result<std::string> serialize_route(const PersistedMidiRoute& route) {
                << ";wmid=" << winmm->manufacturer_id
                << ";wpid=" << winmm->product_id
                << ";driver=" << winmm->driver_version;
+    } else if (const auto* external = std::get_if<ExternalRouteIdentity>(&route.identity.native)) {
+        stream << ";provider=" << encode(external->provider_id)
+               << ";endpoint=" << encode(external->endpoint_id);
     }
     return Result<std::string>::success(stream.str());
 }
@@ -177,6 +180,21 @@ Result<PersistedMidiRoute> deserialize_route(const std::string_view text) {
         if (!name) return Result<PersistedMidiRoute>::failure(name.error());
         identity.backend = MidiBackend::winmm;
         identity.native = WinmmRouteIdentity{name.value(), wmid.value(), wpid.value(), driver.value()};
+    } else if (backend_field->second == "external") {
+        if (!contains_only(fields, {"version", "backend", "direction", "provider", "endpoint"})) {
+            return Result<PersistedMidiRoute>::failure(serialization_error("unknown external route field"));
+        }
+        const auto provider_field = fields.find("provider");
+        const auto endpoint_field = fields.find("endpoint");
+        if (provider_field == fields.end() || endpoint_field == fields.end()) {
+            return Result<PersistedMidiRoute>::failure(serialization_error("missing external identity"));
+        }
+        const auto provider = decode(provider_field->second);
+        if (!provider) return Result<PersistedMidiRoute>::failure(provider.error());
+        const auto endpoint = decode(endpoint_field->second);
+        if (!endpoint) return Result<PersistedMidiRoute>::failure(endpoint.error());
+        identity.backend = MidiBackend::external;
+        identity.native = ExternalRouteIdentity{provider.value(), endpoint.value()};
     } else {
         return Result<PersistedMidiRoute>::failure(serialization_error("invalid backend"));
     }

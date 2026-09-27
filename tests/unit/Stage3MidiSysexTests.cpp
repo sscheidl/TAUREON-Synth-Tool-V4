@@ -2,6 +2,7 @@
 
 #include "core/midi/MidiMessage.hpp"
 #include "core/sysex/SysEx7.hpp"
+#include "core/sysex/SysExCaptureSession.hpp"
 #include "core/sysex/SysExStreamParser.hpp"
 
 #include <array>
@@ -236,6 +237,39 @@ void sysex7_tests() {
                     std::vector<std::uint8_t>({0xf0, 0x55, 0xf7}));
 }
 
+void external_loss_tests() {
+    sysex::SysExCaptureSession capture;
+    const auto midi1 = [](std::vector<std::uint8_t> bytes) {
+        return midi::MidiStreamEvent{0, midi::NativeMidiMessage{
+            midi::MidiBackend::external, midi::Midi1NativeMessage{std::move(bytes)}, std::nullopt}};
+    };
+    TAUREON_REQUIRE(capture.consume(midi1({0xf0, 1})).empty());
+    const midi::MidiStreamEvent loss{
+        1, midi::MidiDataLossEvent{midi::MidiBackend::external,
+                                   midi::MidiDataLossReason::backend_reported_loss,
+                                   true, std::nullopt, "external loss", std::nullopt}};
+    TAUREON_REQUIRE(capture.consume(loss).empty());
+    const auto damaged = capture.consume(midi1({2, 0xf7}));
+    TAUREON_REQUIRE(damaged.size() == 1);
+    TAUREON_REQUIRE(damaged.front().status == sysex::SysExFrameStatus::malformed);
+    TAUREON_REQUIRE(damaged.front().affected_by_data_loss);
+
+    capture.reset();
+    const auto packets = sysex::encode_sysex7(
+        complete({0xf0, 1, 2, 3, 4, 5, 6, 7, 0xf7}), 3).value();
+    const auto ump = [](const sysex::UmpSysEx7Packet& packet) {
+        return midi::MidiStreamEvent{0, midi::NativeMidiMessage{
+            midi::MidiBackend::external,
+            midi::UmpNativeMessage{{packet.word0, packet.word1}}, std::nullopt}};
+    };
+    TAUREON_REQUIRE(capture.consume(ump(packets.front())).empty());
+    TAUREON_REQUIRE(capture.consume(loss).empty());
+    const auto damaged_ump = capture.consume(ump(packets.back()));
+    TAUREON_REQUIRE(damaged_ump.size() == 1);
+    TAUREON_REQUIRE(damaged_ump.front().status == sysex::SysExFrameStatus::malformed);
+    TAUREON_REQUIRE(damaged_ump.front().affected_by_data_loss);
+}
+
 } // namespace
 
 int main() {
@@ -243,5 +277,6 @@ int main() {
         midi_message_tests();
         stream_parser_tests();
         sysex7_tests();
+        external_loss_tests();
     });
 }

@@ -27,6 +27,12 @@ MidiRouteIdentity winmm_route(const MidiDirection direction, std::string name,
             WinmmRouteIdentity{std::move(name), 1, product, 256}};
 }
 
+MidiRouteIdentity external_route(const MidiDirection direction, std::string provider,
+                                 std::string endpoint_id) {
+    return {MidiBackend::external, direction,
+            ExternalRouteIdentity{std::move(provider), std::move(endpoint_id)}};
+}
+
 MidiEndpointDescriptor endpoint(MidiRouteIdentity identity, std::string display,
                                 const std::uint32_t index) {
     const bool input = identity.direction == MidiDirection::input;
@@ -53,12 +59,25 @@ void persistence_tests() {
     TAUREON_REQUIRE(restored_winmm);
     TAUREON_REQUIRE(restored_winmm.value() == winmm);
 
+    const PersistedMidiRoute external{
+        1, external_route(MidiDirection::output, "org.example;driver", "port=1%")};
+    const auto serialized_external = serialize_route(external);
+    TAUREON_REQUIRE(serialized_external);
+    TAUREON_REQUIRE(serialized_external.value().find("backend=external") != std::string::npos);
+    const auto restored_external = deserialize_route(serialized_external.value());
+    TAUREON_REQUIRE(restored_external);
+    TAUREON_REQUIRE(restored_external.value() == external);
+
     TAUREON_REQUIRE(!deserialize_route("version=2;backend=wms;direction=input;endpoint=x;group=0"));
     TAUREON_REQUIRE(!deserialize_route("version=1;backend=wms;direction=input;endpoint=x;group=16"));
     TAUREON_REQUIRE(!deserialize_route("version=1;backend=winmm;direction=output;name=x;wmid=1;wpid=2"));
     TAUREON_REQUIRE(!deserialize_route(
         "version=1;backend=winmm;direction=output;name=x;wmid=1;wpid=2;driver=3;index=4"));
     TAUREON_REQUIRE(!deserialize_route("version=1;backend=wms;backend=winmm;direction=input"));
+    TAUREON_REQUIRE(!deserialize_route(
+        "version=1;backend=external;direction=output;provider=x;endpoint="));
+    TAUREON_REQUIRE(!deserialize_route(
+        "version=1;backend=external;direction=output;provider=x;endpoint=y;index=0"));
 }
 
 void resolver_tests() {
@@ -83,6 +102,20 @@ void resolver_tests() {
     TAUREON_REQUIRE(resolve_route(
         {MidiBackend::winmm, MidiDirection::output, WmsRouteIdentity{"wrong-variant", 0}},
         {exact}).status == RouteResolutionStatus::invalid);
+
+    const auto external = external_route(MidiDirection::output, "org.example.driver", "port-1");
+    const auto other_provider = endpoint(
+        external_route(MidiDirection::output, "org.other.driver", "port-1"), "Port 10", 19);
+    const auto external_endpoint = endpoint(external, "Port 10", 20);
+    TAUREON_REQUIRE(resolve_route(external, {same_display_other_backend, other_provider,
+                                            external_endpoint}).status == RouteResolutionStatus::exact);
+    TAUREON_REQUIRE(resolve_route(external, {other_provider}).status ==
+                    RouteResolutionStatus::missing);
+    TAUREON_REQUIRE(resolve_route(external, {external_endpoint, external_endpoint}).status ==
+                    RouteResolutionStatus::ambiguous);
+    TAUREON_REQUIRE(resolve_route(
+        {MidiBackend::external, MidiDirection::output, WinmmRouteIdentity{"wrong", 1, 2, 3}},
+        {external_endpoint}).status == RouteResolutionStatus::invalid);
 }
 
 void state_tests() {

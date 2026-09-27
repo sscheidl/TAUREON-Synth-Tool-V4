@@ -1,6 +1,6 @@
 # ADR-0003 – Export the generic MIDI engine separately from the product host
 
-**Status:** Proposed — package exists at 0.2.0; stable SDK contract and Product Owner gate pending
+**Status:** Proposed — package exists at 0.3.0; stable SDK review and Product Owner gate pending
 **Date:** 2026-09-27
 **Owner:** Codex / Implementation Lead
 
@@ -26,22 +26,24 @@ generic engine. No installed package or separate-consumer proof existed.
 This does **not** declare a stable SDK, change any wire-format behavior, or
 extend Stage 3 to MIDI 2.0 Channel Voice, MPE, SysEx8, or device protocols.
 The current source tree is MIT licensed. The independently versioned package is
-0.2.0; version zero does not imply a frozen source or binary interface.
+0.3.0; version zero does not imply a frozen source or binary interface.
 
 ## Consequences and review questions
 
 - Existing product and test targets should preserve behavior; a build and the
   existing focused suites must verify linkage after the split.
-- Installed public headers still expose `core/...` and
-  `transports/IMidiTransport.hpp` without a project prefix. Select and review a
-  prefixed layout before a stable SDK release.
-- `MidiBackend` and persisted route identity currently model WMS and WinMM only.
-  A third-party transport must not impersonate either backend in a stable SDK;
-  any generic identity design must preserve ADR-0001's exact-selection rule.
-- `IMidiTransport` lacks a cross-backend callback thread, handler replacement,
-  and close-quiescence contract. Specify and verify these against the native
-  implementations before promising them to package consumers.
-- `TransferEngine` is explicitly one-shot at 0.2.0. Its owner serializes
+- Installed public headers now live under `taureon/...`; review the generated
+  install-copy approach and ensure no unprefixed headers escape the package.
+- `MidiBackend::external` and provider-scoped endpoint IDs let a third-party
+  transport avoid impersonating WMS or WinMM. Exact route matching remains
+  mandatory. Review the schema-v1 extension, provider-ID ownership convention,
+  and failure behavior before accepting this as a stable SDK identity.
+- `IMidiTransport` now documents callback-thread freedom, in-flight handler
+  replacement, and control serialization, but intentionally does not promise
+  quiescence at `close()` return. Determine and enforce a usable close/destructor
+  quiescence rule against WMS, WinMM, fake, and third-party transports before
+  accepting a stable contract. In particular, inspect native close-failure paths.
+- `TransferEngine` is explicitly one-shot since 0.2.0. Its owner serializes
   `start()`/`wait()`/destruction, keeps the transport alive, and must not call
   `wait()` or destroy the engine from a progress handler. Stable SDK review must
   decide whether these restrictions are sufficient or need enforcement.

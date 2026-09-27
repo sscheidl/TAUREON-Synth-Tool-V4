@@ -4,9 +4,12 @@
 **Maintained by:** ChatGPT Classic / Project Manager
 
 **Current branch note (2026-09-27):** PR #14 packages the generic MIDI/SysEx
-engine experimentally at version 0.2.0. The repository is now public. PR #14's
-tree excludes the former real Summit SysEx fixture, while `main` and four other
-remote branch tips still contain it; see `docs/reference/PROVENANCE.md`. This
+engine experimentally at version 0.2.0 and is merged into `main`. A follow-up
+branch proposes version 0.3.0 with prefixed headers and explicit external route
+and callback contracts; these are not yet accepted as a stable SDK. The former
+real Summit SysEx fixture is absent from the current `main` tree, but four older
+remote branch tips and public history still contain it; see
+`docs/reference/PROVENANCE.md`. This
 branch note does not change the Stage-5 gate recorded below.
 
 ## Current stage
