@@ -1,4 +1,5 @@
 #include "gui/SettingsPanel.hpp"
+#include "gui/FocusWheelControls.hpp"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -25,7 +26,7 @@ QString route_text(const std::optional<midi::PersistedMidiRoute>& route) {
 }
 
 QComboBox* enum_box(QWidget* parent, std::initializer_list<std::pair<QString, QString>> values) {
-    auto* box = new QComboBox(parent);
+    auto* box = new FocusWheelComboBox(parent);
     for (const auto& [label, value] : values) box->addItem(label, value);
     return box;
 }
@@ -85,22 +86,28 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
         diagnostic_export_policy_->include_route_identity = settings_.include_route_identity_in_bundle;
     }
     auto* layout = new QVBoxLayout(this);
+    auto* scope_notice = new QLabel(
+        "Only log level, bounded log entries, and diagnostic-bundle route metadata apply now. "
+        "All other fields are saved only; the confirmation preference does not gate Raw Send.", this);
+    scope_notice->setObjectName("settingsScopeNotice");
+    scope_notice->setWordWrap(true);
+    layout->addWidget(scope_notice);
 
     auto* general = new QGroupBox("General", this);
     auto* general_form = new QFormLayout(general);
     theme_ = enum_box(general, {{"System compatible", "system"}, {"Light", "light"}, {"Dark", "dark"}});
     theme_->setObjectName("settingsTheme");
-    ui_scale_ = new QSpinBox(general);
+    ui_scale_ = new FocusWheelSpinBox(general);
     ui_scale_->setRange(50, 300);
     ui_scale_->setSuffix("%");
     ui_scale_->setObjectName("settingsUiScale");
     standard_path_ = new QLineEdit(general);
     standard_path_->setObjectName("settingsStandardPath");
-    restore_session_ = new QCheckBox("Restore safe session preferences on next launch", general);
+    restore_session_ = new QCheckBox("Restore safe session preferences (saved only)", general);
     restore_session_->setObjectName("settingsRestoreSession");
-    general_form->addRow("Appearance", theme_);
-    general_form->addRow("UI scale preference", ui_scale_);
-    general_form->addRow("Standard path", standard_path_);
+    general_form->addRow("Appearance (saved only)", theme_);
+    general_form->addRow("UI scale (saved only)", ui_scale_);
+    general_form->addRow("Standard path (saved only)", standard_path_);
     general_form->addRow({}, restore_session_);
 
     auto* midi = new QGroupBox("MIDI preferences", this);
@@ -109,9 +116,9 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     backend_->setObjectName("settingsPreferredBackend");
     reconnect_ = enum_box(midi, {{"Require confirmation", "require_confirmation"}, {"Manual only", "manual_only"}});
     reconnect_->setObjectName("settingsReconnectPolicy");
-    monitor_paused_ = new QCheckBox("Start monitor presentation paused", midi);
+    monitor_paused_ = new QCheckBox("Start monitor presentation paused (saved only)", midi);
     monitor_paused_->setObjectName("settingsMonitorPaused");
-    monitor_history_ = new QSpinBox(midi);
+    monitor_history_ = new FocusWheelSpinBox(midi);
     monitor_history_->setRange(1, 1'000'000);
     monitor_history_->setObjectName("settingsMonitorHistory");
     receive_route_ = new QLabel(midi);
@@ -123,26 +130,31 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     capture_routes_ = new QPushButton("Capture current exact routes as preferences", midi);
     capture_routes_->setObjectName("settingsCaptureExactRoutes");
     capture_routes_->setToolTip("Stores only the current exact Stage-2 route identities. It never opens, closes, or changes a route.");
-    midi_form->addRow("Preferred backend", backend_);
-    midi_form->addRow("Reconnect policy", reconnect_);
-    midi_form->addRow("Monitor history limit", monitor_history_);
+    midi_form->addRow("Preferred backend (saved only)", backend_);
+    midi_form->addRow("Reconnect policy (saved only)", reconnect_);
+    midi_form->addRow("Monitor history (saved only)", monitor_history_);
     midi_form->addRow({}, monitor_paused_);
-    midi_form->addRow("Preferred RX route", receive_route_);
-    midi_form->addRow("Preferred TX route", transmit_route_);
+    midi_form->addRow("Preferred RX route (saved only)", receive_route_);
+    midi_form->addRow("Preferred TX route (saved only)", transmit_route_);
     midi_form->addRow({}, capture_routes_);
 
     auto* sysex = new QGroupBox("SysEx safety defaults", this);
     auto* sysex_form = new QFormLayout(sysex);
-    pacing_ = new QSpinBox(sysex);
+    pacing_ = new FocusWheelSpinBox(sysex);
     pacing_->setRange(0, 60'000);
     pacing_->setSuffix(" ms");
     pacing_->setObjectName("settingsSysExPacing");
-    confirmation_ = enum_box(sysex, {{"Always confirm", "always_confirm"}, {"Confirm before sending", "confirm_when_sending"}});
+    confirmation_ = enum_box(sysex, {{"Always confirm (saved only)", "always_confirm"},
+                                     {"Confirm before sending (saved only)", "confirm_when_sending"}});
     confirmation_->setObjectName("settingsConfirmationPolicy");
-    stop_on_loss_ = new QCheckBox("Stop capture on reported data loss", sysex);
+    confirmation_->setEnabled(false);
+    confirmation_->setToolTip(
+        "Unavailable in this build: this saved value is not enforced by Raw Send. "
+        "Raw Send requires a direct click and shows the exact TX route in SysEx Transfer.");
+    stop_on_loss_ = new QCheckBox("Stop capture on reported data loss (saved only)", sysex);
     stop_on_loss_->setObjectName("settingsStopCaptureOnLoss");
-    sysex_form->addRow("Generic pacing", pacing_);
-    sysex_form->addRow("Confirmation policy", confirmation_);
+    sysex_form->addRow("Generic pacing (saved only)", pacing_);
+    sysex_form->addRow("Confirmation (not enforced)", confirmation_);
     sysex_form->addRow({}, stop_on_loss_);
 
     auto* diagnostics = new QGroupBox("Logging and diagnostics", this);
@@ -151,13 +163,13 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     log_level_->setObjectName("settingsLogLevel");
     log_destination_ = new QLineEdit(diagnostics);
     log_destination_->setObjectName("settingsLogDestination");
-    log_rotation_ = new QSpinBox(diagnostics);
+    log_rotation_ = new FocusWheelSpinBox(diagnostics);
     log_rotation_->setRange(1, 1'000'000);
     log_rotation_->setObjectName("settingsLogRotation");
     include_routes_ = new QCheckBox("Include exact route identity metadata in diagnostic bundles", diagnostics);
     include_routes_->setObjectName("settingsBundleRouteIdentity");
     diagnostics_form->addRow("Log level", log_level_);
-    diagnostics_form->addRow("Log destination", log_destination_);
+    diagnostics_form->addRow("Log destination (saved only)", log_destination_);
     diagnostics_form->addRow("Bounded log entries", log_rotation_);
     diagnostics_form->addRow({}, include_routes_);
 

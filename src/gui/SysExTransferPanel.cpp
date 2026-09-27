@@ -1,4 +1,5 @@
 #include "gui/SysExTransferPanel.hpp"
+#include "gui/FocusWheelControls.hpp"
 
 #include <QFileDialog>
 #include <QGridLayout>
@@ -9,8 +10,10 @@
 #include <QPushButton>
 #include <QScrollBar>
 #include <QSignalBlocker>
-#include <QSpinBox>
+#include <QSizePolicy>
+#include <QSplitter>
 #include <QStringList>
+#include <QTabWidget>
 #include <QTableView>
 #include <QTimer>
 #include <QTextCursor>
@@ -129,14 +132,17 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
     auto* summary = new QGridLayout;
     source_label_ = new QLabel("No file or capture loaded", this);
     source_label_->setObjectName("sysExSource");
+    source_label_->setWordWrap(true);
     evidence_label_ = new QLabel("Manufacturer / device: not identified — no verified evidence", this);
     evidence_label_->setWordWrap(true);
     profile_label_ = new QLabel("Active profile: Generic · match status: not evaluated", this);
     profile_label_->setWordWrap(true);
     profile_label_->setObjectName("sysExProfileMatch");
     counts_label_ = new QLabel("Frames 0 · bytes 0", this);
+    counts_label_->setWordWrap(true);
     integrity_label_ = new QLabel("Integrity: no data", this);
     integrity_label_->setObjectName("sysExIntegrity");
+    integrity_label_->setWordWrap(true);
     route_label_ = new QLabel("Actual TX route: No exact TX route connected", this);
     route_label_->setObjectName("sysExTxRoute");
     route_label_->setWordWrap(true);
@@ -149,6 +155,10 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
     summary->addWidget(integrity_label_, 3, 1);
     summary->addWidget(route_label_, 4, 0, 1, 2);
     summary->addWidget(pacing_label_, 5, 0, 1, 2);
+    for (auto* label : {source_label_, evidence_label_, profile_label_, counts_label_,
+                        integrity_label_, route_label_, pacing_label_}) {
+        label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    }
     root->addLayout(summary);
 
     auto* actions = new QGridLayout;
@@ -170,10 +180,11 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
     validated_restore_button_->setEnabled(false);
     validated_restore_button_->setToolTip(
         "Unavailable: no validated device restore protocol capability is implemented.");
-    pacing_delay_ = new QSpinBox(this);
+    pacing_delay_ = new FocusWheelSpinBox(this);
     pacing_delay_->setObjectName("sysExPacingDelay");
     pacing_delay_->setRange(0, 10'000);
-    pacing_delay_->setSuffix(" ms between frames");
+    pacing_delay_->setSuffix(" ms");
+    pacing_delay_->setToolTip("Fixed delay in milliseconds between SysEx frames for this Raw Send.");
     actions->addWidget(open_button_, 0, 0);
     actions->addWidget(receive_button_, 0, 1);
     actions->addWidget(send_button_, 0, 2);
@@ -182,6 +193,13 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
     actions->addWidget(clear_button_, 1, 1);
     actions->addWidget(validated_restore_button_, 1, 2);
     actions->addWidget(pacing_delay_, 1, 3);
+    for (auto* button : {open_button_, receive_button_, send_button_, cancel_button_,
+                         save_button_, clear_button_, validated_restore_button_}) {
+        button->setMinimumWidth(0);
+        button->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+    }
+    pacing_delay_->setMinimumWidth(0);
+    pacing_delay_->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
     for (int column = 0; column < 4; ++column) actions->setColumnStretch(column, 1);
     root->addLayout(actions);
 
@@ -197,21 +215,34 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
     frame_table_->setSelectionBehavior(QAbstractItemView::SelectRows);
     frame_table_->setSelectionMode(QAbstractItemView::SingleSelection);
     frame_table_->horizontalHeader()->setStretchLastSection(true);
-    root->addWidget(frame_table_, 2);
+    frame_table_->setMinimumHeight(0);
 
     raw_bytes_ = new QPlainTextEdit(this);
     raw_bytes_->setObjectName("sysExRawBytes");
     raw_bytes_->setReadOnly(true);
     raw_bytes_->setPlaceholderText("Select a frame to inspect its exact raw bytes.");
     raw_bytes_->setMaximumBlockCount(1);
-    root->addWidget(raw_bytes_, 1);
+    raw_bytes_->setMinimumHeight(0);
     transfer_log_ = new QPlainTextEdit(this);
     transfer_log_->setObjectName("sysExTransferLog");
     transfer_log_->setReadOnly(true);
     transfer_log_->setMaximumBlockCount(100);
-    root->addWidget(transfer_log_, 1);
+    transfer_log_->setMinimumHeight(0);
+    auto* inspector_tabs = new QTabWidget(this);
+    inspector_tabs->setObjectName("sysExInspectorTabs");
+    inspector_tabs->addTab(raw_bytes_, "Raw bytes");
+    inspector_tabs->addTab(transfer_log_, "Transfer log");
+    inspector_tabs->setMinimumHeight(0);
+    auto* work_splitter = new QSplitter(Qt::Vertical, this);
+    work_splitter->setObjectName("sysExWorkSplitter");
+    work_splitter->addWidget(frame_table_);
+    work_splitter->addWidget(inspector_tabs);
+    work_splitter->setStretchFactor(0, 2);
+    work_splitter->setStretchFactor(1, 1);
+    root->addWidget(work_splitter, 1);
     status_label_ = new QLabel("Idle — no automatic send is performed", this);
     status_label_->setObjectName("sysExStatus");
+    status_label_->setWordWrap(true);
     root->addWidget(status_label_);
 
     connect(open_button_, &QPushButton::clicked, this, [this] {

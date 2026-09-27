@@ -219,12 +219,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     monitor_bridge_ = new MonitorEventBridge(monitor_queue, *monitor_model_, this);
     workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_));
     sysex_transfer_panel_ = new SysExTransferPanel(connection_worker_);
-    auto* sysex_transfer_scroll = new QScrollArea(workspace_stack_);
-    sysex_transfer_scroll->setObjectName("sysExTransferScrollArea");
-    sysex_transfer_scroll->setFrameShape(QFrame::NoFrame);
-    sysex_transfer_scroll->setWidgetResizable(true);
-    sysex_transfer_scroll->setWidget(sysex_transfer_panel_);
-    workspace_stack_->addWidget(sysex_transfer_scroll);
+    workspace_stack_->addWidget(sysex_transfer_panel_);
     sysex_manager_panel_ = new SysExManagerPanel(
         profile_registry,
         [this](app::SysExManagerTransferItem item,

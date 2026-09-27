@@ -17,8 +17,10 @@
 #include <QListWidget>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QSplitter>
 #include <QStatusBar>
 #include <QTableView>
+#include <QTabWidget>
 
 #include <filesystem>
 #include <memory>
@@ -145,6 +147,28 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(raw_send != nullptr);
         TAUREON_REQUIRE(validated_restore != nullptr);
         TAUREON_REQUIRE(frame_table != nullptr);
+        auto* work_splitter = window.findChild<QSplitter*>("sysExWorkSplitter");
+        auto* inspector_tabs = window.findChild<QTabWidget*>("sysExInspectorTabs");
+        TAUREON_REQUIRE(work_splitter != nullptr && inspector_tabs != nullptr);
+        TAUREON_REQUIRE(work_splitter->count() == 2 && inspector_tabs->count() == 2);
+        TAUREON_REQUIRE(inspector_tabs->tabText(0) == "Raw bytes");
+        TAUREON_REQUIRE(inspector_tabs->tabText(1) == "Transfer log");
+        TAUREON_REQUIRE(window.findChild<QWidget*>("sysExTransferScrollArea") == nullptr);
+        {
+            gui::SysExTransferPanel compact_transfer(worker);
+            compact_transfer.resize(700, 430);
+            compact_transfer.show();
+            QApplication::processEvents(QEventLoop::AllEvents);
+            auto* compact_status = compact_transfer.findChild<QLabel*>("sysExStatus");
+            auto* compact_table = compact_transfer.findChild<QTableView*>("sysExFrameTable");
+            auto* compact_inspector = compact_transfer.findChild<QTabWidget*>("sysExInspectorTabs");
+            TAUREON_REQUIRE(compact_status != nullptr && compact_table != nullptr &&
+                            compact_inspector != nullptr);
+            TAUREON_REQUIRE(compact_transfer.width() == 700 && compact_transfer.height() == 430);
+            TAUREON_REQUIRE(compact_status->isVisible() &&
+                            compact_status->geometry().bottom() < compact_transfer.height());
+            TAUREON_REQUIRE(compact_table->height() > 40 && compact_inspector->height() > 40);
+        }
         TAUREON_REQUIRE(route_label != nullptr);
         TAUREON_REQUIRE(profile_label != nullptr);
         TAUREON_REQUIRE(!validated_restore->isEnabled());
