@@ -28,6 +28,7 @@ public:
 
 private:
     void update_temporary_selection_enabled();
+    void show_profile_details();
 
     QLabel* selected_{};
     QLabel* evidence_{};
@@ -35,6 +36,9 @@ private:
     QComboBox* temporary_selector_{};
     QPushButton* use_temporary_{};
     QPushButton* remember_{};
+    QPushButton* details_{};
+    std::vector<profiles::DeviceProfile> profiles_;
+    profiles::ProfileMatchResult current_match_;
     std::function<void(std::string)> select_temporary_action_;
     std::function<void()> remember_action_;
 };
