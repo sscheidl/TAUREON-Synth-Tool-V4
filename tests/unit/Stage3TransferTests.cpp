@@ -58,6 +58,7 @@ void success_pacing_progress() {
     TAUREON_REQUIRE(result.progress.pacing_intervals_applied == 2);
     TAUREON_REQUIRE(!progress.empty());
     TAUREON_REQUIRE(progress.back().state == transfer::TransferState::completed);
+    TAUREON_REQUIRE(!engine.start(messages(1)));
     TAUREON_REQUIRE(transport.close());
 }
 
@@ -67,11 +68,14 @@ void cancellation_before_start() {
     transfer::TransferEngine engine(transport);
     engine.request_cancel();
     engine.request_cancel();
-    TAUREON_REQUIRE(engine.start(messages(3)));
+    const auto start = engine.start(messages(3));
+    TAUREON_REQUIRE(!start);
+    TAUREON_REQUIRE(start.error().code == midi::MidiErrorCode::invalid_state);
     const auto result = engine.wait();
     TAUREON_REQUIRE(result.state == transfer::TransferState::cancelled);
     TAUREON_REQUIRE(result.error->code == midi::MidiErrorCode::transfer_cancelled);
     TAUREON_REQUIRE(result.progress.messages_accepted == 0);
+    TAUREON_REQUIRE(!engine.start(messages(1)));
     TAUREON_REQUIRE(transport.close());
 }
 

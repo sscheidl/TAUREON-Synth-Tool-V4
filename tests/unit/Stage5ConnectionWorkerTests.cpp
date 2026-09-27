@@ -164,8 +164,7 @@ int main() {
         TAUREON_REQUIRE(connected);
         TAUREON_REQUIRE(connected.value().state == app::ConnectionPresentationState::connected);
 
-        const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
-                             "novation_summit_crazy_sine.syx";
+        const std::filesystem::path fixture{TAUREON_TEST_FIXTURE_PATH};
         const auto loaded = worker.load_sysex(fixture).get();
         TAUREON_REQUIRE(loaded);
         TAUREON_REQUIRE(loaded.value().can_raw_send);

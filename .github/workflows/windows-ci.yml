@@ -8,6 +8,33 @@ permissions:
   contents: read
 
 jobs:
+  engine-consumer:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Build, test and install both engine configurations without Qt
+        shell: pwsh
+        run: |
+          cmake -S . -B build/engine -G "Visual Studio 17 2022" -A x64 -T v143 `
+            -DTAUREON_BUILD_PRODUCT_APP=OFF -DBUILD_TESTING=ON `
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/engine-install"
+          foreach ($configuration in @('Debug', 'Release')) {
+            cmake --build build/engine --config $configuration --parallel
+            ctest --test-dir build/engine -C $configuration --output-on-failure
+            cmake --install build/engine --config $configuration
+          }
+      - name: Build and run separate consumer in both configurations
+        shell: pwsh
+        run: |
+          cmake -S tests/consumer -B build/consumer -G "Visual Studio 17 2022" -A x64 -T v143 `
+            -DCMAKE_PREFIX_PATH="$PWD/build/engine-install"
+          foreach ($configuration in @('Debug', 'Release')) {
+            cmake --build build/consumer --config $configuration --parallel
+            ctest --test-dir build/consumer -C $configuration --output-on-failure
+          }
+
   software:
     runs-on: windows-2022
     timeout-minutes: 45

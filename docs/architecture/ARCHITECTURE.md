@@ -274,7 +274,7 @@ explicit binding, device-native identity, Universal Identity, exact SysEx finger
 Generic fallback are distinct inputs; a route or port display name is deliberately ignored as device evidence.
 
 The repository contains one neutral Generic profile and exactly one bounded real profile, Novation Summit. The
-Summit profile uses the User-approved read-only single-patch fixture's exact observed SysEx prefix only and claims
+Summit profile uses an observed SysEx recognition prefix only and claims
 `Detect`; it does not claim Read, Inspect, Extract, Modify, Serialize, Transfer or Validated Restore. Matching
 accepts only verified-complete, untainted `SysExFrame` data and never mutates bytes or UMP words. No compiled
 protocol hook was required.
