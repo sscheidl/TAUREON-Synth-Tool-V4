@@ -8,6 +8,28 @@ permissions:
   contents: read
 
 jobs:
+  engine-consumer:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Build and install engine without Qt
+        shell: pwsh
+        run: |
+          cmake -S . -B build/engine -G "Visual Studio 17 2022" -A x64 -T v143 `
+            -DTAUREON_BUILD_PRODUCT_APP=OFF -DBUILD_TESTING=OFF `
+            -DCMAKE_INSTALL_PREFIX="$PWD/build/engine-install"
+          cmake --build build/engine --config Debug --target taureon_midi_engine --parallel
+          cmake --install build/engine --config Debug
+      - name: Build and run separate consumer
+        shell: pwsh
+        run: |
+          cmake -S tests/consumer -B build/consumer -G "Visual Studio 17 2022" -A x64 -T v143 `
+            -DCMAKE_PREFIX_PATH="$PWD/build/engine-install"
+          cmake --build build/consumer --config Debug --parallel
+          ctest --test-dir build/consumer -C Debug --output-on-failure
+
   software:
     runs-on: windows-2022
     timeout-minutes: 45

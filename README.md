@@ -70,6 +70,10 @@ TAUREON V4 is a clean rebuild targeting:
 
 The shipped application must not require Python, `mido`, `python-rtmidi`, PortMidi, or a `midi.exe` subprocess transport.
 
+The Qt-independent generic MIDI/SysEx/transfer library has an experimental
+[standalone CMake package and consumer example](docs/engine/REUSE.md). Native
+Windows backends and device-specific protocols are separate from that package.
+
 ## What TAUREON is not
 
 TAUREON is not intended to be:

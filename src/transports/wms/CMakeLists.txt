@@ -15,7 +15,7 @@ option(TAUREON_ENABLE_WMS_TRANSPORT
 if(TAUREON_ENABLE_WMS_TRANSPORT)
     add_library(taureon_wms_transport STATIC WmsTransport.cpp)
     target_include_directories(taureon_wms_transport PUBLIC "${PROJECT_SOURCE_DIR}/src")
-    target_link_libraries(taureon_wms_transport PUBLIC taureon_midi_core)
+    target_link_libraries(taureon_wms_transport PUBLIC taureon_midi_engine)
     target_compile_definitions(taureon_wms_transport PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
     target_compile_options(taureon_wms_transport PRIVATE /W4 /permissive- /bigobj /EHsc)
     include("${PROJECT_SOURCE_DIR}/cmake/TaureonWmsSdk.cmake")

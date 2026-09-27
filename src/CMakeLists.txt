@@ -1,3 +1,57 @@
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+find_package(Threads REQUIRED)
+
+add_library(taureon_midi_engine STATIC
+    core/midi/MidiMessage.cpp
+    core/midi/MidiTypes.cpp
+    core/midi/RoutePersistence.cpp
+    core/midi/RouteResolver.cpp
+    core/midi/TransportState.cpp
+    core/sysex/SysEx7.cpp
+    core/sysex/SysExCaptureSession.cpp
+    core/sysex/SysExStreamParser.cpp
+    core/sysex/SyxFile.cpp
+    core/transfer/TransferEngine.cpp)
+add_library(TaureonMidiEngine::MidiEngine ALIAS taureon_midi_engine)
+set_target_properties(taureon_midi_engine PROPERTIES EXPORT_NAME MidiEngine)
+target_include_directories(taureon_midi_engine PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_compile_features(taureon_midi_engine PUBLIC cxx_std_20)
+target_link_libraries(taureon_midi_engine PUBLIC Threads::Threads)
+
+if(MSVC)
+    target_compile_options(taureon_midi_engine PRIVATE /W4 /permissive- /EHsc)
+else()
+    target_compile_options(taureon_midi_engine PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+install(TARGETS taureon_midi_engine EXPORT TaureonMidiEngineTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/src/core/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/core" FILES_MATCHING PATTERN "*.hpp")
+install(FILES "${PROJECT_SOURCE_DIR}/src/transports/IMidiTransport.hpp"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/transports")
+set(engine_package_dir "${CMAKE_INSTALL_LIBDIR}/cmake/TaureonMidiEngine")
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/TaureonMidiEngineConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfig.cmake"
+    INSTALL_DESTINATION "${engine_package_dir}")
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
+    VERSION "${PROJECT_VERSION}" COMPATIBILITY SameMajorVersion)
+install(EXPORT TaureonMidiEngineTargets NAMESPACE TaureonMidiEngine::
+    DESTINATION "${engine_package_dir}")
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
+    DESTINATION "${engine_package_dir}")
+
+if(NOT TAUREON_BUILD_PRODUCT_APP)
+    return()
+endif()
+
 add_library(taureon_midi_core STATIC
     app/BoundedLog.cpp
     app/ConnectionController.cpp
@@ -8,22 +62,13 @@ add_library(taureon_midi_core STATIC
     app/ProfileSelectionService.cpp
     app/SysExTransferSession.cpp
     app/SysExManager.cpp
-    core/midi/MidiMessage.cpp
-    core/midi/MidiTypes.cpp
-    core/midi/RoutePersistence.cpp
-    core/midi/RouteResolver.cpp
-    core/midi/TransportState.cpp
-    core/sysex/SysEx7.cpp
-    core/sysex/SysExCaptureSession.cpp
-    core/sysex/SysExStreamParser.cpp
-    core/sysex/SyxFile.cpp
-    core/transfer/TransferEngine.cpp
     profiles/ProfileLoader.cpp
     profiles/ProfileRegistry.cpp
     transports/fake/FakeMidiTransport.cpp)
 
 target_include_directories(taureon_midi_core PUBLIC "${PROJECT_SOURCE_DIR}/src")
 target_compile_features(taureon_midi_core PUBLIC cxx_std_20)
+target_link_libraries(taureon_midi_core PUBLIC taureon_midi_engine)
 
 if(MSVC)
     target_compile_options(taureon_midi_core PRIVATE /W4 /permissive- /EHsc)
