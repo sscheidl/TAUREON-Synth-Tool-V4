@@ -20,6 +20,51 @@ QString hex_bytes(const std::vector<std::uint8_t>& bytes) {
     return values.join(' ').toUpper();
 }
 
+QString hex_words(const std::vector<std::uint32_t>& words) {
+    QStringList values;
+    values.reserve(static_cast<qsizetype>(words.size()));
+    for (const auto word : words) values.push_back(QStringLiteral("%1").arg(word, 8, 16, QLatin1Char('0')));
+    return values.join(' ').toUpper();
+}
+
+struct Midi2VoiceDetail {
+    int channel;
+    QString type;
+    QString event;
+    QString value;
+};
+
+std::optional<Midi2VoiceDetail> midi2_voice_detail(const midi::NativeMidiMessage& message) {
+    const auto* ump = std::get_if<midi::UmpNativeMessage>(&message.data);
+    if (!ump || ump->words.size() != 2) return std::nullopt;
+    const auto first = ump->words[0];
+    if ((first >> 28u) != 0x4u) return std::nullopt;
+    const auto status = (first >> 20u) & 0xfu;
+    const auto channel = static_cast<int>(((first >> 16u) & 0xfu) + 1u);
+    const auto index = (first >> 8u) & 0xffu;
+    const auto data = ump->words[1];
+    switch (status) {
+    case 0x8u:
+    case 0x9u:
+        if (index > 127u) return std::nullopt;
+        return Midi2VoiceDetail{channel, status == 0x8u ? "MIDI 2.0 Note Off" : "MIDI 2.0 Note On",
+                                QStringLiteral("Note %1").arg(index), QString::number(data >> 16u)};
+    case 0xau:
+        if (index > 127u) return std::nullopt;
+        return Midi2VoiceDetail{channel, "MIDI 2.0 Poly Pressure", QStringLiteral("Note %1").arg(index),
+                                QString::number(data)};
+    case 0xbu:
+        if (index > 127u) return std::nullopt;
+        return Midi2VoiceDetail{channel, "MIDI 2.0 Control Change", QStringLiteral("CC %1").arg(index),
+                                QString::number(data)};
+    case 0xdu:
+        return Midi2VoiceDetail{channel, "MIDI 2.0 Channel Pressure", "Channel", QString::number(data)};
+    case 0xeu:
+        return Midi2VoiceDetail{channel, "MIDI 2.0 Pitch Bend", "Pitch wheel", QString::number(data)};
+    default: return std::nullopt;
+    }
+}
+
 std::optional<midi::ParsedMidi1Message> channel_voice_message(const midi::NativeMidiMessage& message) {
     if (const auto* midi1 = std::get_if<midi::Midi1NativeMessage>(&message.data)) {
         if (midi1->bytes.size() < 2 || midi1->bytes.size() > 3 ||
@@ -116,16 +161,25 @@ QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const 
     const auto* midi1 = std::get_if<midi::Midi1NativeMessage>(&message.data);
     const auto parsed_voice = index.column() >= Channel && index.column() <= Value
                                   ? channel_voice_message(message) : std::nullopt;
+    const auto midi2_voice = index.column() >= Channel && index.column() <= Value
+                                 ? midi2_voice_detail(message) : std::nullopt;
     switch (index.column()) {
     case Time: return message.timestamp ? QString::number(message.timestamp->native_value) : QStringLiteral("—");
     case Direction: return event.direction == midi::MidiDirection::input ? "RX" : "TX";
     case Route: return QString::fromLatin1(midi::to_string(message.backend));
     case Channel:
-        return parsed_voice ? QVariant{static_cast<int>(*parsed_voice->channel + 1)} : QVariant{QStringLiteral("—")};
-    case Type: return parsed_voice ? channel_voice_type(parsed_voice->kind) : message_type(message);
-    case Event: return parsed_voice ? channel_voice_event(*parsed_voice) : QStringLiteral("—");
-    case Value: return parsed_voice ? channel_voice_value(*parsed_voice) : QVariant{QStringLiteral("—")};
-    case Raw: return midi1 ? hex_bytes(midi1->bytes) : QStringLiteral("UMP words");
+        if (parsed_voice) return static_cast<int>(*parsed_voice->channel + 1);
+        return midi2_voice ? QVariant{midi2_voice->channel} : QVariant{QStringLiteral("—")};
+    case Type:
+        if (parsed_voice) return channel_voice_type(parsed_voice->kind);
+        return midi2_voice ? midi2_voice->type : message_type(message);
+    case Event:
+        if (parsed_voice) return channel_voice_event(*parsed_voice);
+        return midi2_voice ? midi2_voice->event : QStringLiteral("—");
+    case Value:
+        if (parsed_voice) return channel_voice_value(*parsed_voice);
+        return midi2_voice ? midi2_voice->value : QStringLiteral("—");
+    case Raw: return midi1 ? hex_bytes(midi1->bytes) : hex_words(std::get<midi::UmpNativeMessage>(message.data).words);
     default: return {};
     }
 }
