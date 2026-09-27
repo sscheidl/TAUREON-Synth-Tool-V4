@@ -2,6 +2,7 @@
 
 #include "gui/MidiMonitorModel.hpp"
 
+#include <initializer_list>
 #include <utility>
 
 namespace taureon::gui {
@@ -27,9 +28,12 @@ bool MidiMonitorFilterModel::filterAcceptsRow(const int source_row,
     const auto direction = sourceModel()->index(source_row, MidiMonitorModel::Direction, source_parent)
                                .data(Qt::DisplayRole).toString();
     if (!direction_.isEmpty() && direction != direction_) return false;
-    const auto type = sourceModel()->index(source_row, MidiMonitorModel::Type, source_parent)
-                          .data(Qt::DisplayRole).toString();
-    return type_filter_.isEmpty() || type.contains(type_filter_, Qt::CaseInsensitive);
+    if (type_filter_.isEmpty()) return true;
+    for (const auto column : {MidiMonitorModel::Type, MidiMonitorModel::Event, MidiMonitorModel::Value}) {
+        if (sourceModel()->index(source_row, column, source_parent)
+                .data(Qt::DisplayRole).toString().contains(type_filter_, Qt::CaseInsensitive)) return true;
+    }
+    return false;
 }
 
 } // namespace taureon::gui

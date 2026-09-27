@@ -10,13 +10,22 @@
 #include "gui/SysExTransferPanel.hpp"
 #include "gui/SysExManagerPanel.hpp"
 
+#include <QAbstractItemModel>
+#include <QAction>
+#include <QApplication>
+#include <QClipboard>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QItemSelectionModel>
+#include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QMessageBox>
 #include <QPushButton>
+#include <QSaveFile>
 #include <QScrollArea>
 #include <QSignalBlocker>
 #include <QStackedWidget>
@@ -29,6 +38,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstddef>
@@ -37,6 +47,7 @@
 #include <type_traits>
 #include <utility>
 #include <variant>
+#include <vector>
 
 namespace taureon::gui {
 namespace {
@@ -101,6 +112,33 @@ QWidget* make_workspace_page(const QString& name) {
     return page;
 }
 
+QString monitor_delimited_text(const QAbstractItemModel& model, const std::vector<int>& rows,
+                               const QChar separator, const bool include_header) {
+    const auto cell = [separator](QString value) {
+        if (value.contains('"') || value.contains(separator) || value.contains('\n') || value.contains('\r')) {
+            value.replace('"', "\"\"");
+            return QStringLiteral("\"") + value + QStringLiteral("\"");
+        }
+        return value;
+    };
+    QStringList lines;
+    if (include_header) {
+        QStringList headings;
+        for (int column = 0; column < model.columnCount(); ++column) {
+            headings.push_back(cell(model.headerData(column, Qt::Horizontal).toString()));
+        }
+        lines.push_back(headings.join(separator));
+    }
+    for (const auto row : rows) {
+        QStringList fields;
+        for (int column = 0; column < model.columnCount(); ++column) {
+            fields.push_back(cell(model.index(row, column).data(Qt::DisplayRole).toString()));
+        }
+        lines.push_back(fields.join(separator));
+    }
+    return lines.join("\r\n") + "\r\n";
+}
+
 QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) {
     auto* page = new QWidget;
     auto* layout = new QVBoxLayout(page);
@@ -109,8 +147,8 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
     direction->addItems({"All directions", "RX", "TX"});
     direction->setAccessibleName("Monitor direction filter");
     auto* type_filter = new QLineEdit(page);
-    type_filter->setPlaceholderText("Filter event type");
-    type_filter->setAccessibleName("Monitor event type filter");
+    type_filter->setPlaceholderText("Filter type, event or value");
+    type_filter->setAccessibleName("Monitor type, event or value filter");
     auto* pause = new QPushButton("Pause presentation", page);
     pause->setCheckable(true);
     pause->setToolTip("Presentation events are counted and discarded while paused; transport capture continues.");
@@ -132,6 +170,34 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
     table->setAlternatingRowColors(true);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSortingEnabled(false);
+    table->setContextMenuPolicy(Qt::ActionsContextMenu);
+    table->setToolTip("Right-click to copy selected rows or export all visible rows.");
+    auto* copy_action = new QAction("Copy selected rows", table);
+    copy_action->setShortcut(QKeySequence::Copy);
+    copy_action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    table->addAction(copy_action);
+    QObject::connect(copy_action, &QAction::triggered, table, [table, proxy] {
+        std::vector<int> rows;
+        for (const auto& index : table->selectionModel()->selectedRows()) rows.push_back(index.row());
+        if (rows.empty()) return;
+        std::sort(rows.begin(), rows.end());
+        QApplication::clipboard()->setText(monitor_delimited_text(*proxy, rows, '\t', false));
+    });
+    auto* export_action = new QAction("Export visible rows as CSV…", table);
+    table->addAction(export_action);
+    QObject::connect(export_action, &QAction::triggered, table, [table, proxy] {
+        const auto selected = QFileDialog::getSaveFileName(table, "Export MIDI Monitor", "midi-monitor.csv",
+                                                       "CSV files (*.csv)");
+        if (selected.isEmpty()) return;
+        std::vector<int> rows;
+        rows.reserve(static_cast<std::size_t>(proxy->rowCount()));
+        for (int row = 0; row < proxy->rowCount(); ++row) rows.push_back(row);
+        QSaveFile output(selected);
+        const auto bytes = monitor_delimited_text(*proxy, rows, ',', true).toUtf8();
+        if (!output.open(QIODevice::WriteOnly) || output.write(bytes) != bytes.size() || !output.commit()) {
+            QMessageBox::warning(table, "Export MIDI Monitor", "The selected CSV file could not be saved.");
+        }
+    });
     layout->addWidget(table);
 
     QObject::connect(direction, &QComboBox::currentTextChanged, page,
