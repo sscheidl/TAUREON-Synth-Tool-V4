@@ -6,6 +6,7 @@
 #include <QWidget>
 
 #include <filesystem>
+#include <cstdint>
 #include <functional>
 #include <future>
 #include <optional>
@@ -51,6 +52,7 @@ public:
     void request_select_temporary_profile(std::string profile_id);
     void request_remember_overridden_manual_profile();
     void set_snapshot_observer(std::function<void(const app::SysExTransferSnapshot&)> observer);
+    void set_default_pacing(std::uint32_t milliseconds);
     [[nodiscard]] bool has_required_controls() const noexcept;
 
 private:

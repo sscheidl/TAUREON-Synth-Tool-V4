@@ -56,6 +56,7 @@ private:
     DiagnosticsPanel* diagnostics_panel_{};
     MidiMonitorModel* monitor_model_{};
     MonitorEventBridge* monitor_bridge_{};
+    QPushButton* monitor_pause_button_{};
     ProfileMatchPanel* profile_panel_{};
     SettingsPanel* settings_panel_{};
     SysExTransferPanel* sysex_transfer_panel_{};

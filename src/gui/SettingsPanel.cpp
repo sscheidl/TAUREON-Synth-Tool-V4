@@ -82,13 +82,15 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     setObjectName("settingsPanel");
     const auto loaded = app::SettingsStore::load(path_);
     settings_ = loaded.settings;
+    if (log_) log_->configure(settings_.log_level, settings_.log_rotation_entries);
     if (diagnostic_export_policy_) {
         diagnostic_export_policy_->include_route_identity = settings_.include_route_identity_in_bundle;
     }
     auto* layout = new QVBoxLayout(this);
     auto* scope_notice = new QLabel(
-        "Only log level, bounded log entries, and diagnostic-bundle route metadata apply now. "
-        "All other fields are saved only; the confirmation preference does not gate Raw Send.", this);
+        "Log level, bounded log entries, diagnostic-bundle route metadata, monitor history, and generic SysEx "
+        "pacing apply now. Monitor start-paused applies on next launch. Other fields are saved only; "
+        "the confirmation preference does not gate Raw Send.", this);
     scope_notice->setObjectName("settingsScopeNotice");
     scope_notice->setWordWrap(true);
     layout->addWidget(scope_notice);
@@ -116,7 +118,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     backend_->setObjectName("settingsPreferredBackend");
     reconnect_ = enum_box(midi, {{"Require confirmation", "require_confirmation"}, {"Manual only", "manual_only"}});
     reconnect_->setObjectName("settingsReconnectPolicy");
-    monitor_paused_ = new QCheckBox("Start monitor presentation paused (saved only)", midi);
+    monitor_paused_ = new QCheckBox("Start monitor presentation paused on next launch", midi);
     monitor_paused_->setObjectName("settingsMonitorPaused");
     monitor_history_ = new FocusWheelSpinBox(midi);
     monitor_history_->setRange(1, 1'000'000);
@@ -132,7 +134,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     capture_routes_->setToolTip("Stores only the current exact Stage-2 route identities. It never opens, closes, or changes a route.");
     midi_form->addRow("Preferred backend (saved only)", backend_);
     midi_form->addRow("Reconnect policy (saved only)", reconnect_);
-    midi_form->addRow("Monitor history (saved only)", monitor_history_);
+    midi_form->addRow("Monitor history", monitor_history_);
     midi_form->addRow({}, monitor_paused_);
     midi_form->addRow("Preferred RX route (saved only)", receive_route_);
     midi_form->addRow("Preferred TX route (saved only)", transmit_route_);
@@ -153,7 +155,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
         "Raw Send requires a direct click and shows the exact TX route in SysEx Transfer.");
     stop_on_loss_ = new QCheckBox("Stop capture on reported data loss (saved only)", sysex);
     stop_on_loss_->setObjectName("settingsStopCaptureOnLoss");
-    sysex_form->addRow("Generic pacing (saved only)", pacing_);
+    sysex_form->addRow("Generic pacing", pacing_);
     sysex_form->addRow("Confirmation (not enforced)", confirmation_);
     sysex_form->addRow({}, stop_on_loss_);
 
@@ -177,9 +179,9 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     save_button_->setObjectName("settingsSave");
     // S7-3: distinguish persisted preferences from settings applied live by this foundation.
     auto* application_scope = new QLabel(
-        "Saved preferences are persisted and reloaded. Of these, only the "
-        "diagnostic-bundle route-identity choice and the log level and log rotation size take "
-        "effect in the running application; every other preference on this page is stored only "
+        "Saved preferences are persisted and reloaded. Diagnostic-bundle route identity, log level, "
+        "log rotation size, monitor history, and generic SysEx pacing apply in the running application. "
+        "Monitor start-paused applies on next launch; every other preference remains stored only "
         "and is not applied by this foundation.",
         this);
     application_scope->setObjectName("settingsApplicationScope");
@@ -208,7 +210,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     });
     connect(save_button_, &QPushButton::clicked, this, [this] {
         const auto result = save();
-        set_status(result ? "Settings saved atomically. Preferences are not applied to the active connection."
+        set_status(result ? "Settings saved atomically. Active MIDI routes were not changed."
                           : "Settings save failed: " + result.error().message);
     });
     populate_controls();
@@ -230,7 +232,12 @@ midi::Result<void> SettingsPanel::save() {
         log_->configure(settings_.log_level, settings_.log_rotation_entries);
         log_->append(app::LogLevel::info, "Settings saved without applying a route or connection.");
     }
+    if (result && applied_settings_callback_) applied_settings_callback_(settings_);
     return result;
+}
+
+void SettingsPanel::set_applied_settings_callback(std::function<void(const app::Settings&)> callback) {
+    applied_settings_callback_ = std::move(callback);
 }
 
 const app::Settings& SettingsPanel::settings() const noexcept { return settings_; }

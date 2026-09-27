@@ -220,4 +220,14 @@ void MidiMonitorModel::clear() {
     endResetModel();
 }
 
+void MidiMonitorModel::set_history_limit(const std::size_t history_limit) {
+    if (history_limit == 0) throw std::invalid_argument("monitor history limit must be positive");
+    history_limit_ = history_limit;
+    if (events_.size() <= history_limit_) return;
+    const auto excess = events_.size() - history_limit_;
+    beginRemoveRows({}, 0, static_cast<int>(excess - 1));
+    for (std::size_t index = 0; index < excess; ++index) events_.pop_front();
+    endRemoveRows();
+}
+
 } // namespace taureon::gui

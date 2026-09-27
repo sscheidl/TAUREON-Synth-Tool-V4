@@ -182,7 +182,7 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
         "Unavailable: no validated device restore protocol capability is implemented.");
     pacing_delay_ = new FocusWheelSpinBox(this);
     pacing_delay_->setObjectName("sysExPacingDelay");
-    pacing_delay_->setRange(0, 10'000);
+    pacing_delay_->setRange(0, 60'000);
     pacing_delay_->setSuffix(" ms");
     pacing_delay_->setToolTip("Fixed delay in milliseconds between SysEx frames for this Raw Send.");
     actions->addWidget(open_button_, 0, 0);
@@ -530,6 +530,12 @@ void SysExTransferPanel::update_raw_inspector(const int row) {
     const auto* frame = frame_model_->frame(row);
     const auto text = frame ? bytes_hex(frame->bytes) : QString{};
     if (raw_bytes_->toPlainText() != text) raw_bytes_->setPlainText(text);
+}
+
+void SysExTransferPanel::set_default_pacing(const std::uint32_t milliseconds) {
+    pacing_delay_->setValue(static_cast<int>(milliseconds));
+    pacing_label_->setText(QStringLiteral("Pacing: user-selected fixed inter-frame delay · %1 ms")
+                               .arg(pacing_delay_->value()));
 }
 
 void SysExTransferPanel::show_error(const midi::MidiError& error) {

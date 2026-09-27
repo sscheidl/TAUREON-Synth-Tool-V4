@@ -23,10 +23,11 @@ public:
                                       int role) const override;
     void append_batch(std::vector<app::MonitorEvent> events);
     void clear();
+    void set_history_limit(std::size_t history_limit);
     [[nodiscard]] std::size_t history_limit() const noexcept { return history_limit_; }
 
 private:
-    const std::size_t history_limit_;
+    std::size_t history_limit_;
     std::deque<app::MonitorEvent> events_;
 };
 

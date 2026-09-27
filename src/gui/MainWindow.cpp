@@ -112,8 +112,7 @@ QWidget* make_workspace_page(const QString& name) {
     return page;
 }
 
-QString monitor_delimited_text(const QAbstractItemModel& model, const std::vector<int>& rows,
-                               const QChar separator, const bool include_header) {
+QString monitor_delimited_line(const QAbstractItemModel& model, const int row, const QChar separator) {
     const auto cell = [separator](QString value) {
         if (value.contains('"') || value.contains(separator) || value.contains('\n') || value.contains('\r')) {
             value.replace('"', "\"\"");
@@ -121,25 +120,16 @@ QString monitor_delimited_text(const QAbstractItemModel& model, const std::vecto
         }
         return value;
     };
-    QStringList lines;
-    if (include_header) {
-        QStringList headings;
-        for (int column = 0; column < model.columnCount(); ++column) {
-            headings.push_back(cell(model.headerData(column, Qt::Horizontal).toString()));
-        }
-        lines.push_back(headings.join(separator));
+    QStringList fields;
+    for (int column = 0; column < model.columnCount(); ++column) {
+        fields.push_back(cell(row < 0 ? model.headerData(column, Qt::Horizontal).toString()
+                                      : model.index(row, column).data(Qt::DisplayRole).toString()));
     }
-    for (const auto row : rows) {
-        QStringList fields;
-        for (int column = 0; column < model.columnCount(); ++column) {
-            fields.push_back(cell(model.index(row, column).data(Qt::DisplayRole).toString()));
-        }
-        lines.push_back(fields.join(separator));
-    }
-    return lines.join("\r\n") + "\r\n";
+    return fields.join(separator);
 }
 
-QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) {
+QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
+                           QPushButton*& pause_button) {
     auto* page = new QWidget;
     auto* layout = new QVBoxLayout(page);
     auto* controls = new QHBoxLayout;
@@ -151,6 +141,7 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
     type_filter->setAccessibleName("Monitor type, event or value filter");
     auto* pause = new QPushButton("Pause presentation", page);
     pause->setCheckable(true);
+    pause_button = pause;
     pause->setToolTip("Presentation events are counted and discarded while paused; transport capture continues.");
     auto* clear = new QPushButton("Clear", page);
     auto* accounting = new QLabel("Presentation running", page);
@@ -181,7 +172,9 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
         for (const auto& index : table->selectionModel()->selectedRows()) rows.push_back(index.row());
         if (rows.empty()) return;
         std::sort(rows.begin(), rows.end());
-        QApplication::clipboard()->setText(monitor_delimited_text(*proxy, rows, '\t', false));
+        QStringList lines;
+        for (const auto row : rows) lines.push_back(monitor_delimited_line(*proxy, row, '\t'));
+        QApplication::clipboard()->setText(lines.join("\r\n"));
     });
     auto* export_action = new QAction("Export visible rows as CSV…", table);
     table->addAction(export_action);
@@ -189,12 +182,18 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
         const auto selected = QFileDialog::getSaveFileName(table, "Export MIDI Monitor", "midi-monitor.csv",
                                                        "CSV files (*.csv)");
         if (selected.isEmpty()) return;
-        std::vector<int> rows;
-        rows.reserve(static_cast<std::size_t>(proxy->rowCount()));
-        for (int row = 0; row < proxy->rowCount(); ++row) rows.push_back(row);
         QSaveFile output(selected);
-        const auto bytes = monitor_delimited_text(*proxy, rows, ',', true).toUtf8();
-        if (!output.open(QIODevice::WriteOnly) || output.write(bytes) != bytes.size() || !output.commit()) {
+        bool saved = output.open(QIODevice::WriteOnly);
+        const auto write_line = [&output](const QString& line) {
+            const auto bytes = (line + "\r\n").toUtf8();
+            return output.write(bytes) == bytes.size();
+        };
+        if (saved) saved = write_line(monitor_delimited_line(*proxy, -1, ','));
+        for (int row = 0; saved && row < proxy->rowCount(); ++row) {
+            saved = write_line(monitor_delimited_line(*proxy, row, ','));
+        }
+        if (saved) saved = output.commit();
+        if (!saved) {
             QMessageBox::warning(table, "Export MIDI Monitor", "The selected CSV file could not be saved.");
         }
     });
@@ -284,7 +283,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     workspace_stack_->setObjectName("workspaceStack");
     monitor_model_ = new MidiMonitorModel(10'000, this);
     monitor_bridge_ = new MonitorEventBridge(monitor_queue, *monitor_model_, this);
-    workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_));
+    workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_, monitor_pause_button_));
     sysex_transfer_panel_ = new SysExTransferPanel(connection_worker_);
     workspace_stack_->addWidget(sysex_transfer_panel_);
     sysex_manager_panel_ = new SysExManagerPanel(
@@ -321,6 +320,13 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     settings_panel_ = new SettingsPanel(
         std::filesystem::path{settings_location.toStdWString()} / "taureon-settings.v1",
         diagnostics_log_, diagnostic_export_policy_, workspace_stack_);
+    const auto apply_safe_settings = [this](const app::Settings& settings) {
+        monitor_model_->set_history_limit(settings.monitor_history_limit);
+        sysex_transfer_panel_->set_default_pacing(settings.sysex_pacing_milliseconds);
+    };
+    settings_panel_->set_applied_settings_callback(apply_safe_settings);
+    apply_safe_settings(settings_panel_->settings());
+    monitor_pause_button_->setChecked(settings_panel_->settings().monitor_start_paused);
     auto* settings_scroll = new QScrollArea(workspace_stack_);
     settings_scroll->setObjectName("settingsScrollArea");
     settings_scroll->setFrameShape(QFrame::NoFrame);
