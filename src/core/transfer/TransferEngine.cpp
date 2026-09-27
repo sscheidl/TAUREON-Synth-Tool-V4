@@ -38,8 +38,7 @@ midi::Result<void> TransferEngine::start(std::vector<midi::NativeMidiMessage> me
                                          const TransferOptions options,
                                          TransferProgressHandler handler) {
     std::unique_lock lock(mutex_);
-    if (worker_.joinable() || (progress_.state != TransferState::idle &&
-                               progress_.state != TransferState::cancelled)) {
+    if (worker_.joinable() || progress_.state != TransferState::idle) {
         return midi::Result<void>::failure(
             {midi::MidiErrorCode::invalid_state, "transfer engine is not idle", {}, std::nullopt});
     }
@@ -49,14 +48,6 @@ midi::Result<void> TransferEngine::start(std::vector<midi::NativeMidiMessage> me
     for (const auto& message : messages) progress_.bytes_total += message_size(message);
     result_ = {TransferState::preparing, progress_, std::nullopt};
 
-    if (cancel_requested_.load(std::memory_order_acquire)) {
-        progress_.state = TransferState::cancelled;
-        result_ = {TransferState::cancelled, progress_, cancelled_error()};
-        const auto snapshot = progress_;
-        lock.unlock();
-        if (handler) handler(snapshot);
-        return midi::Result<void>::success();
-    }
     worker_ = std::thread([this, messages = std::move(messages), options,
                            handler = std::move(handler)]() mutable {
         worker_main(std::move(messages), options, std::move(handler));

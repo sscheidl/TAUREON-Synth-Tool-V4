@@ -11,10 +11,11 @@
 | R-004 | Windows MIDI stack instability complicates testing | Medium | High | WMS diagnostic and temporary native loopbacks; isolated RC4 correlation fail-fast; no physical send or system change | Project Manager / User | Active / bounded |
 | R-005 | Wrong route/device selected for send | Low | Critical | Stage 2 schema and resolver enforce backend-specific composite identity, reject missing/ambiguous/invalid routes, omit WinMM indices, and prohibit fuzzy/cross-backend substitution; deliberate-selection GUI remains later work | Architecture / GUI | Mitigated in core / UI follow-up |
 | R-006 | Scope creep into universal librarian delays reliable core | High | Medium/High | V4.0 baseline explicitly limits librarian depth; stage scope control | Project Manager / User | Open |
-| R-007 | Legacy/third-party reuse has unclear provenance/license | Medium | High | Stage 0 provenance inventory; prefer clean reimplementation; Stage-4 Summit fixture has per-item User permission, immutable hash and no-redistribution restriction | Project Manager / Claude Code | Open |
+| R-007 | Legacy/third-party reuse has unclear provenance/license | Medium | High | Stage 0 provenance inventory; clean reimplementation; no real Summit dump in PR #14's tree; retain per-item restrictions for historical material | Project Manager / Claude Code | Open |
 | R-008 | GUI cannot keep up with Clock/Active Sense/event floods | Medium | Medium/High | Bounded model/view, batched updates, 100k-event stress | Codex | Open |
 | R-009 | Specialist AI token/context budget exhausted during risky task | Medium | Medium | Project Manager prepares focused context and absorbs bounded support work | Project Manager | Open |
 | R-010 | Documentation/source-of-truth drift | Low/Medium | High | Source-of-truth map, audit at gates, PM owns consistency | Project Manager | Open |
+| R-011 | Restricted Summit test dump remains publicly accessible | Present | High | PR #14 removes the dump and provenance JSON from its tree. A 2026-09-27 branch-tip check still found both files on `main` and four other remote branches, named in `docs/reference/PROVENANCE.md`; historical commits also remain accessible. Update affected branch tips and decide separately whether history remediation is warranted. | User / Project Manager | Active exposure |
 
 ## Risk rules
 

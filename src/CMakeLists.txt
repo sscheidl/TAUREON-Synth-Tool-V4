@@ -1,7 +1,7 @@
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 find_package(Threads REQUIRED)
-set(TAUREON_MIDI_ENGINE_VERSION 0.1.0)
+set(TAUREON_MIDI_ENGINE_VERSION 0.2.0)
 string(REPLACE "." ";" engine_version_parts "${TAUREON_MIDI_ENGINE_VERSION}")
 list(GET engine_version_parts 0 TAUREON_MIDI_ENGINE_VERSION_MAJOR)
 list(GET engine_version_parts 1 TAUREON_MIDI_ENGINE_VERSION_MINOR)

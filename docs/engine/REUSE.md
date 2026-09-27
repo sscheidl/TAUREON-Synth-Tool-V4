@@ -6,7 +6,7 @@ the transport interface `transports/IMidiTransport.hpp`. It does not contain Qt,
 device profiles, the product application, or a native Windows backend.
 
 The package is **not yet a stable SDK**: its independent package version is
-0.1.0, with compatibility restricted to the same minor release while the major
+0.2.0, with compatibility restricted to the same minor release while the major
 version is zero. Public API questions remain open. Keep the source revision
 pinned when reusing it in another project. The supported build and package route
 is Windows/MSVC only; other platforms have not been validated. A static-library
@@ -14,6 +14,10 @@ consumer must use a compatible MSVC/STL toolchain, C++ runtime and configuration
 (Debug or Release). Native WinMM/WMS transports are not included in the package.
 The current repository source is offered under the MIT license in `LICENSE`;
 historical restricted test material removed from the current tree is not relicensed.
+While the package remains at major version zero, changes to installed public
+declarations or their behavior increment the minor version. Implementation-only
+corrections may increment the patch version. Consumers should pin an exact source
+revision until the public header layout and transport contracts are settled.
 
 ## Build and consume on Windows
 
@@ -40,7 +44,7 @@ foreach ($configuration in @('Debug', 'Release')) {
 In an independent CMake project:
 
 ```cmake
-find_package(TaureonMidiEngine 0.1 CONFIG REQUIRED)
+find_package(TaureonMidiEngine 0.2 CONFIG REQUIRED)
 target_link_libraries(my_app PRIVATE TaureonMidiEngine::MidiEngine)
 ```
 
@@ -48,6 +52,15 @@ The standalone consumer is deliberately configured from a separate source tree
 against the **installed** headers and library. It compiles all installed headers
 and runs a transfer with its own transport implementation. CI runs this route,
 plus the Stage 2/3 engine tests, without Qt in both configurations.
+
+`TransferEngine` is one-shot: create a new instance for each transfer attempt.
+Its transport must remain alive until `wait()` and destruction complete. The
+owner serializes `start()`, `wait()`, and destruction; cancellation and progress
+queries may be made from other threads while the object is alive, and must finish
+before destruction. Progress handlers run on the worker
+thread and may request cancellation, but may not call `wait()`, destroy the engine,
+or throw. A transport `send()` that blocks can also block `wait()` beyond the
+configured timeout, which is checked between sends.
 
 ## Current capability boundary
 
@@ -62,6 +75,10 @@ plus the Stage 2/3 engine tests, without Qt in both configurations.
   interpretation are **not** implemented by this package.
 - The WMS and WinMM native backends remain Windows-specific product targets,
   not part of this installed generic package. Hardware acceptance is separate.
+- The standalone consumer's custom transport is a compile/link example. It uses
+  a WinMM tag because the current public model has no third-party backend or
+  route identity. This is not a valid identity design for an external device;
+  backend-neutral transport identity remains an SDK blocker.
 
 ## Next capability work
 

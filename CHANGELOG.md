@@ -8,8 +8,9 @@ All notable TAUREON V4 changes will be documented here.
 
 - Separated the generic MIDI/SysEx/transfer engine from the Qt product host and
   added an installed CMake package with independent Debug/Release verification.
-- Assigned the experimental engine package its own `0.1.0` version, independent
-  of the product application version.
+- Assigned the experimental engine package its own version, independent of the
+  product application version. Version `0.2.0` makes the one-shot transfer
+  lifecycle explicit and rejects a second start after cancellation or completion.
 - Licensed the current repository source under MIT; the previously restricted
   real Summit dump was removed rather than included under that license.
 - Replaced the restricted real Summit SysEx test fixture with an artificial

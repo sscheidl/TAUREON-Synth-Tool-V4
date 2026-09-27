@@ -329,7 +329,6 @@ endif()
 
 foreach(target IN ITEMS
     stage4_profile_tests
-    stage5_application_tests
     stage5_profile_followup_tests
     stage5_profile_ui_tests
     stage5_connection_worker_tests

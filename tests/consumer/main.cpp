@@ -68,7 +68,7 @@ private:
 
 int main() {
     static_assert(taureon::midi::engine_version_major == 0 &&
-                  taureon::midi::engine_version_minor == 1);
+                  taureon::midi::engine_version_minor == 2);
     const std::array<std::uint8_t, 3> pressure{0xa2, 62, 40};
     const auto midi = taureon::midi::parse_midi1_message(pressure);
     if (!midi || midi.value().kind != taureon::midi::Midi1MessageKind::polyphonic_aftertouch ||
