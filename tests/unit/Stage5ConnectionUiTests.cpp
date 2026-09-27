@@ -333,9 +333,16 @@ int main(int argc, char* argv[]) {
             TAUREON_REQUIRE(transport_ptr != nullptr);
             transport_ptr->remove_endpoint(transmit_endpoint.identity);
         }
-        TAUREON_REQUIRE(process_until([&] {
-            return window.statusBar()->currentMessage().startsWith("Degraded:");
-        }));
+        // The connection snapshot is polled on a 250 ms timer. On a fast CI runner,
+        // an iteration-only wait can finish before that timer fires even once.
+        QElapsedTimer degraded_wait;
+        degraded_wait.start();
+        while (!window.statusBar()->currentMessage().startsWith("Degraded:") &&
+               degraded_wait.elapsed() < 3000) {
+            QApplication::processEvents(QEventLoop::AllEvents);
+            std::this_thread::yield();
+        }
+        TAUREON_REQUIRE(window.statusBar()->currentMessage().startsWith("Degraded:"));
         TAUREON_REQUIRE(connect->text() == "Disconnect");
 
         connect->click();
