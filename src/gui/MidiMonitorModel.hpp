@@ -12,7 +12,7 @@ namespace taureon::gui {
 
 class MidiMonitorModel final : public QAbstractTableModel {
 public:
-    enum Column { Time, Direction, Route, Group, Channel, Type, Event, Value, Raw, ColumnCount };
+    enum Column { Time, Direction, Route, Channel, Type, Event, Value, Raw, ColumnCount };
 
     explicit MidiMonitorModel(std::size_t history_limit, QObject* parent = nullptr);
 

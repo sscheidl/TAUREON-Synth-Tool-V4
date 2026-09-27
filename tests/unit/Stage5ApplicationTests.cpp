@@ -218,6 +218,14 @@ void queue_and_model_tests() {
     gui::MidiMonitorModel model(2);
     model.append_batch(queue.drain(3));
     TAUREON_REQUIRE(model.rowCount() == 2);
+    TAUREON_REQUIRE(model.columnCount() == 8);
+    for (int column = 0; column < model.columnCount(); ++column) {
+        TAUREON_REQUIRE(model.headerData(column, Qt::Horizontal, Qt::DisplayRole).toString() != "Group");
+    }
+    TAUREON_REQUIRE(model.headerData(gui::MidiMonitorModel::Event, Qt::Horizontal, Qt::DisplayRole)
+                        .toString() == "Event");
+    TAUREON_REQUIRE(model.headerData(gui::MidiMonitorModel::Value, Qt::Horizontal, Qt::DisplayRole)
+                        .toString() == "Value");
     TAUREON_REQUIRE(model.data(model.index(0, gui::MidiMonitorModel::Raw), Qt::DisplayRole).toString() ==
                     "90 3D 7F");
     TAUREON_REQUIRE(model.data(model.index(1, gui::MidiMonitorModel::Channel), Qt::DisplayRole).toInt() == 1);

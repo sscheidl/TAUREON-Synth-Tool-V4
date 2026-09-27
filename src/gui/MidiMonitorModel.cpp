@@ -59,7 +59,6 @@ QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const 
     case Time: return message.timestamp ? QString::number(message.timestamp->native_value) : QStringLiteral("—");
     case Direction: return event.direction == midi::MidiDirection::input ? "RX" : "TX";
     case Route: return QString::fromLatin1(midi::to_string(message.backend));
-    case Group: return QStringLiteral("—");
     case Channel:
         if (midi1) {
             const auto parsed = midi::parse_midi1_message(midi1->bytes);
@@ -77,7 +76,7 @@ QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const 
 QVariant MidiMonitorModel::headerData(const int section, const Qt::Orientation orientation,
                                       const int role) const {
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole || section < 0 || section >= ColumnCount) return {};
-    static const QStringList headers{"Time", "Direction", "Route", "Group", "Channel", "Type", "Event", "Value", "Raw"};
+    static const QStringList headers{"Time", "Direction", "Route", "Channel", "Type", "Event", "Value", "Raw"};
     return headers.at(section);
 }
 
