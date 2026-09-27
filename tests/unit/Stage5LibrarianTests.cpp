@@ -183,7 +183,7 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(registry.load_directory(root / "resources" / "device_profiles", issues));
         TAUREON_REQUIRE(issues.empty());
         const auto fixture =
-            sysex::load_syx_file(root / "tests" / "fixtures" / "novation_summit_crazy_sine.syx");
+            sysex::load_syx_file(std::filesystem::path{TAUREON_TEST_FIXTURE_PATH});
         TAUREON_REQUIRE(fixture && fixture.value().frames.size() == 1);
         const auto profile_match = registry.match(fixture.value().frames.front(), {});
         TAUREON_REQUIRE(profile_match.selected_profile_id ==

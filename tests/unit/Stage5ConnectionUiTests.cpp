@@ -132,8 +132,7 @@ int main(int argc, char* argv[]) {
             window.findChild<QWidget*>("sysExManagerPanel"));
         TAUREON_REQUIRE(manager_panel != nullptr);
         TAUREON_REQUIRE(manager_panel->has_required_controls());
-        const auto manager_fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
-                                     "novation_summit_crazy_sine.syx";
+        const std::filesystem::path manager_fixture{TAUREON_TEST_FIXTURE_PATH};
         manager_panel->add_file(manager_fixture);
         auto* manager_open = window.findChild<QPushButton*>("sysExManagerOpenTransfer");
         auto* manager_status = window.findChild<QLabel*>("sysExManagerStatus");
@@ -200,8 +199,7 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(process_until([&] { return connect->text() == "Disconnect"; }));
         TAUREON_REQUIRE(receive->currentIndex() == 0);
 
-        const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
-                             "novation_summit_crazy_sine.syx";
+        const std::filesystem::path fixture{TAUREON_TEST_FIXTURE_PATH};
         transfer_panel->request_load(fixture);
         TAUREON_REQUIRE(process_until([&] {
             return frame_table->model()->rowCount() == 1 && raw_send->isEnabled();

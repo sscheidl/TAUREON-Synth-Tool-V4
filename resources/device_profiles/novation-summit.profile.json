@@ -45,11 +45,11 @@
     ]
   },
   "provenance": {
-    "source": "User-approved byte-exact Crazy Sine.syx capture from the User's Novation Summit",
+    "source": "Clean profile implementation using an observed Summit SysEx recognition prefix; no preset dump is included",
     "owner": "TAUREON User / Product Owner",
-    "license": "Private repository internal read-only test use only",
-    "redistribution": "Forbidden",
-    "acquisition": "User-provided local backup; approved 2026-08-24"
+    "license": "MIT",
+    "redistribution": "Allowed under MIT; no real preset data is included",
+    "acquisition": "Protocol observation from user-owned device; synthetic test payload generated at build time"
   },
   "protocol_module_id": null
 }

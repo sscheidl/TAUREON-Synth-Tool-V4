@@ -1,5 +1,12 @@
 # Stage 4 Report – Device/Profile Isolation Proof
 
+**Historical evidence note (2026-09-27):** The real Summit `.syx` fixture described
+below was removed from the current repository tree at the Product Owner's request.
+Current software tests generate artificial recognition-shaped bytes in the build
+directory. The original Stage-4 file/hash commands below document the historical
+gate only and no longer run against the current tree. Older public Git history
+still contains that fixture pending any separate history-remediation decision.
+
 **Stage:** 4
 **Date:** 2026-08-24
 **Implementation lead:** Codex

@@ -1,6 +1,13 @@
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 find_package(Threads REQUIRED)
+set(TAUREON_MIDI_ENGINE_VERSION 0.1.0)
+string(REPLACE "." ";" engine_version_parts "${TAUREON_MIDI_ENGINE_VERSION}")
+list(GET engine_version_parts 0 TAUREON_MIDI_ENGINE_VERSION_MAJOR)
+list(GET engine_version_parts 1 TAUREON_MIDI_ENGINE_VERSION_MINOR)
+list(GET engine_version_parts 2 TAUREON_MIDI_ENGINE_VERSION_PATCH)
+configure_file(core/midi/EngineVersion.hpp.in
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/core/midi/EngineVersion.hpp" @ONLY)
 
 add_library(taureon_midi_engine STATIC
     core/midi/MidiMessage.cpp
@@ -17,6 +24,7 @@ add_library(TaureonMidiEngine::MidiEngine ALIAS taureon_midi_engine)
 set_target_properties(taureon_midi_engine PROPERTIES EXPORT_NAME MidiEngine DEBUG_POSTFIX d)
 target_include_directories(taureon_midi_engine PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_features(taureon_midi_engine PUBLIC cxx_std_20)
 target_link_libraries(taureon_midi_engine PUBLIC Threads::Threads)
@@ -33,6 +41,8 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/src/core/"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/core" FILES_MATCHING PATTERN "*.hpp")
 install(FILES "${PROJECT_SOURCE_DIR}/src/transports/IMidiTransport.hpp"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/transports")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/core/midi/EngineVersion.hpp"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/core/midi")
 set(engine_package_dir "${CMAKE_INSTALL_LIBDIR}/cmake/TaureonMidiEngine")
 configure_package_config_file(
     "${PROJECT_SOURCE_DIR}/cmake/TaureonMidiEngineConfig.cmake.in"
@@ -40,13 +50,15 @@ configure_package_config_file(
     INSTALL_DESTINATION "${engine_package_dir}")
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
-    VERSION "${PROJECT_VERSION}" COMPATIBILITY SameMajorVersion)
+    VERSION "${TAUREON_MIDI_ENGINE_VERSION}" COMPATIBILITY SameMinorVersion)
 install(EXPORT TaureonMidiEngineTargets NAMESPACE TaureonMidiEngine::
     DESTINATION "${engine_package_dir}")
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
     DESTINATION "${engine_package_dir}")
+install(FILES "${PROJECT_SOURCE_DIR}/LICENSE"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses/TaureonMidiEngine")
 
 if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
     add_library(taureon_midi_engine_testing STATIC

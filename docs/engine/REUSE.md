@@ -5,13 +5,15 @@ contains `src/core/midi`, `src/core/sysex`, and `src/core/transfer`, and publish
 the transport interface `transports/IMidiTransport.hpp`. It does not contain Qt,
 device profiles, the product application, or a native Windows backend.
 
-The package is **not yet a stable SDK**: the project version remains 0.0.0, the
-public API still has open architecture questions after review, and no license for
-distribution to unrelated parties has been selected. Keep the source revision
+The package is **not yet a stable SDK**: its independent package version is
+0.1.0, with compatibility restricted to the same minor release while the major
+version is zero. Public API questions remain open. Keep the source revision
 pinned when reusing it in another project. The supported build and package route
 is Windows/MSVC only; other platforms have not been validated. A static-library
 consumer must use a compatible MSVC/STL toolchain, C++ runtime and configuration
 (Debug or Release). Native WinMM/WMS transports are not included in the package.
+The current repository source is offered under the MIT license in `LICENSE`;
+historical restricted test material removed from the current tree is not relicensed.
 
 ## Build and consume on Windows
 
@@ -38,7 +40,7 @@ foreach ($configuration in @('Debug', 'Release')) {
 In an independent CMake project:
 
 ```cmake
-find_package(TaureonMidiEngine CONFIG REQUIRED)
+find_package(TaureonMidiEngine 0.1 CONFIG REQUIRED)
 target_link_libraries(my_app PRIVATE TaureonMidiEngine::MidiEngine)
 ```
 

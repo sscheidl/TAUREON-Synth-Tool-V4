@@ -33,6 +33,20 @@ if(NOT TAUREON_BUILD_PRODUCT_APP)
     return()
 endif()
 
+set(taureon_fixture_path "${CMAKE_CURRENT_BINARY_DIR}/fixtures/synthetic_summit_header.syx")
+add_executable(taureon_generate_synthetic_summit unit/GenerateSyntheticSummit.cpp)
+add_custom_command(OUTPUT "${taureon_fixture_path}"
+    COMMAND $<TARGET_FILE:taureon_generate_synthetic_summit> "${taureon_fixture_path}"
+    DEPENDS taureon_generate_synthetic_summit
+    VERBATIM)
+add_custom_target(taureon_test_fixture DEPENDS "${taureon_fixture_path}")
+
+function(taureon_use_test_fixture target)
+    add_dependencies(${target} taureon_test_fixture)
+    target_compile_definitions(${target} PRIVATE
+        TAUREON_TEST_FIXTURE_PATH="${taureon_fixture_path}")
+endfunction()
+
 add_executable(stage4_profile_tests unit/Stage4ProfileTests.cpp)
 target_include_directories(stage4_profile_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(stage4_profile_tests PRIVATE taureon_midi_core)
@@ -312,6 +326,20 @@ if(WIN32)
     add_test(NAME stage3_winmm_transport_unit COMMAND stage3_winmm_transport_tests)
     set_tests_properties(stage3_winmm_transport_unit PROPERTIES LABELS "stage3;unit;ci;winmm")
 endif()
+
+foreach(target IN ITEMS
+    stage4_profile_tests
+    stage5_application_tests
+    stage5_profile_followup_tests
+    stage5_profile_ui_tests
+    stage5_connection_worker_tests
+    stage5_connection_ui_tests
+    stage5_sysex_transfer_session_tests
+    stage5_sysex_manager_tests
+    stage5_sysex_manager_ui_tests
+    stage5_librarian_tests)
+    taureon_use_test_fixture(${target})
+endforeach()
 
 option(TAUREON_ENABLE_LOCAL_MIDI_INTEGRATION_TESTS
     "Register local-only WMS/WinMM integration regressions" OFF)
