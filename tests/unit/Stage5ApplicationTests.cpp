@@ -255,6 +255,10 @@ void queue_and_model_tests() {
     TAUREON_REQUIRE(cell(3, gui::MidiMonitorModel::Event) == "Note 60");
     TAUREON_REQUIRE(cell(3, gui::MidiMonitorModel::Value) == "127");
     TAUREON_REQUIRE(cell(4, gui::MidiMonitorModel::Event) == "—");
+    details.set_history_limit(2);
+    TAUREON_REQUIRE(details.rowCount() == 2);
+    TAUREON_REQUIRE(cell(0, gui::MidiMonitorModel::Event) == "Note 60");
+    TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Event) == "—");
     TAUREON_REQUIRE(queue.stats().current_size == 0);
     model.clear();
     TAUREON_REQUIRE(model.rowCount() == 0);
@@ -283,6 +287,10 @@ void queue_and_model_tests() {
     TAUREON_REQUIRE(filter.rowCount() == 1);
     filter.set_direction({});
     filter.set_type_filter("Note On");
+    TAUREON_REQUIRE(filter.rowCount() == 2);
+    filter.set_type_filter("Note 67");
+    TAUREON_REQUIRE(filter.rowCount() == 1);
+    filter.set_type_filter("127");
     TAUREON_REQUIRE(filter.rowCount() == 2);
 }
 

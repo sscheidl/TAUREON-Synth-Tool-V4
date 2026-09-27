@@ -154,6 +154,7 @@ endif()
 add_test(NAME stage5_connection_ui_unit COMMAND stage5_connection_ui_tests)
 set_tests_properties(stage5_connection_ui_unit PROPERTIES
     LABELS "stage5;gui;unit;ci"
+    TIMEOUT 20
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 

@@ -15,12 +15,14 @@
 #include <QEventLoop>
 #include <QLabel>
 #include <QListWidget>
+#include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSplitter>
 #include <QStatusBar>
 #include <QTableView>
 #include <QTabWidget>
+#include <QTimer>
 
 #include <filesystem>
 #include <memory>
@@ -331,7 +333,21 @@ int main(int argc, char* argv[]) {
             std::scoped_lock lock(transport_mutex);
             TAUREON_REQUIRE(transport_ptr->diagnostics().transmitted_messages == 0);
         }
+        bool confirmed_exact_route = false;
+        QTimer::singleShot(0, &window, [&] {
+            auto* dialog = qobject_cast<QMessageBox*>(QApplication::activeModalWidget());
+            if (!dialog) return;
+            confirmed_exact_route = dialog->text().contains("fake-tx-id") &&
+                                    dialog->text().contains("1 complete SysEx frame");
+            for (auto* button : dialog->buttons()) {
+                if (button->text() == "Send raw data") {
+                    button->click();
+                    break;
+                }
+            }
+        });
         raw_send->click();
+        TAUREON_REQUIRE(confirmed_exact_route);
         TAUREON_REQUIRE(process_until([&] {
             std::scoped_lock lock(transport_mutex);
             return transport_ptr->diagnostics().transmitted_messages == 1;
