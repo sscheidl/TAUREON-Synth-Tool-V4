@@ -1,6 +1,6 @@
 add_executable(stage2_core_tests unit/Stage2CoreTests.cpp)
 target_include_directories(stage2_core_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(stage2_core_tests PRIVATE taureon_midi_core)
+target_link_libraries(stage2_core_tests PRIVATE taureon_midi_engine_testing)
 if(MSVC)
     target_compile_options(stage2_core_tests PRIVATE /W4 /permissive- /EHsc)
 else()
@@ -12,7 +12,7 @@ set_tests_properties(stage2_core_unit PROPERTIES LABELS "stage2;unit;ci")
 function(taureon_add_stage3_unit target source)
     add_executable(${target} ${source})
     target_include_directories(${target} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_link_libraries(${target} PRIVATE taureon_midi_core)
+    target_link_libraries(${target} PRIVATE taureon_midi_engine_testing)
     if(MSVC)
         target_compile_options(${target} PRIVATE /W4 /permissive- /EHsc)
     else()
@@ -28,6 +28,10 @@ taureon_add_stage3_unit(stage3_transfer_unit unit/Stage3TransferTests.cpp)
 taureon_add_stage3_unit(stage3_large_sysex_unit unit/Stage3LargeSysexTests.cpp)
 taureon_add_stage3_unit(stage3_handle_growth_unit unit/Stage3HandleGrowthTests.cpp)
 set_tests_properties(stage3_large_sysex_unit PROPERTIES LABELS "stage3;unit;ci;large-data")
+
+if(NOT TAUREON_BUILD_PRODUCT_APP)
+    return()
+endif()
 
 add_executable(stage4_profile_tests unit/Stage4ProfileTests.cpp)
 target_include_directories(stage4_profile_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -55,7 +59,7 @@ add_executable(stage5_application_tests
     "${PROJECT_SOURCE_DIR}/src/gui/MonitorEventBridge.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/MidiMonitorModel.cpp")
 target_include_directories(stage5_application_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(stage5_application_tests PRIVATE taureon_midi_core Qt6::Widgets)
+target_link_libraries(stage5_application_tests PRIVATE taureon_midi_core taureon_midi_engine_testing Qt6::Widgets)
 if(MSVC)
     target_compile_options(stage5_application_tests PRIVATE /W4 /permissive- /EHsc)
 else()
@@ -117,7 +121,7 @@ add_executable(stage5_connection_worker_tests
     unit/Stage5ConnectionWorkerTests.cpp
     "${PROJECT_SOURCE_DIR}/src/app/ConnectionWorker.cpp")
 target_include_directories(stage5_connection_worker_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(stage5_connection_worker_tests PRIVATE taureon_midi_core)
+target_link_libraries(stage5_connection_worker_tests PRIVATE taureon_midi_core taureon_midi_engine_testing)
 target_compile_definitions(stage5_connection_worker_tests PRIVATE
     TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 if(MSVC)
@@ -143,7 +147,7 @@ add_executable(stage5_connection_ui_tests
     "${PROJECT_SOURCE_DIR}/src/gui/SysExManagerPanel.cpp")
 set_target_properties(stage5_connection_ui_tests PROPERTIES AUTOMOC ON)
 target_include_directories(stage5_connection_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(stage5_connection_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
+target_link_libraries(stage5_connection_ui_tests PRIVATE taureon_midi_core taureon_midi_engine_testing Qt6::Widgets)
 target_compile_definitions(stage5_connection_ui_tests PRIVATE
     TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 if(MSVC)
@@ -174,7 +178,7 @@ add_executable(stage5_gui_preview_capture
     "${PROJECT_SOURCE_DIR}/src/gui/SysExManagerPanel.cpp")
 set_target_properties(stage5_gui_preview_capture PROPERTIES AUTOMOC ON)
 target_include_directories(stage5_gui_preview_capture PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(stage5_gui_preview_capture PRIVATE taureon_midi_core Qt6::Widgets)
+target_link_libraries(stage5_gui_preview_capture PRIVATE taureon_midi_core taureon_midi_engine_testing Qt6::Widgets)
 target_compile_definitions(stage5_gui_preview_capture PRIVATE
     TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 if(MSVC)
@@ -185,7 +189,7 @@ endif()
 
 add_executable(stage5_sysex_transfer_session_tests unit/Stage5SysExTransferSessionTests.cpp)
 target_include_directories(stage5_sysex_transfer_session_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(stage5_sysex_transfer_session_tests PRIVATE taureon_midi_core)
+target_link_libraries(stage5_sysex_transfer_session_tests PRIVATE taureon_midi_core taureon_midi_engine_testing)
 target_compile_definitions(stage5_sysex_transfer_session_tests PRIVATE
     TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
     TAUREON_TEST_OUTPUT_DIR="$<TARGET_FILE_DIR:stage5_sysex_transfer_session_tests>")
@@ -250,7 +254,7 @@ add_executable(stage5_settings_diagnostics_ui_tests
     "${PROJECT_SOURCE_DIR}/src/gui/DiagnosticsPanel.cpp"
     "${PROJECT_SOURCE_DIR}/src/gui/SettingsPanel.cpp")
 target_include_directories(stage5_settings_diagnostics_ui_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(stage5_settings_diagnostics_ui_tests PRIVATE taureon_midi_core Qt6::Widgets)
+target_link_libraries(stage5_settings_diagnostics_ui_tests PRIVATE taureon_midi_core taureon_midi_engine_testing Qt6::Widgets)
 target_compile_definitions(stage5_settings_diagnostics_ui_tests PRIVATE
     TAUREON_TEST_OUTPUT_DIR="$<TARGET_FILE_DIR:stage5_settings_diagnostics_ui_tests>")
 if(MSVC)

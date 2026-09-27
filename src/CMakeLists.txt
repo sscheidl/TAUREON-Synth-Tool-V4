@@ -14,7 +14,7 @@ add_library(taureon_midi_engine STATIC
     core/sysex/SyxFile.cpp
     core/transfer/TransferEngine.cpp)
 add_library(TaureonMidiEngine::MidiEngine ALIAS taureon_midi_engine)
-set_target_properties(taureon_midi_engine PROPERTIES EXPORT_NAME MidiEngine)
+set_target_properties(taureon_midi_engine PROPERTIES EXPORT_NAME MidiEngine DEBUG_POSTFIX d)
 target_include_directories(taureon_midi_engine PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
@@ -48,6 +48,18 @@ install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
     DESTINATION "${engine_package_dir}")
 
+if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
+    add_library(taureon_midi_engine_testing STATIC
+        transports/fake/FakeMidiTransport.cpp)
+    target_include_directories(taureon_midi_engine_testing PUBLIC "${PROJECT_SOURCE_DIR}/src")
+    target_link_libraries(taureon_midi_engine_testing PUBLIC taureon_midi_engine)
+    if(MSVC)
+        target_compile_options(taureon_midi_engine_testing PRIVATE /W4 /permissive- /EHsc)
+    else()
+        target_compile_options(taureon_midi_engine_testing PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+endif()
+
 if(NOT TAUREON_BUILD_PRODUCT_APP)
     return()
 endif()
@@ -63,8 +75,7 @@ add_library(taureon_midi_core STATIC
     app/SysExTransferSession.cpp
     app/SysExManager.cpp
     profiles/ProfileLoader.cpp
-    profiles/ProfileRegistry.cpp
-    transports/fake/FakeMidiTransport.cpp)
+    profiles/ProfileRegistry.cpp)
 
 target_include_directories(taureon_midi_core PUBLIC "${PROJECT_SOURCE_DIR}/src")
 target_compile_features(taureon_midi_core PUBLIC cxx_std_20)

@@ -6,9 +6,12 @@ the transport interface `transports/IMidiTransport.hpp`. It does not contain Qt,
 device profiles, the product application, or a native Windows backend.
 
 The package is **not yet a stable SDK**: the project version remains 0.0.0, the
-public API has not had an independent architecture review, and no license for
+public API still has open architecture questions after review, and no license for
 distribution to unrelated parties has been selected. Keep the source revision
-pinned when reusing it in another project.
+pinned when reusing it in another project. The supported build and package route
+is Windows/MSVC only; other platforms have not been validated. A static-library
+consumer must use a compatible MSVC/STL toolchain, C++ runtime and configuration
+(Debug or Release). Native WinMM/WMS transports are not included in the package.
 
 ## Build and consume on Windows
 
@@ -17,14 +20,19 @@ the repository's `build/` directory:
 
 ```powershell
 cmake -S . -B build/engine -G "Visual Studio 17 2022" -A x64 `
-  -DTAUREON_BUILD_PRODUCT_APP=OFF -DBUILD_TESTING=OFF `
+  -DTAUREON_BUILD_PRODUCT_APP=OFF -DBUILD_TESTING=ON `
   -DCMAKE_INSTALL_PREFIX="$PWD/build/engine-install"
-cmake --build build/engine --config Release --target taureon_midi_engine
-cmake --install build/engine --config Release
+foreach ($configuration in @('Debug', 'Release')) {
+  cmake --build build/engine --config $configuration
+  ctest --test-dir build/engine -C $configuration --output-on-failure
+  cmake --install build/engine --config $configuration
+}
 cmake -S tests/consumer -B build/consumer -G "Visual Studio 17 2022" -A x64 `
   -DCMAKE_PREFIX_PATH="$PWD/build/engine-install"
-cmake --build build/consumer --config Release
-ctest --test-dir build/consumer -C Release --output-on-failure
+foreach ($configuration in @('Debug', 'Release')) {
+  cmake --build build/consumer --config $configuration
+  ctest --test-dir build/consumer -C $configuration --output-on-failure
+}
 ```
 
 In an independent CMake project:
@@ -35,7 +43,9 @@ target_link_libraries(my_app PRIVATE TaureonMidiEngine::MidiEngine)
 ```
 
 The standalone consumer is deliberately configured from a separate source tree
-against the **installed** headers and library. CI runs this route without Qt.
+against the **installed** headers and library. It compiles all installed headers
+and runs a transfer with its own transport implementation. CI runs this route,
+plus the Stage 2/3 engine tests, without Qt in both configurations.
 
 ## Current capability boundary
 
