@@ -456,10 +456,11 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::save_received
 }
 
 std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::start_raw_sysex_send(
-    const std::chrono::milliseconds inter_frame_delay) {
+    const std::chrono::milliseconds inter_frame_delay,
+    std::optional<midi::MidiRouteIdentity> expected_transmit_route) {
     auto promise = std::make_shared<std::promise<midi::Result<SysExTransferSnapshot>>>();
     auto future = promise->get_future();
-    enqueue([promise, inter_frame_delay, this](State& state) {
+    enqueue([promise, inter_frame_delay, expected_transmit_route = std::move(expected_transmit_route), this](State& state) {
         state.synchronize_transfer();
         if (state.transfer) {
             promise->set_value(midi::Result<SysExTransferSnapshot>::failure(
@@ -476,6 +477,11 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::start_raw_sys
             !connection.transmit_route) {
             promise->set_value(midi::Result<SysExTransferSnapshot>::failure(
                 worker_error("connect an exact TX route before Raw Send")));
+            return;
+        }
+        if (expected_transmit_route && connection.transmit_route != expected_transmit_route) {
+            promise->set_value(midi::Result<SysExTransferSnapshot>::failure(
+                worker_error("the exact TX route changed after Raw Send confirmation; no data was sent")));
             return;
         }
         std::optional<std::uint8_t> group;

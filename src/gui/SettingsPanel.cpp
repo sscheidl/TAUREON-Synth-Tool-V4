@@ -90,7 +90,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     auto* scope_notice = new QLabel(
         "Log level, bounded log entries, diagnostic-bundle route metadata, monitor history, and generic SysEx "
         "pacing apply now. Monitor start-paused applies on next launch. Other fields are saved only; "
-        "the confirmation preference does not gate Raw Send.", this);
+        "the confirmation preference does not gate Raw Send, which always requires an explicit route confirmation.", this);
     scope_notice->setObjectName("settingsScopeNotice");
     scope_notice->setWordWrap(true);
     layout->addWidget(scope_notice);
@@ -152,7 +152,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     confirmation_->setEnabled(false);
     confirmation_->setToolTip(
         "Unavailable in this build: this saved value is not enforced by Raw Send. "
-        "Raw Send requires a direct click and shows the exact TX route in SysEx Transfer.");
+        "Raw Send always requires a direct click and confirmation of the exact TX route.");
     stop_on_loss_ = new QCheckBox("Stop capture on reported data loss (saved only)", sysex);
     stop_on_loss_->setObjectName("settingsStopCaptureOnLoss");
     sysex_form->addRow("Generic pacing", pacing_);

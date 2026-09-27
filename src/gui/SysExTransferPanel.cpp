@@ -5,6 +5,7 @@
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QProgressBar>
 #include <QPushButton>
@@ -260,8 +261,25 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
         }
     });
     connect(send_button_, &QPushButton::clicked, this, [this] {
+        if (!snapshot_.can_raw_send || !snapshot_.transmit_route) return;
+        const auto confirmed_route = snapshot_.transmit_route;
+        QMessageBox confirmation(this);
+        confirmation.setIcon(QMessageBox::Warning);
+        confirmation.setWindowTitle("Confirm Raw Send");
+        confirmation.setTextFormat(Qt::PlainText);
+        confirmation.setText(QStringLiteral(
+            "Send %1 complete SysEx frame(s), %2 bytes, to the exact TX route below?\n\n%3\n\n"
+            "This is a raw transfer, not a validated device restore. No automatic backup or rollback is available.")
+            .arg(snapshot_.complete_frames)
+            .arg(snapshot_.byte_count)
+            .arg(route_text(confirmed_route)));
+        auto* confirm_send = confirmation.addButton("Send raw data", QMessageBox::AcceptRole);
+        confirmation.addButton(QMessageBox::Cancel);
+        confirmation.setDefaultButton(QMessageBox::Cancel);
+        confirmation.exec();
+        if (confirmation.clickedButton() != confirm_send) return;
         set_pending(worker_.start_raw_sysex_send(
-                        std::chrono::milliseconds{pacing_delay_->value()}),
+                        std::chrono::milliseconds{pacing_delay_->value()}, confirmed_route),
                     PendingAction::send, "Raw Send requested by user…");
     });
     connect(cancel_button_, &QPushButton::clicked, this, [this] {
