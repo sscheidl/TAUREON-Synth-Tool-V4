@@ -228,7 +228,8 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
 
 MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
                        app::ConnectionWorker& connection_worker,
-                       std::shared_ptr<const profiles::ProfileRegistry> profile_registry)
+                       std::shared_ptr<const profiles::ProfileRegistry> profile_registry,
+                       std::vector<profiles::ProfileLoadIssue> profile_issues)
     : connection_worker_(connection_worker) {
     setObjectName("taureonMainWindow");
     setWindowTitle("TAUREON Synth Tool V4");
@@ -301,6 +302,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     workspace_stack_->addWidget(new LibrarianPanel(workspace_stack_));
     profile_panel_ = new ProfileMatchPanel;
     if (profile_registry) profile_panel_->set_available_profiles(profile_registry->profiles());
+    profile_panel_->set_profile_load_issue_count(profile_issues.size());
     profile_panel_->set_select_temporary_action([this](std::string profile_id) {
         sysex_transfer_panel_->request_select_temporary_profile(std::move(profile_id));
     });
@@ -315,6 +317,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     diagnostic_export_policy_ = std::make_shared<app::DiagnosticExportPolicy>();
     diagnostics_panel_ = new DiagnosticsPanel(
         connection_worker_, monitor_queue, diagnostic_export_policy_, workspace_stack_);
+    diagnostics_panel_->set_profile_load_issues(std::move(profile_issues));
     workspace_stack_->addWidget(diagnostics_panel_);
     const auto settings_location = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     settings_panel_ = new SettingsPanel(

@@ -118,6 +118,11 @@ bool DiagnosticsPanel::has_required_controls() const noexcept {
     return details_ && status_ && export_button_ && timer_;
 }
 
+void DiagnosticsPanel::set_profile_load_issues(std::vector<profiles::ProfileLoadIssue> issues) {
+    profile_load_issues_ = std::move(issues);
+    present();
+}
+
 app::DiagnosticExportPolicy DiagnosticsPanel::effective_export_policy() const {
     // S7-4: use documented defaults if composition omits the optional shared policy.
     return export_policy_ ? *export_policy_ : app::DiagnosticExportPolicy{};
@@ -161,7 +166,14 @@ void DiagnosticsPanel::present() {
     const auto snapshot = app::DiagnosticBundle::make_snapshot(
         connection_, transfer_, monitor_queue_.stats(), TAUREON_APP_VERSION, TAUREON_BUILD_REVISION,
         effective_export_policy());
-    const auto text = format_snapshot(snapshot);
+    auto text = format_snapshot(snapshot);
+    if (!profile_load_issues_.empty()) {
+        text += "\nProfile loading issues:\n";
+        for (const auto& issue : profile_load_issues_) {
+            text += QString::fromStdWString(issue.path.filename().wstring()) + ": " +
+                    QString::fromStdString(issue.error.message) + "\n";
+        }
+    }
     if (details_->toPlainText() != text) {
         auto* scroll = details_->verticalScrollBar();
         const int prior_scroll = scroll->value();

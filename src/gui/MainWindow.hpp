@@ -34,7 +34,8 @@ class SysExManagerPanel;
 class MainWindow final : public QMainWindow {
 public:
     MainWindow(app::MonitorEventQueue& monitor_queue, app::ConnectionWorker& connection_worker,
-               std::shared_ptr<const profiles::ProfileRegistry> profile_registry = {});
+               std::shared_ptr<const profiles::ProfileRegistry> profile_registry = {},
+               std::vector<profiles::ProfileLoadIssue> profile_issues = {});
     ~MainWindow() override;
 
     [[nodiscard]] bool has_expected_shell() const noexcept;

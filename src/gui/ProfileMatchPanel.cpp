@@ -92,6 +92,9 @@ ProfileMatchPanel::ProfileMatchPanel(QWidget* parent) : QWidget(parent) {
     override_->setObjectName("overriddenManualProfileEvidence");
     override_->setWordWrap(true);
     override_->hide();
+    load_issues_ = new QLabel(this);
+    load_issues_->setWordWrap(true);
+    load_issues_->hide();
 
     temporary_selector_ = new QComboBox(this);
     temporary_selector_->setObjectName("profileTemporarySelector");
@@ -127,6 +130,7 @@ ProfileMatchPanel::ProfileMatchPanel(QWidget* parent) : QWidget(parent) {
     layout->addWidget(selected_);
     layout->addWidget(evidence_);
     layout->addWidget(override_);
+    layout->addWidget(load_issues_);
     layout->addWidget(temporary_selector_);
     layout->addWidget(use_temporary_);
     layout->addWidget(remember_);
@@ -146,6 +150,11 @@ void ProfileMatchPanel::set_available_profiles(
     }
     update_temporary_selection_enabled();
     details_->setEnabled(!profiles_.empty());
+}
+
+void ProfileMatchPanel::set_profile_load_issue_count(const std::size_t count) {
+    load_issues_->setVisible(count > 0);
+    load_issues_->setText(QStringLiteral("%1 profile load issue(s). See Diagnostics for details.").arg(count));
 }
 
 void ProfileMatchPanel::present(const profiles::ProfileMatchResult& result) {
