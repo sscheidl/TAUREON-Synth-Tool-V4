@@ -66,7 +66,7 @@ configure_package_config_file(
     INSTALL_DESTINATION "${engine_package_dir}")
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
-    VERSION "${TAUREON_MIDI_ENGINE_VERSION}" COMPATIBILITY SameMinorVersion)
+    VERSION "${TAUREON_MIDI_ENGINE_VERSION}" COMPATIBILITY ExactVersion)
 install(EXPORT TaureonMidiEngineTargets NAMESPACE TaureonMidiEngine::
     DESTINATION "${engine_package_dir}")
 install(FILES

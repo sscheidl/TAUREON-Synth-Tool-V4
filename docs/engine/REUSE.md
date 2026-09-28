@@ -1,23 +1,20 @@
-# Generic MIDI engine reuse (experimental)
+# TAUREON MIDI engine reuse (internal)
 
 The generic C++20 engine is now a separate CMake target, `taureon_midi_engine`. It
 contains `src/core/midi`, `src/core/sysex`, and `src/core/transfer`, and publishes
 the transport interface `transports/IMidiTransport.hpp`. It does not contain Qt,
 device profiles, the product application, or a native Windows backend.
 
-The package is **not yet a stable SDK**: its independent package version is
-0.3.0, with compatibility restricted to the same minor release while the major
-version is zero. Public API questions remain open. Keep the source revision
-pinned when reusing it in another project. The supported build and package route
-is Windows/MSVC only; other platforms have not been validated. A static-library
-consumer must use a compatible MSVC/STL toolchain, C++ runtime and configuration
-(Debug or Release). Native WinMM/WMS transports are not included in the package.
-The current repository source is offered under the MIT license in `LICENSE`;
-historical restricted test material removed from the current tree is not relicensed.
-While the package remains at major version zero, changes to installed public
-declarations or their behavior increment the minor version. Implementation-only
-corrections may increment the patch version. Consumers should pin an exact source
-revision until the public header layout and transport contracts are settled.
+This is a shared internal library for the owner's own TAUREON/Synth projects,
+not a public SDK or general-purpose MIDI framework. Version `0.3.0` identifies
+the installed package; CMake requires an exact package version and consumers
+should also pin a source revision. No source or binary compatibility promise is
+made across revisions. The supported build and package route is Windows/MSVC;
+other platforms have not been validated. A static-library consumer must use a
+compatible MSVC/STL toolchain, C++ runtime and configuration (Debug or Release).
+Native WinMM/WMS transports are not included in the package. The current
+repository source is offered under the MIT license in `LICENSE`; historical
+restricted test material removed from the current tree is not relicensed.
 
 ## Build and consume on Windows
 
@@ -44,7 +41,7 @@ foreach ($configuration in @('Debug', 'Release')) {
 In an independent CMake project:
 
 ```cmake
-find_package(TaureonMidiEngine 0.3 CONFIG REQUIRED)
+find_package(TaureonMidiEngine 0.3.0 EXACT CONFIG REQUIRED)
 target_link_libraries(my_app PRIVATE TaureonMidiEngine::MidiEngine)
 ```
 
@@ -86,8 +83,8 @@ configured timeout, which is checked between sends.
   an explicit external backend and a provider-scoped stable endpoint ID. Route
   resolution remains exact and ambiguity fails closed; it never falls back to
   a display name or an enumeration index. Existing WMS/WinMM serialized strings
-  are unchanged. The extension of schema v1 and provider-ID ownership policy
-  require architecture review before stable SDK release.
+  are unchanged. Our own external transports must choose a stable provider ID
+  and endpoint ID; no registry or global provider-ID governance is needed.
 
 `IMidiTransport` handlers may run on the transport worker or synchronously on a
 caller thread. Never call a control method, destroy the transport, throw, or

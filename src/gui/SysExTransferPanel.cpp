@@ -57,12 +57,16 @@ QString route_text(const std::optional<midi::MidiRouteIdentity>& route) {
             return QStringLiteral("WMS %1 · group %2")
                 .arg(QString::fromStdString(identity.endpoint_device_id))
                 .arg(identity.group + 1);
-        } else {
+        } else if constexpr (std::is_same_v<Identity, midi::WinmmRouteIdentity>) {
             return QStringLiteral("WinMM %1 · manufacturer %2 · product %3 · driver %4")
                 .arg(QString::fromStdString(identity.port_name))
                 .arg(identity.manufacturer_id)
                 .arg(identity.product_id)
                 .arg(identity.driver_version);
+        } else {
+            return QStringLiteral("External %1 · %2")
+                .arg(QString::fromStdString(identity.provider_id),
+                     QString::fromStdString(identity.endpoint_id));
         }
     }, route->native);
 }
