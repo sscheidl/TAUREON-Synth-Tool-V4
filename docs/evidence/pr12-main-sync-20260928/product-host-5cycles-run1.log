@@ -1,0 +1,78 @@
+UpdateCTestConfiguration  from :D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate/DartConfiguration.tcl
+Parse Config file:D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate/DartConfiguration.tcl
+Test project D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 29
+    Start 29: stage5_local_product_host_lifecycle
+
+Test command: C:\Users\ssche\AppData\Local\Microsoft\WindowsApps\pwsh.exe "-NoProfile" "-ExecutionPolicy" "Bypass" "-File" "D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tools/RunStage5ProductHostLoopback.ps1" "-Executable" "D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate/tests/integration/Debug/stage5_product_host_local.exe" "-Cycles" "5"
+Working Directory: D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate/tests/integration
+Environment variable modifications: 
+ PATH=path_list_prepend:C:/Qt/6.10.3/msvc2022_64/bin
+Test timeout computed to be: 120
+PASS
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+Loopback endpoints created.
+
+Unlike classic MIDI 1.0 loopbacks, these are fully MIDI 2.0-compatible 
+bidirectional endpoints. Messages sent to Loopback A will be received by 
+Loopback B. Messages sent by B will be received by A. MIDI 1.0 apps will see 4 
+created ports (2 sources, 2 destinations) as a result.
+
+These endpoints will disappear when the service or PC is restarted. To create 
+permanent loopback endpoints, use the MIDI Settings app.
+
+╭────────────────┬─────────────────────────────────────────────────────────────╮
+│ Endpoint A     │ TAUREON S5 WMS A FC0D5D                                     │
+│                │ \\?\swd#midisrv#midiu_loop_a_taureonstage547b6fb7d50d649158 │
+│                │ d9608d8ee548a7e#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
+│                │                                                             │
+│ Endpoint B     │ TAUREON S5 WMS B FC0D5D                                     │
+│                │ \\?\swd#midisrv#midiu_loop_b_taureonstage547b6fb7d50d649158 │
+│                │ d9608d8ee548a7e#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
+│                │                                                             │
+│ Association Id │ 12a3f82d-61ca-4f96-bb5f-f8ff9b9f6277                        │
+╰────────────────┴─────────────────────────────────────────────────────────────╯
+
+PASS
+{"event":"stage5_gui_apartment","type":"main_sta","qualifier":0}
+{"event":"stage5_product_host_handle_trend","backend":"wms","steady_slope":0.5,"new_steady_high":true,"sustained_growth":true,"gate_applied":false,"handle_samples":[463,464,464,465,465]}
+{"event":"stage5_product_host","backend":"wms","cycles":5,"receive_active_callbacks":1,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":1,"max_shutdown_ms":74,"steady_handle_min":464,"steady_handle_max":465,"steady_handle_slope":0.5,"handle_growth_gate_applied":false,"sustained_handle_growth":true}
+PASS
+{"event":"stage5_gui_apartment","type":"main_sta","qualifier":0}
+{"event":"stage5_product_host_handle_trend","backend":"winmm","steady_slope":0,"new_steady_high":false,"sustained_growth":false,"gate_applied":false,"handle_samples":[484,485,485,485,485]}
+{"event":"stage5_product_host","backend":"winmm","cycles":5,"receive_active_callbacks":3,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":2,"max_shutdown_ms":37,"steady_handle_min":485,"steady_handle_max":485,"steady_handle_slope":0,"handle_growth_gate_applied":false,"sustained_handle_growth":false}
+PASS
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+Loopback endpoint pair removed.
+
+PASS
+1/1 Test #29: stage5_local_product_host_lifecycle ...   Passed   20.25 sec
+
+The following tests passed:
+	stage5_local_product_host_lifecycle
+
+100% tests passed out of 1
+
+Label Time Summary:
+gui            =  20.25 sec*proc (1 test)
+integration    =  20.25 sec*proc (1 test)
+local-midi     =  20.25 sec*proc (1 test)
+stage5         =  20.25 sec*proc (1 test)
+winmm          =  20.25 sec*proc (1 test)
+wms            =  20.25 sec*proc (1 test)
+
+Total Test time (real) =  20.26 sec
