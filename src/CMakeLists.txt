@@ -6,8 +6,9 @@ string(REPLACE "." ";" engine_version_parts "${TAUREON_MIDI_ENGINE_VERSION}")
 list(GET engine_version_parts 0 TAUREON_MIDI_ENGINE_VERSION_MAJOR)
 list(GET engine_version_parts 1 TAUREON_MIDI_ENGINE_VERSION_MINOR)
 list(GET engine_version_parts 2 TAUREON_MIDI_ENGINE_VERSION_PATCH)
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/generated/taureon/core/midi")
 configure_file(core/midi/EngineVersion.hpp.in
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/core/midi/EngineVersion.hpp" @ONLY)
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/taureon/core/midi/EngineVersion.hpp" @ONLY)
 
 add_library(taureon_midi_engine STATIC
     core/midi/MidiMessage.cpp
@@ -23,7 +24,7 @@ add_library(taureon_midi_engine STATIC
 add_library(TaureonMidiEngine::MidiEngine ALIAS taureon_midi_engine)
 set_target_properties(taureon_midi_engine PROPERTIES EXPORT_NAME MidiEngine DEBUG_POSTFIX d)
 target_include_directories(taureon_midi_engine PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_features(taureon_midi_engine PUBLIC cxx_std_20)
@@ -37,42 +38,12 @@ endif()
 
 install(TARGETS taureon_midi_engine EXPORT TaureonMidiEngineTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-# The source tree keeps short internal paths; the installed API is always
-# taureon-prefixed, including includes made by one public header from another.
-file(GLOB_RECURSE engine_public_headers CONFIGURE_DEPENDS
-    "${PROJECT_SOURCE_DIR}/src/core/*.hpp")
-list(APPEND engine_public_headers "${PROJECT_SOURCE_DIR}/src/transports/IMidiTransport.hpp")
-set(engine_public_root "${CMAKE_CURRENT_BINARY_DIR}/generated-public/taureon")
-foreach(header IN LISTS engine_public_headers)
-    file(RELATIVE_PATH relative_header "${PROJECT_SOURCE_DIR}/src" "${header}")
-    get_filename_component(relative_directory "${relative_header}" DIRECTORY)
-    file(MAKE_DIRECTORY "${engine_public_root}/${relative_directory}")
-    file(READ "${header}" public_header_contents)
-    string(REPLACE "#include \"core/" "#include \"taureon/core/"
-        public_header_contents "${public_header_contents}")
-    string(REPLACE "#include \"transports/" "#include \"taureon/transports/"
-        public_header_contents "${public_header_contents}")
-    file(WRITE "${engine_public_root}/${relative_header}" "${public_header_contents}")
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${header}")
-endforeach()
-install(DIRECTORY "${engine_public_root}/"
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/include/taureon/core"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/taureon" FILES_MATCHING PATTERN "*.hpp")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/core/midi/EngineVersion.hpp"
+install(FILES "${PROJECT_SOURCE_DIR}/include/taureon/transports/IMidiTransport.hpp"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/taureon/transports")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/taureon/core/midi/EngineVersion.hpp"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/taureon/core/midi")
-set(engine_package_dir "${CMAKE_INSTALL_LIBDIR}/cmake/TaureonMidiEngine")
-configure_package_config_file(
-    "${PROJECT_SOURCE_DIR}/cmake/TaureonMidiEngineConfig.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfig.cmake"
-    INSTALL_DESTINATION "${engine_package_dir}")
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
-    VERSION "${TAUREON_MIDI_ENGINE_VERSION}" COMPATIBILITY ExactVersion)
-install(EXPORT TaureonMidiEngineTargets NAMESPACE TaureonMidiEngine::
-    DESTINATION "${engine_package_dir}")
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
-    DESTINATION "${engine_package_dir}")
 install(FILES "${PROJECT_SOURCE_DIR}/LICENSE"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses/TaureonMidiEngine")
 
@@ -87,6 +58,37 @@ if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)
         target_compile_options(taureon_midi_engine_testing PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 endif()
+
+if(WIN32)
+    option(TAUREON_BUILD_WINMM_TRANSPORT "Build the reusable WinMM transport" ON)
+    if(TAUREON_BUILD_WINMM_TRANSPORT)
+        add_subdirectory(transports/winmm)
+    endif()
+    add_subdirectory(transports/wms)
+endif()
+
+set(TAUREON_PACKAGE_HAS_WMS OFF)
+if(TARGET taureon_wms_transport)
+    set(TAUREON_PACKAGE_HAS_WMS ON)
+endif()
+set(TAUREON_PACKAGE_HAS_WINMM OFF)
+if(TARGET taureon_winmm_transport)
+    set(TAUREON_PACKAGE_HAS_WINMM ON)
+endif()
+set(engine_package_dir "${CMAKE_INSTALL_LIBDIR}/cmake/TaureonMidiEngine")
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/TaureonMidiEngineConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfig.cmake"
+    INSTALL_DESTINATION "${engine_package_dir}")
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
+    VERSION "${TAUREON_MIDI_ENGINE_VERSION}" COMPATIBILITY ExactVersion)
+install(EXPORT TaureonMidiEngineTargets NAMESPACE TaureonMidiEngine::
+    DESTINATION "${engine_package_dir}")
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/TaureonMidiEngineConfigVersion.cmake"
+    DESTINATION "${engine_package_dir}")
 
 if(NOT TAUREON_BUILD_PRODUCT_APP)
     return()
@@ -161,8 +163,9 @@ else()
 endif()
 
 if(WIN32)
-    add_subdirectory(transports/winmm)
-    add_subdirectory(transports/wms)
+    if(NOT TARGET taureon_winmm_transport)
+        message(FATAL_ERROR "The product application requires TAUREON_BUILD_WINMM_TRANSPORT=ON")
+    endif()
     target_link_libraries(taureon_app PRIVATE taureon_winmm_transport)
     if(TARGET taureon_wms_transport)
         target_link_libraries(taureon_app PRIVATE taureon_wms_transport)

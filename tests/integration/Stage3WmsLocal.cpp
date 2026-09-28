@@ -1,5 +1,5 @@
-#include "core/sysex/SysEx7.hpp"
-#include "transports/wms/WmsTransport.hpp"
+#include <taureon/core/sysex/SysEx7.hpp>
+#include <taureon/transports/wms/WmsTransport.hpp>
 #include "../HandleGrowth.hpp"
 
 #include <windows.h>

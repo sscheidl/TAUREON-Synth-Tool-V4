@@ -3,10 +3,12 @@
 **Last updated:** 2026-09-01
 **Maintained by:** ChatGPT Classic / Project Manager
 
-**Current branch note (2026-09-27):** PR #14 packages the generic MIDI/SysEx
-engine experimentally at version 0.2.0 and is merged into `main`. A follow-up
-branch proposes version 0.3.0 with prefixed headers and explicit external route
-and callback contracts for internal reuse, not a public SDK. The former
+**Current branch note (2026-09-28):** PR #14 packages the generic MIDI/SysEx
+engine experimentally at version 0.2.0 and is merged into `main`. PR #15 updates
+the internal package to version 0.3.0: physical `include/taureon` public headers,
+separately reusable Core/WinMM/WMS CMake targets, and a WinMM callback context
+that remains safe when native close fails. The package is for the owner's own
+TAUREON projects, not a public SDK. Hardware validation remains separate. The former
 real Summit SysEx fixture is absent from the current `main` tree, but four older
 remote branch tips and public history still contain it; see
 `docs/reference/PROVENANCE.md`. This

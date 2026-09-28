@@ -24,6 +24,14 @@ submission, return/completion, unprepare, and release. A submitted header cannot
 Shutdown closes callback acceptance, stops/resets input, drains ownership completions on the worker,
 unprepares returned headers, closes handles, and joins the worker. Production code uses no arbitrary sleeps.
 
+The native callback receives a separately owned callback context rather than a raw transport pointer.
+Callbacks take a short lease on that context before accessing the implementation. `close()` may deliver
+already queued application events while running, but after any `close()` return (success or failure) no
+application handler is invoked. Successful `midiInClose`/`midiOutClose` is the native callback-quiescence
+boundary. If a native close fails, destruction detaches the context and waits for active leases; the handle,
+context, and any driver-referenced `MIDIHDR` storage are then retained until process exit. This bounded
+failure quarantine prevents use-after-free even if a driver calls back after the transport is destroyed.
+
 ## Alternatives considered
 
 1. Requeue inside the native callback: rejected because it expands callback work and complicates teardown.
@@ -51,6 +59,9 @@ unprepares returned headers, closes handles, and joins the worker. Production co
 
 - Fake native-API unit tests cover prepare, submit, completion/return, unprepare, retryable failures, and
   rejection of unprepare while submitted.
+- A forced `midiInClose` failure regression verifies that application handlers stay quiescent after the
+  failed close, retry can succeed, and a callback after destruction is a safe no-op even when all destructor
+  close attempts fail.
 - A transport-level injected-native-API regression drives `open()` through input submit failure and proves
   unprepare occurs before the native handle closes; this closes the targeted-review P1 without changing the
   ownership model.

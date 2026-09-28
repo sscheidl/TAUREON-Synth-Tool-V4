@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/midi/MidiTypes.hpp"
-#include "core/midi/Result.hpp"
-#include "core/midi/TransportState.hpp"
+#include <taureon/core/midi/MidiTypes.hpp>
+#include <taureon/core/midi/Result.hpp>
+#include <taureon/core/midi/TransportState.hpp>
 
 #include <functional>
 #include <optional>

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "DeviceProfile.hpp"
-#include "core/midi/Result.hpp"
-#include "core/sysex/SysExFrame.hpp"
+#include <taureon/core/midi/Result.hpp>
+#include <taureon/core/sysex/SysExFrame.hpp>
 
 #include <filesystem>
 #include <map>

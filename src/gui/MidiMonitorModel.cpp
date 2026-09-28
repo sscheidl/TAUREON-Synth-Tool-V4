@@ -1,6 +1,6 @@
 #include "gui/MidiMonitorModel.hpp"
 
-#include "core/midi/MidiMessage.hpp"
+#include <taureon/core/midi/MidiMessage.hpp>
 
 #include <QStringList>
 

@@ -1,4 +1,4 @@
-#include "MidiTypes.hpp"
+#include <taureon/core/midi/MidiTypes.hpp>
 
 namespace taureon::midi {
 

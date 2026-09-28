@@ -6,7 +6,7 @@
 #include "gui/ProfileMatchPanel.hpp"
 #include "gui/SysExTransferPanel.hpp"
 #include "gui/SysExManagerPanel.hpp"
-#include "core/sysex/SysEx7.hpp"
+#include <taureon/core/sysex/SysEx7.hpp>
 #include "transports/fake/FakeMidiTransport.hpp"
 
 #include <QApplication>

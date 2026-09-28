@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DeviceProfile.hpp"
-#include "core/midi/Result.hpp"
+#include <taureon/core/midi/Result.hpp>
 
 #include <filesystem>
 #include <string_view>

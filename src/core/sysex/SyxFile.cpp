@@ -1,6 +1,6 @@
-#include "SyxFile.hpp"
+#include <taureon/core/sysex/SyxFile.hpp>
 
-#include "SysExStreamParser.hpp"
+#include <taureon/core/sysex/SysExStreamParser.hpp>
 
 #include <algorithm>
 #include <cerrno>

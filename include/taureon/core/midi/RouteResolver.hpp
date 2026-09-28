@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MidiTypes.hpp"
+#include <taureon/core/midi/MidiTypes.hpp>
 
 #include <optional>
 #include <vector>

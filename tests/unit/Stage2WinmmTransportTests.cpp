@@ -1,6 +1,7 @@
 #include "TestSupport.hpp"
 
-#include "transports/winmm/WinmmTransport.hpp"
+#include <taureon/transports/winmm/WinmmTransport.hpp>
+#include "transports/winmm/WinmmTransportTestAccess.hpp"
 
 #include <windows.h>
 #include <mmsystem.h>
@@ -108,7 +109,8 @@ public:
 void submit_failure_unwinds_before_handle_close() {
     auto api = std::make_shared<SubmitFailureApi>();
     {
-        WinmmTransport transport(api);
+        auto transport_owner = WinmmTransportTestAccess::create(api);
+        auto& transport = *transport_owner;
         const auto endpoints = transport.enumerate();
         TAUREON_REQUIRE(endpoints);
         TAUREON_REQUIRE(endpoints.value().size() == 1);

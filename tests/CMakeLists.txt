@@ -29,6 +29,35 @@ taureon_add_stage3_unit(stage3_large_sysex_unit unit/Stage3LargeSysexTests.cpp)
 taureon_add_stage3_unit(stage3_handle_growth_unit unit/Stage3HandleGrowthTests.cpp)
 set_tests_properties(stage3_large_sysex_unit PROPERTIES LABELS "stage3;unit;ci;large-data")
 
+if(TARGET taureon_winmm_transport)
+    add_executable(stage2_winmm_header_tests unit/Stage2WinmmHeaderTests.cpp)
+    target_include_directories(stage2_winmm_header_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/src")
+    target_link_libraries(stage2_winmm_header_tests PRIVATE taureon_winmm_transport)
+    target_compile_definitions(stage2_winmm_header_tests PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_compile_options(stage2_winmm_header_tests PRIVATE /W4 /permissive- /EHsc)
+    add_test(NAME stage2_winmm_header_unit COMMAND stage2_winmm_header_tests)
+    set_tests_properties(stage2_winmm_header_unit PROPERTIES LABELS "stage2;unit;ci;winmm")
+
+    add_executable(stage2_winmm_transport_tests unit/Stage2WinmmTransportTests.cpp)
+    target_include_directories(stage2_winmm_transport_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/src")
+    target_link_libraries(stage2_winmm_transport_tests PRIVATE taureon_winmm_transport)
+    target_compile_definitions(stage2_winmm_transport_tests PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_compile_options(stage2_winmm_transport_tests PRIVATE /W4 /permissive- /EHsc)
+    add_test(NAME stage2_winmm_transport_unit COMMAND stage2_winmm_transport_tests)
+    set_tests_properties(stage2_winmm_transport_unit PROPERTIES LABELS "stage2;unit;ci;winmm")
+
+    add_executable(stage3_winmm_transport_tests unit/Stage3WinmmTransportTests.cpp)
+    target_include_directories(stage3_winmm_transport_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/src")
+    target_link_libraries(stage3_winmm_transport_tests PRIVATE taureon_winmm_transport)
+    target_compile_definitions(stage3_winmm_transport_tests PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_compile_options(stage3_winmm_transport_tests PRIVATE /W4 /permissive- /EHsc)
+    add_test(NAME stage3_winmm_transport_unit COMMAND stage3_winmm_transport_tests)
+    set_tests_properties(stage3_winmm_transport_unit PROPERTIES LABELS "stage3;unit;ci;winmm")
+endif()
+
 if(NOT TAUREON_BUILD_PRODUCT_APP)
     return()
 endif()
@@ -300,32 +329,6 @@ set_tests_properties(stage5_librarian_unit PROPERTIES
     LABELS "stage5;gui;unit;ci"
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
-
-if(WIN32)
-    add_executable(stage2_winmm_header_tests unit/Stage2WinmmHeaderTests.cpp)
-    target_include_directories(stage2_winmm_header_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_link_libraries(stage2_winmm_header_tests PRIVATE taureon_winmm_transport)
-    target_compile_definitions(stage2_winmm_header_tests PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
-    target_compile_options(stage2_winmm_header_tests PRIVATE /W4 /permissive- /EHsc)
-    add_test(NAME stage2_winmm_header_unit COMMAND stage2_winmm_header_tests)
-    set_tests_properties(stage2_winmm_header_unit PROPERTIES LABELS "stage2;unit;ci;winmm")
-
-    add_executable(stage2_winmm_transport_tests unit/Stage2WinmmTransportTests.cpp)
-    target_include_directories(stage2_winmm_transport_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_link_libraries(stage2_winmm_transport_tests PRIVATE taureon_winmm_transport)
-    target_compile_definitions(stage2_winmm_transport_tests PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
-    target_compile_options(stage2_winmm_transport_tests PRIVATE /W4 /permissive- /EHsc)
-    add_test(NAME stage2_winmm_transport_unit COMMAND stage2_winmm_transport_tests)
-    set_tests_properties(stage2_winmm_transport_unit PROPERTIES LABELS "stage2;unit;ci;winmm")
-
-    add_executable(stage3_winmm_transport_tests unit/Stage3WinmmTransportTests.cpp)
-    target_include_directories(stage3_winmm_transport_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_link_libraries(stage3_winmm_transport_tests PRIVATE taureon_winmm_transport)
-    target_compile_definitions(stage3_winmm_transport_tests PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
-    target_compile_options(stage3_winmm_transport_tests PRIVATE /W4 /permissive- /EHsc)
-    add_test(NAME stage3_winmm_transport_unit COMMAND stage3_winmm_transport_tests)
-    set_tests_properties(stage3_winmm_transport_unit PROPERTIES LABELS "stage3;unit;ci;winmm")
-endif()
 
 foreach(target IN ITEMS
     stage4_profile_tests

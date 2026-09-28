@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/midi/MidiTypes.hpp"
+#include <taureon/core/midi/MidiTypes.hpp>
 
 #include <cstdint>
 #include <optional>

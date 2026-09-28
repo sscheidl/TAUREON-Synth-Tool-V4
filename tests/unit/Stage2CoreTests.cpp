@@ -1,8 +1,8 @@
 #include "TestSupport.hpp"
 
-#include "core/midi/RoutePersistence.hpp"
-#include "core/midi/RouteResolver.hpp"
-#include "core/midi/TransportState.hpp"
+#include <taureon/core/midi/RoutePersistence.hpp>
+#include <taureon/core/midi/RouteResolver.hpp>
+#include <taureon/core/midi/TransportState.hpp>
 #include "transports/fake/FakeMidiTransport.hpp"
 
 #include <algorithm>

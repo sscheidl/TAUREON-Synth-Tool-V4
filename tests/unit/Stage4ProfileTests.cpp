@@ -1,7 +1,7 @@
 #include "TestSupport.hpp"
 
-#include "core/sysex/SysEx7.hpp"
-#include "core/sysex/SyxFile.hpp"
+#include <taureon/core/sysex/SysEx7.hpp>
+#include <taureon/core/sysex/SyxFile.hpp>
 #include "profiles/ProfileLoader.hpp"
 #include "profiles/ProfileRegistry.hpp"
 

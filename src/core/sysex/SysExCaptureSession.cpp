@@ -1,4 +1,4 @@
-#include "SysExCaptureSession.hpp"
+#include <taureon/core/sysex/SysExCaptureSession.hpp>
 
 #include <iterator>
 

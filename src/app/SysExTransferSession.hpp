@@ -1,9 +1,9 @@
 #pragma once
 
-#include "core/sysex/SysExCaptureSession.hpp"
-#include "core/sysex/SyxFile.hpp"
+#include <taureon/core/sysex/SysExCaptureSession.hpp>
+#include <taureon/core/sysex/SyxFile.hpp>
 #include "app/ProfileSelectionService.hpp"
-#include "core/transfer/TransferEngine.hpp"
+#include <taureon/core/transfer/TransferEngine.hpp>
 #include "profiles/ProfileRegistry.hpp"
 
 #include <chrono>

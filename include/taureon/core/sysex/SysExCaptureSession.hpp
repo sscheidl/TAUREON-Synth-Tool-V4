@@ -1,8 +1,8 @@
 #pragma once
 
-#include "SysEx7.hpp"
-#include "SysExStreamParser.hpp"
-#include "core/midi/MidiTypes.hpp"
+#include <taureon/core/sysex/SysEx7.hpp>
+#include <taureon/core/sysex/SysExStreamParser.hpp>
+#include <taureon/core/midi/MidiTypes.hpp>
 
 #include <vector>
 

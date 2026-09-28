@@ -1,9 +1,9 @@
 #include "TestSupport.hpp"
 
-#include "core/midi/MidiMessage.hpp"
-#include "core/sysex/SysEx7.hpp"
-#include "core/sysex/SysExCaptureSession.hpp"
-#include "core/sysex/SysExStreamParser.hpp"
+#include <taureon/core/midi/MidiMessage.hpp>
+#include <taureon/core/sysex/SysEx7.hpp>
+#include <taureon/core/sysex/SysExCaptureSession.hpp>
+#include <taureon/core/sysex/SysExStreamParser.hpp>
 
 #include <array>
 #include <cstdint>

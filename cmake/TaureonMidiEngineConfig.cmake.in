@@ -2,6 +2,18 @@
 
 include(CMakeFindDependencyMacro)
 find_dependency(Threads)
+
+set(TaureonMidiEngine_Core_FOUND TRUE)
+set(TaureonMidiEngine_WinMM_FOUND @TAUREON_PACKAGE_HAS_WINMM@)
+set(TaureonMidiEngine_WMS_FOUND @TAUREON_PACKAGE_HAS_WMS@)
+
+if(TaureonMidiEngine_WMS_FOUND AND
+   NOT TARGET TaureonMidiEngine::CppWinRTFastForwarder)
+    add_library(TaureonMidiEngine::CppWinRTFastForwarder STATIC IMPORTED)
+    set_target_properties(TaureonMidiEngine::CppWinRTFastForwarder PROPERTIES
+        IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_LIBDIR@/cppwinrt_fast_forwarder.lib")
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/TaureonMidiEngineTargets.cmake")
 
 check_required_components(TaureonMidiEngine)

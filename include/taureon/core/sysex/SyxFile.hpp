@@ -1,7 +1,7 @@
 #pragma once
 
-#include "SysExFrame.hpp"
-#include "core/midi/Result.hpp"
+#include <taureon/core/sysex/SysExFrame.hpp>
+#include <taureon/core/midi/Result.hpp>
 
 #include <cstdint>
 #include <filesystem>
