@@ -50,8 +50,7 @@ int main() {
         TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::not_found) == 19);
         TAUREON_REQUIRE(static_cast<int>(midi::MidiErrorCode::invalid_argument) == 20);
 
-        const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
-                             "novation_summit_crazy_sine.syx";
+        const std::filesystem::path fixture{TAUREON_TEST_FIXTURE_PATH};
         const auto fixture_bytes = read_bytes(fixture);
         TAUREON_REQUIRE(!fixture_bytes.empty());
 

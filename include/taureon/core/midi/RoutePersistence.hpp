@@ -1,7 +1,7 @@
 #pragma once
 
-#include "MidiTypes.hpp"
-#include "Result.hpp"
+#include <taureon/core/midi/MidiTypes.hpp>
+#include <taureon/core/midi/Result.hpp>
 
 #include <cstdint>
 #include <string>

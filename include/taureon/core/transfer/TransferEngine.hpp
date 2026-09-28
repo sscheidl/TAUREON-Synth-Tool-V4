@@ -1,6 +1,6 @@
 #pragma once
 
-#include "transports/IMidiTransport.hpp"
+#include <taureon/transports/IMidiTransport.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -50,16 +50,25 @@ using TransferProgressHandler = std::function<void(const TransferProgress&)>;
 
 class TransferEngine {
 public:
+    // One transfer attempt per instance. The transport must outlive this engine.
+    // The owner serializes start(), wait(), and destruction on one thread.
+    // request_cancel(), state(), and progress() may be called from other threads
+    // while the object is alive; all such calls must finish before destruction.
     explicit TransferEngine(midi::IMidiTransport& transport);
     ~TransferEngine();
 
     TransferEngine(const TransferEngine&) = delete;
     TransferEngine& operator=(const TransferEngine&) = delete;
 
+    // A cancellation before start() is terminal; start() then returns invalid_state.
+    // Progress handlers run on the engine worker thread. They may request_cancel(),
+    // state(), or progress(), but must not throw, wait(), or destroy the engine.
     [[nodiscard]] midi::Result<void> start(std::vector<midi::NativeMidiMessage> messages,
                                            TransferOptions options = {},
                                            TransferProgressHandler handler = {});
     void request_cancel() noexcept;
+    // Joins the worker. A blocking transport send can extend this wait beyond
+    // TransferOptions::timeout, which is checked only between send() calls.
     [[nodiscard]] TransferResult wait();
     [[nodiscard]] TransferState state() const noexcept;
     [[nodiscard]] TransferProgress progress() const noexcept;

@@ -86,12 +86,17 @@ QString endpoint_label(const midi::MidiEndpointDescriptor& endpoint) {
                     .arg(QString::fromStdString(endpoint.display_name),
                          QString::fromStdString(identity.endpoint_device_id))
                     .arg(identity.group + 1);
-            } else {
+            } else if constexpr (std::is_same_v<Identity, midi::WinmmRouteIdentity>) {
                 return QStringLiteral("%1 — manufacturer %2 · product %3 · driver %4")
                     .arg(QString::fromStdString(endpoint.display_name))
                     .arg(identity.manufacturer_id)
                     .arg(identity.product_id)
                     .arg(identity.driver_version);
+            } else {
+                return QStringLiteral("%1 — %2 · %3")
+                    .arg(QString::fromStdString(endpoint.display_name),
+                         QString::fromStdString(identity.provider_id),
+                         QString::fromStdString(identity.endpoint_id));
             }
         }, endpoint.identity.native);
 }

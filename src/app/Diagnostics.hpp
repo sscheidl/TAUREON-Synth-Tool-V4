@@ -3,8 +3,8 @@
 #include "app/ConnectionController.hpp"
 #include "app/MonitorEventQueue.hpp"
 #include "app/SysExTransferSession.hpp"
-#include "core/midi/Result.hpp"
-#include "core/midi/RoutePersistence.hpp"
+#include <taureon/core/midi/Result.hpp>
+#include <taureon/core/midi/RoutePersistence.hpp>
 
 #include <filesystem>
 #include <string>

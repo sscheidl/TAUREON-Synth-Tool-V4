@@ -33,8 +33,7 @@ int main(int argc, char* argv[]) {
                 completion(true);
                 return true;
             });
-        const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
-                             "novation_summit_crazy_sine.syx";
+        const std::filesystem::path fixture{TAUREON_TEST_FIXTURE_PATH};
         const auto total_bytes = std::filesystem::file_size(fixture);
         panel.add_file(fixture);
 
@@ -67,7 +66,7 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(status != nullptr &&
                         status->text().contains("Opened inspected Manager bytes in SysEx Transfer"));
         TAUREON_REQUIRE(opened.has_value());
-        TAUREON_REQUIRE(opened->source_name == "novation_summit_crazy_sine.syx");
+        TAUREON_REQUIRE(opened->source_name == "synthetic_summit_header.syx");
         TAUREON_REQUIRE(opened->document.raw_bytes.size() == total_bytes);
         TAUREON_REQUIRE(opened->document.raw_bytes.size() > 256);
 

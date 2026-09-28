@@ -11,6 +11,7 @@ namespace taureon::midi {
 enum class MidiBackend {
     windows_midi_services,
     winmm,
+    external,
 };
 
 enum class MidiDirection {
@@ -40,7 +41,16 @@ struct WinmmRouteIdentity {
     bool operator==(const WinmmRouteIdentity&) const = default;
 };
 
-using BackendRouteIdentity = std::variant<WmsRouteIdentity, WinmmRouteIdentity>;
+// The provider ID namespaces the endpoint ID; both must be stable across runs.
+struct ExternalRouteIdentity {
+    std::string provider_id;
+    std::string endpoint_id;
+
+    bool operator==(const ExternalRouteIdentity&) const = default;
+};
+
+using BackendRouteIdentity = std::variant<WmsRouteIdentity, WinmmRouteIdentity,
+                                          ExternalRouteIdentity>;
 
 struct MidiRouteIdentity {
     MidiBackend backend{MidiBackend::windows_midi_services};

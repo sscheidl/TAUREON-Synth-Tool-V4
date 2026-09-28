@@ -21,3 +21,6 @@
 *.log
 *.tmp
 *.bak
+
+# SysEx captures and presets are local user data, never repository fixtures.
+*.syx

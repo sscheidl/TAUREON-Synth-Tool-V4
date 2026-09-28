@@ -1,20 +1,18 @@
 #pragma once
 
-#include "transports/IMidiTransport.hpp"
-#include "WinmmNativeApi.hpp"
+#include <taureon/transports/IMidiTransport.hpp>
 
 #include <memory>
 
-namespace taureon::midi::winmm {
+namespace taureon::midi::wms {
 
-class WinmmTransport final : public IMidiTransport {
+class WmsTransport final : public IMidiTransport {
 public:
-    WinmmTransport();
-    explicit WinmmTransport(WinmmTransportApiPtr native_api);
-    ~WinmmTransport() override;
+    WmsTransport();
+    ~WmsTransport() override;
 
-    WinmmTransport(const WinmmTransport&) = delete;
-    WinmmTransport& operator=(const WinmmTransport&) = delete;
+    WmsTransport(const WmsTransport&) = delete;
+    WmsTransport& operator=(const WmsTransport&) = delete;
 
     [[nodiscard]] MidiBackend backend() const noexcept override;
     [[nodiscard]] MidiTransportCapabilities capabilities() const noexcept override;
@@ -34,4 +32,4 @@ private:
     TransportStateMachine lifecycle_;
 };
 
-} // namespace taureon::midi::winmm
+} // namespace taureon::midi::wms

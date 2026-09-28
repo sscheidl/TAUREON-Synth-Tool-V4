@@ -1,7 +1,7 @@
-#include "WinmmTransport.hpp"
+#include <taureon/transports/winmm/WinmmTransport.hpp>
 
 #include "WinmmNativeApi.hpp"
-#include "core/midi/RouteResolver.hpp"
+#include <taureon/core/midi/RouteResolver.hpp>
 
 #include <windows.h>
 #include <mmsystem.h>
@@ -64,6 +64,52 @@ WinmmTransportApiPtr require_native_api(WinmmTransportApiPtr native_api) {
 } // namespace
 
 struct WinmmTransport::Impl {
+    struct CallbackContext {
+        explicit CallbackContext(Impl* owner) : target(owner) {}
+
+        Impl* acquire() noexcept {
+            std::scoped_lock lock(mutex);
+            if (target == nullptr) return nullptr;
+            ++active;
+            return target;
+        }
+
+        void release() noexcept {
+            std::scoped_lock lock(mutex);
+            --active;
+            if (active == 0) quiesced.notify_all();
+        }
+
+        void detach_and_wait() noexcept {
+            std::unique_lock lock(mutex);
+            target = nullptr;
+            quiesced.wait(lock, [this] { return active == 0; });
+        }
+
+        std::mutex mutex;
+        std::condition_variable quiesced;
+        Impl* target{};
+        std::size_t active{};
+    };
+
+    class CallbackLease {
+    public:
+        explicit CallbackLease(CallbackContext* context) noexcept
+            : context_(context), target_(context_ == nullptr ? nullptr : context_->acquire()) {}
+        ~CallbackLease() {
+            if (target_ != nullptr) context_->release();
+        }
+
+        CallbackLease(const CallbackLease&) = delete;
+        CallbackLease& operator=(const CallbackLease&) = delete;
+
+        [[nodiscard]] Impl* target() const noexcept { return target_; }
+
+    private:
+        CallbackContext* context_{};
+        Impl* target_{};
+    };
+
     struct CallbackEvent {
         enum class Kind { native, data_loss };
 
@@ -81,6 +127,8 @@ struct WinmmTransport::Impl {
     HMIDIOUT output_handle{};
     std::vector<std::unique_ptr<WinmmInputBuffer>> input_buffers;
     std::vector<std::unique_ptr<WinmmOutputBuffer>> output_buffers;
+    std::unique_ptr<CallbackContext> callback_context;
+    std::atomic<bool> application_callbacks_enabled{false};
     std::atomic<bool> accepting_callbacks{false};
     std::atomic<std::uint64_t> native_callbacks{0};
     std::atomic<std::uint64_t> delivered_messages{0};
@@ -102,6 +150,46 @@ struct WinmmTransport::Impl {
     MidiMessageHandler message_handler;
     MidiStreamEventHandler stream_event_handler;
     EndpointChangeHandler endpoint_handler;
+
+    struct FailedNativeState {
+        WinmmTransportApiPtr native_api;
+        HMIDIIN input_handle{};
+        HMIDIOUT output_handle{};
+        std::vector<std::unique_ptr<WinmmInputBuffer>> input_buffers;
+        std::vector<std::unique_ptr<WinmmOutputBuffer>> output_buffers;
+        std::unique_ptr<CallbackContext> callback_context;
+    };
+
+    // Allocated up front so a low-memory condition cannot make the destructor release
+    // memory that a native handle may still reference after a failed close.
+    std::unique_ptr<FailedNativeState> failed_native_state{
+        std::make_unique<FailedNativeState>()};
+
+    void ensure_callback_context() {
+        if (!callback_context) callback_context = std::make_unique<CallbackContext>(this);
+    }
+
+    void detach_callback_context() noexcept {
+        if (callback_context) callback_context->detach_and_wait();
+    }
+
+    void preserve_failed_native_state() noexcept {
+        if (!input_handle && !output_handle) return;
+        failed_native_state->native_api = std::move(native_api);
+        failed_native_state->input_handle = input_handle;
+        failed_native_state->output_handle = output_handle;
+        failed_native_state->input_buffers = std::move(input_buffers);
+        failed_native_state->output_buffers = std::move(output_buffers);
+        failed_native_state->callback_context = std::move(callback_context);
+        input_handle = nullptr;
+        output_handle = nullptr;
+
+        // A failed WinMM close means the driver may still own the handles, callback
+        // context, and MIDIHDR storage. Releasing any of them would permit a late
+        // native callback or buffer access to touch freed memory. Intentionally keep
+        // this bounded per-transport state alive until process exit instead.
+        static_cast<void>(failed_native_state.release());
+    }
 
     void insert_callback_locked(CallbackEvent event) {
         const auto position = std::upper_bound(
@@ -132,12 +220,15 @@ struct WinmmTransport::Impl {
 
     ~Impl() {
         static_cast<void>(invoke([this] { return close_on_worker(); }));
+        application_callbacks_enabled.store(false, std::memory_order_release);
+        detach_callback_context();
         {
             std::scoped_lock lock(queue_mutex);
             stopping = true;
         }
         queue_changed.notify_all();
         if (worker.joinable()) worker.join();
+        preserve_failed_native_state();
     }
 
     template <typename Function>
@@ -154,66 +245,79 @@ struct WinmmTransport::Impl {
     }
 
     static void CALLBACK input_callback(HMIDIIN, const UINT message, const DWORD_PTR instance,
-                                        const DWORD_PTR parameter, const DWORD_PTR timestamp) {
-        auto* self = reinterpret_cast<Impl*>(instance);
-        if (self == nullptr || (message != MIM_DATA && message != MIM_LONGDATA &&
-                                message != MIM_ERROR && message != MIM_LONGERROR)) {
+                                        const DWORD_PTR parameter,
+                                        const DWORD_PTR timestamp) noexcept {
+        if (message != MIM_DATA && message != MIM_LONGDATA &&
+            message != MIM_ERROR && message != MIM_LONGERROR) {
             return;
         }
-        ++self->native_callbacks;
-        const bool header_completion = message == MIM_LONGDATA || message == MIM_LONGERROR;
-        const bool accepted = self->accepting_callbacks.load(std::memory_order_acquire);
-        if (!accepted && !header_completion) {
-            ++self->callbacks_after_acceptance_closed;
-            return;
-        }
-        const auto sequence =
-            self->next_stream_sequence.fetch_add(1, std::memory_order_relaxed);
-        {
-            std::scoped_lock lock(self->queue_mutex);
-            constexpr std::size_t callback_capacity = 1024;
-            const bool non_droppable = header_completion || message == MIM_ERROR;
-            if (!non_droppable && self->callbacks.size() >= callback_capacity) {
-                ++self->dropped_callbacks;
+        CallbackLease lease(reinterpret_cast<CallbackContext*>(instance));
+        auto* self = lease.target();
+        if (self == nullptr) return;
+        try {
+            ++self->native_callbacks;
+            const bool header_completion = message == MIM_LONGDATA || message == MIM_LONGERROR;
+            const bool accepted = self->accepting_callbacks.load(std::memory_order_acquire);
+            if (!accepted && !header_completion) {
+                ++self->callbacks_after_acceptance_closed;
+                return;
+            }
+            const auto sequence =
+                self->next_stream_sequence.fetch_add(1, std::memory_order_relaxed);
+            {
+                std::scoped_lock lock(self->queue_mutex);
+                constexpr std::size_t callback_capacity = 1024;
+                const bool non_droppable = header_completion || message == MIM_ERROR;
+                if (!non_droppable && self->callbacks.size() >= callback_capacity) {
+                    ++self->dropped_callbacks;
                 // Coalesce only consecutive drops. A non-droppable callback (notably a returned
                 // long-input header) ends the run, so any later drop receives a new ordered marker
                 // before subsequent frame data. Global coalescing could otherwise under-report a
                 // sustained overflow across multiple SysEx frame boundaries.
-                const bool consecutive_overflow_marker =
-                    !self->callbacks.empty() &&
-                    self->callbacks.back().kind == CallbackEvent::Kind::data_loss &&
-                    self->callbacks.back().loss.reason == MidiDataLossReason::queue_overflow;
-                if (!consecutive_overflow_marker) {
-                    self->insert_callback_locked(
-                        {sequence, CallbackEvent::Kind::data_loss, 0, 0, 0, true,
-                         {MidiBackend::winmm, MidiDataLossReason::queue_overflow, true,
-                          std::nullopt, "WinMM callback queue overflow", std::nullopt}});
+                    const bool consecutive_overflow_marker =
+                        !self->callbacks.empty() &&
+                        self->callbacks.back().kind == CallbackEvent::Kind::data_loss &&
+                        self->callbacks.back().loss.reason == MidiDataLossReason::queue_overflow;
+                    if (!consecutive_overflow_marker) {
+                        self->insert_callback_locked(
+                            {sequence, CallbackEvent::Kind::data_loss, 0, 0, 0, true,
+                             {MidiBackend::winmm, MidiDataLossReason::queue_overflow, true,
+                              std::nullopt, "WinMM callback queue overflow", std::nullopt}});
+                    }
+                    self->queue_changed.notify_one();
+                    return;
                 }
-                self->queue_changed.notify_one();
-                return;
+                self->insert_callback_locked(
+                    {sequence, CallbackEvent::Kind::native, message, parameter, timestamp, accepted,
+                     {}});
             }
-            self->insert_callback_locked(
-                {sequence, CallbackEvent::Kind::native, message, parameter, timestamp, accepted,
-                 {}});
+            self->queue_changed.notify_one();
+        } catch (...) {
+            ++self->dropped_callbacks;
         }
-        self->queue_changed.notify_one();
     }
 
     static void CALLBACK output_callback(HMIDIOUT, const UINT message, const DWORD_PTR instance,
-                                         const DWORD_PTR parameter, DWORD_PTR) {
-        auto* self = reinterpret_cast<Impl*>(instance);
-        if (self == nullptr || message != MOM_DONE) return;
-        ++self->native_callbacks;
-        {
-            std::scoped_lock lock(self->queue_mutex);
-            self->output_completions.push_back(reinterpret_cast<MIDIHDR*>(parameter));
-            const auto depth = static_cast<std::uint64_t>(self->output_completions.size());
-            auto high_water = self->queue_high_water_mark.load(std::memory_order_relaxed);
-            while (depth > high_water &&
-                   !self->queue_high_water_mark.compare_exchange_weak(
-                       high_water, depth, std::memory_order_relaxed)) {}
+                                         const DWORD_PTR parameter, DWORD_PTR) noexcept {
+        if (message != MOM_DONE) return;
+        CallbackLease lease(reinterpret_cast<CallbackContext*>(instance));
+        auto* self = lease.target();
+        if (self == nullptr) return;
+        try {
+            ++self->native_callbacks;
+            {
+                std::scoped_lock lock(self->queue_mutex);
+                self->output_completions.push_back(reinterpret_cast<MIDIHDR*>(parameter));
+                const auto depth = static_cast<std::uint64_t>(self->output_completions.size());
+                auto high_water = self->queue_high_water_mark.load(std::memory_order_relaxed);
+                while (depth > high_water &&
+                       !self->queue_high_water_mark.compare_exchange_weak(
+                           high_water, depth, std::memory_order_relaxed)) {}
+            }
+            self->queue_changed.notify_one();
+        } catch (...) {
+            ++self->dropped_callbacks;
         }
-        self->queue_changed.notify_one();
     }
 
     void worker_main() {
@@ -274,6 +378,7 @@ struct WinmmTransport::Impl {
     }
 
     void dispatch_loss(const std::uint64_t sequence, const MidiDataLossEvent& loss) {
+        if (!application_callbacks_enabled.load(std::memory_order_acquire)) return;
         MidiStreamEventHandler handler;
         {
             std::scoped_lock lock(handler_mutex);
@@ -284,6 +389,7 @@ struct WinmmTransport::Impl {
 
     void deliver(const std::uint64_t sequence, std::vector<std::uint8_t> bytes,
                  const DWORD_PTR timestamp) {
+        if (!application_callbacks_enabled.load(std::memory_order_acquire)) return;
         MidiMessageHandler handler;
         MidiStreamEventHandler stream_handler;
         {
@@ -424,8 +530,13 @@ struct WinmmTransport::Impl {
     }
 
     Result<void> open_on_worker(const MidiConnectionRequest& request) {
+        ensure_callback_context();
+        application_callbacks_enabled.store(true, std::memory_order_release);
         const auto endpoints = enumerate_on_worker();
-        if (!endpoints) return Result<void>::failure(endpoints.error());
+        if (!endpoints) {
+            application_callbacks_enabled.store(false, std::memory_order_release);
+            return Result<void>::failure(endpoints.error());
+        }
 
         if (request.receive_route) {
             if (request.receive_route->direction != MidiDirection::input) {
@@ -436,7 +547,7 @@ struct WinmmTransport::Impl {
             if (!index) return Result<void>::failure(index.error());
             const auto result = native_api->open_input(
                 input_handle, index.value(), reinterpret_cast<DWORD_PTR>(&input_callback),
-                reinterpret_cast<DWORD_PTR>(this));
+                reinterpret_cast<DWORD_PTR>(callback_context.get()));
             if (result != MMSYSERR_NOERROR) {
                 return Result<void>::failure(
                     native_error(MidiErrorCode::open_failure, "midiInOpen", result));
@@ -477,7 +588,7 @@ struct WinmmTransport::Impl {
             }
             const auto result = native_api->open_output(
                 output_handle, index.value(), reinterpret_cast<DWORD_PTR>(&output_callback),
-                reinterpret_cast<DWORD_PTR>(this));
+                reinterpret_cast<DWORD_PTR>(callback_context.get()));
             if (result != MMSYSERR_NOERROR) {
                 static_cast<void>(close_on_worker());
                 return Result<void>::failure(
@@ -616,8 +727,8 @@ struct WinmmTransport::Impl {
         const auto submitted = output_buffers.back()->submit();
         if (!submitted) {
             const auto unprepared = output_buffers.back()->unprepare();
-            output_buffers.pop_back();
             if (!unprepared) return unprepared;
+            output_buffers.pop_back();
             return submitted;
         }
 
@@ -701,6 +812,16 @@ struct WinmmTransport::Impl {
                     }
                 }
             }
+        }
+        application_callbacks_enabled.store(false, std::memory_order_release);
+        if (!input_handle && !output_handle) {
+            detach_callback_context();
+            drain_pending_callbacks();
+            {
+                std::scoped_lock lock(queue_mutex);
+                output_completions.clear();
+            }
+            callback_context.reset();
         }
         if (first_error) return Result<void>::failure(std::move(*first_error));
         return Result<void>::success();

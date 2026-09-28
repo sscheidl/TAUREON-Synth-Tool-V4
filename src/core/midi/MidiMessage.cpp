@@ -1,4 +1,4 @@
-#include "MidiMessage.hpp"
+#include <taureon/core/midi/MidiMessage.hpp>
 
 #include <algorithm>
 #include <string>

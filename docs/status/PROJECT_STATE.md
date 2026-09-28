@@ -3,6 +3,17 @@
 **Last updated:** 2026-09-26
 **Maintained by:** ChatGPT Classic / Project Manager
 
+**Current branch note (2026-09-28):** PR #14 packages the generic MIDI/SysEx
+engine experimentally at version 0.2.0 and is merged into `main`. PR #15 updates
+the internal package to version 0.3.0: physical `include/taureon` public headers,
+separately reusable Core/WinMM/WMS CMake targets, and a WinMM callback context
+that remains safe when native close fails. The package is for the owner's own
+TAUREON projects, not a public SDK. Hardware validation remains separate. The former
+real Summit SysEx fixture is absent from the current `main` tree, but four older
+remote branch tips and public history still contain it; see
+`docs/reference/PROVENANCE.md`. This
+branch note does not change the Stage-5 gate recorded below.
+
 ## Current stage
 
 ```text
@@ -41,10 +52,12 @@ Slice 9a was merged at `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`. Block A was m
 
 PR #9 was merged at `0ea82e526e89fddb2d6e8ae10a24b481c0937813`. Windows CI #236 passed at its exact head `434727d729097f844b42df7746e8d7b4b71b4d87` with whitespace PASS, Debug build PASS, capture/artifact upload PASS, and 24/24 CTest PASS, 0 failed, 0 skipped. The `stage5-gui-preview-1920x1080` artifact contains one capture of each actual workspace; the hosted offscreen raster was 2164×1080 at DPR 1.0. It is **VISUAL PREVIEW ONLY**, not Windows desktop, High-DPI, or Block-B evidence.
 
-Enforced branch protection is not available for this private repository on the
-GitHub Free plan, so no protection rule or ruleset is enforced here.
-The standing control is therefore the manual pre-merge verification
-that has been applied to every Stage-5 pull request: the exact PR
+At the earlier Stage-5 gate, enforced branch protection was not available for
+the then-private repository on the GitHub Free plan, so no protection rule or
+ruleset was enforced at that time. The repository is now public; the current
+branch-protection configuration has not been re-audited in this PR.
+The standing control at that gate was manual pre-merge verification,
+applied to every Stage-5 pull request: the exact PR
 HEAD, a green Windows CI run identified by that `head_sha` rather
 than by a badge, and a conflict-free base. The PR whitespace check
 remains advisory. This is a plan limitation that has been assessed
@@ -104,7 +117,7 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4
 GitHub repository:
 
 ```text
-https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (private; `main` includes the dedicated Stage-3 completion commit recorded in Git history)
+https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (public as of 2026-09-27; `main` includes the dedicated Stage-3 completion commit recorded in Git history)
 ```
 
 Legacy local reference:

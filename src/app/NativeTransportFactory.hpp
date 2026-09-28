@@ -1,6 +1,6 @@
 #pragma once
 
-#include "transports/IMidiTransport.hpp"
+#include <taureon/transports/IMidiTransport.hpp>
 
 #include <memory>
 

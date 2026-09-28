@@ -1,7 +1,7 @@
 #include "TestSupport.hpp"
 
 #include "app/ProfileSelectionService.hpp"
-#include "core/sysex/SyxFile.hpp"
+#include <taureon/core/sysex/SyxFile.hpp>
 #include "gui/ProfileMatchPanel.hpp"
 
 #include <QApplication>
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
             {"other-header", 0, {0xF0, 0x7D, 0x55, 0x66}}};
         TAUREON_REQUIRE(registry.register_profile(std::move(manual)));
         const auto fixture = sysex::load_syx_file(
-            root / "tests" / "fixtures" / "novation_summit_crazy_sine.syx");
+            std::filesystem::path{TAUREON_TEST_FIXTURE_PATH});
         TAUREON_REQUIRE(fixture);
 
         app::ProfileSelectionService service(registry);
