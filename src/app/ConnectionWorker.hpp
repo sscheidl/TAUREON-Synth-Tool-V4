@@ -52,7 +52,8 @@ public:
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> save_received_sysex(
         std::filesystem::path path);
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> start_raw_sysex_send(
-        std::chrono::milliseconds inter_frame_delay);
+        std::chrono::milliseconds inter_frame_delay,
+        std::optional<midi::MidiRouteIdentity> expected_transmit_route = {});
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> cancel_sysex_transfer();
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> sysex_snapshot();
 

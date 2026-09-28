@@ -14,6 +14,8 @@ All notable TAUREON V4 changes will be documented here.
 - Version `0.3.0` prefixes installed headers with `taureon/`, adds honest
   provider-scoped external routes with exact persistence/resolution, and states
   the callback/close-lifetime contract for transport implementers.
+- `MidiTransportDiagnostics` includes the WMS-only
+  `worker_mta_apartment_observed` evidence field.
 - Licensed the current repository source under MIT; the previously restricted
   real Summit dump was removed rather than included under that license.
 - Replaced the restricted real Summit SysEx test fixture with an artificial

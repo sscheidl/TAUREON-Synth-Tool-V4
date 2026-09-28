@@ -7,8 +7,10 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QEventLoop>
+#include <QGuiApplication>
 #include <QImage>
 #include <QListWidget>
+#include <QScreen>
 #include <QStackedWidget>
 
 #include <array>
@@ -16,6 +18,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace {
@@ -44,8 +47,14 @@ void process_pending_events() {
 
 int main(int argc, char* argv[]) {
     QApplication application(argc, argv);
-    if (argc != 2) {
-        std::cerr << "Expected exactly one output-directory argument.\n";
+    if (argc < 2 || argc > 3) {
+        std::cerr << "Expected an output directory and optional --physical-1920x1080.\n";
+        return 2;
+    }
+    const bool physical_1920x1080 = argc == 3 &&
+        std::string_view{argv[2]} == "--physical-1920x1080";
+    if (argc == 3 && !physical_1920x1080) {
+        std::cerr << "Unknown preview mode.\n";
         return 2;
     }
 
@@ -71,11 +80,36 @@ int main(int argc, char* argv[]) {
     taureon::app::ConnectionWorker worker(
         [](const taureon::midi::MidiBackend backend) {
             return std::make_unique<taureon::midi::FakeMidiTransport>(backend);
-        });
+    });
     taureon::gui::MainWindow window(monitor_queue, worker, profiles);
-    window.resize(1920, 1080);
+    const auto* screen = QGuiApplication::primaryScreen();
+    if (!screen) {
+        std::cerr << "No primary screen is available.\n";
+        return 5;
+    }
+    const qreal dpr = screen->devicePixelRatio();
+    const QSize requested_size = physical_1920x1080 ?
+        QSize{qRound(1920.0 / dpr), qRound(1080.0 / dpr)} : QSize{1920, 1080};
+    const QSize minimum_hint = window.minimumSizeHint();
+    const QSize size_hint = window.sizeHint();
+    const QRect screen_geometry = screen->geometry();
+    const QRect available_geometry = screen->availableGeometry();
+    std::cout << "Qt platform " << QGuiApplication::platformName().toStdString()
+              << "; screen logical " << screen_geometry.width() << 'x'
+              << screen_geometry.height() << "; available logical "
+              << available_geometry.width() << 'x' << available_geometry.height()
+              << "; DPR " << dpr << "; logical DPI " << screen->logicalDotsPerInch()
+              << "; physical DPI " << screen->physicalDotsPerInch() << ".\n";
+    std::cout << "MainWindow minimumSizeHint " << minimum_hint.width() << 'x'
+              << minimum_hint.height() << "; sizeHint " << size_hint.width() << 'x'
+              << size_hint.height() << "; requested logical " << requested_size.width()
+              << 'x' << requested_size.height() << ".\n";
+    window.resize(requested_size);
     window.show();
     process_pending_events();
+    std::cout << "MainWindow actual logical " << window.width() << 'x' << window.height()
+              << "; frame logical " << window.frameGeometry().width() << 'x'
+              << window.frameGeometry().height() << ".\n";
 
     auto* navigation = window.findChild<QListWidget*>("workspaceNavigation");
     auto* workspace_stack = window.findChild<QStackedWidget*>("workspaceStack");
@@ -91,6 +125,14 @@ int main(int argc, char* argv[]) {
             std::cerr << "Workspace activation did not reach index " << preview.workspace_index << ".\n";
             return 6;
         }
+
+        const auto* page = workspace_stack->currentWidget();
+        const QSize page_minimum_hint = page->minimumSizeHint();
+        const QSize page_size_hint = page->sizeHint();
+        std::cout << "Workspace " << preview.workspace_index << " minimumSizeHint "
+                  << page_minimum_hint.width() << 'x' << page_minimum_hint.height()
+                  << "; sizeHint " << page_size_hint.width() << 'x'
+                  << page_size_hint.height() << ".\n";
 
         const QImage image = window.grab().toImage();
         if (image.isNull()) {

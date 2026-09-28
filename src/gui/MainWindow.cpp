@@ -10,13 +10,24 @@
 #include "gui/SysExTransferPanel.hpp"
 #include "gui/SysExManagerPanel.hpp"
 
+#include <QAbstractItemModel>
+#include <QAction>
+#include <QApplication>
+#include <QClipboard>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QItemSelectionModel>
+#include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QMessageBox>
 #include <QPushButton>
+#include <QSaveFile>
+#include <QScrollArea>
+#include <QSignalBlocker>
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStandardPaths>
@@ -27,6 +38,7 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstddef>
@@ -35,6 +47,7 @@
 #include <type_traits>
 #include <utility>
 #include <variant>
+#include <vector>
 
 namespace taureon::gui {
 namespace {
@@ -49,9 +62,10 @@ constexpr auto kWorkspaceNames = std::array{
     "Settings",
 };
 
-QLabel* add_caption(QToolBar& bar, const QString& caption) {
+QLabel* add_caption(QToolBar& bar, const QString& caption, const int horizontal_padding = 0) {
     auto* label = new QLabel(caption, &bar);
     label->setObjectName("connectionCaption");
+    label->setContentsMargins(horizontal_padding, 0, horizontal_padding, 0);
     bar.addWidget(label);
     return label;
 }
@@ -103,7 +117,24 @@ QWidget* make_workspace_page(const QString& name) {
     return page;
 }
 
-QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) {
+QString monitor_delimited_line(const QAbstractItemModel& model, const int row, const QChar separator) {
+    const auto cell = [separator](QString value) {
+        if (value.contains('"') || value.contains(separator) || value.contains('\n') || value.contains('\r')) {
+            value.replace('"', "\"\"");
+            return QStringLiteral("\"") + value + QStringLiteral("\"");
+        }
+        return value;
+    };
+    QStringList fields;
+    for (int column = 0; column < model.columnCount(); ++column) {
+        fields.push_back(cell(row < 0 ? model.headerData(column, Qt::Horizontal).toString()
+                                      : model.index(row, column).data(Qt::DisplayRole).toString()));
+    }
+    return fields.join(separator);
+}
+
+QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
+                           QPushButton*& pause_button) {
     auto* page = new QWidget;
     auto* layout = new QVBoxLayout(page);
     auto* controls = new QHBoxLayout;
@@ -111,10 +142,11 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
     direction->addItems({"All directions", "RX", "TX"});
     direction->setAccessibleName("Monitor direction filter");
     auto* type_filter = new QLineEdit(page);
-    type_filter->setPlaceholderText("Filter event type");
-    type_filter->setAccessibleName("Monitor event type filter");
+    type_filter->setPlaceholderText("Filter type, event or value");
+    type_filter->setAccessibleName("Monitor type, event or value filter");
     auto* pause = new QPushButton("Pause presentation", page);
     pause->setCheckable(true);
+    pause_button = pause;
     pause->setToolTip("Presentation events are counted and discarded while paused; transport capture continues.");
     auto* clear = new QPushButton("Clear", page);
     auto* accounting = new QLabel("Presentation running", page);
@@ -134,6 +166,42 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
     table->setAlternatingRowColors(true);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSortingEnabled(false);
+    table->setContextMenuPolicy(Qt::ActionsContextMenu);
+    table->setToolTip("Right-click to copy selected rows or export all visible rows.");
+    auto* copy_action = new QAction("Copy selected rows", table);
+    copy_action->setShortcut(QKeySequence::Copy);
+    copy_action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+    table->addAction(copy_action);
+    QObject::connect(copy_action, &QAction::triggered, table, [table, proxy] {
+        std::vector<int> rows;
+        for (const auto& index : table->selectionModel()->selectedRows()) rows.push_back(index.row());
+        if (rows.empty()) return;
+        std::sort(rows.begin(), rows.end());
+        QStringList lines;
+        for (const auto row : rows) lines.push_back(monitor_delimited_line(*proxy, row, '\t'));
+        QApplication::clipboard()->setText(lines.join("\r\n"));
+    });
+    auto* export_action = new QAction("Export visible rows as CSV…", table);
+    table->addAction(export_action);
+    QObject::connect(export_action, &QAction::triggered, table, [table, proxy] {
+        const auto selected = QFileDialog::getSaveFileName(table, "Export MIDI Monitor", "midi-monitor.csv",
+                                                       "CSV files (*.csv)");
+        if (selected.isEmpty()) return;
+        QSaveFile output(selected);
+        bool saved = output.open(QIODevice::WriteOnly);
+        const auto write_line = [&output](const QString& line) {
+            const auto bytes = (line + "\r\n").toUtf8();
+            return output.write(bytes) == bytes.size();
+        };
+        if (saved) saved = write_line(monitor_delimited_line(*proxy, -1, ','));
+        for (int row = 0; saved && row < proxy->rowCount(); ++row) {
+            saved = write_line(monitor_delimited_line(*proxy, row, ','));
+        }
+        if (saved) saved = output.commit();
+        if (!saved) {
+            QMessageBox::warning(table, "Export MIDI Monitor", "The selected CSV file could not be saved.");
+        }
+    });
     layout->addWidget(table);
 
     QObject::connect(direction, &QComboBox::currentTextChanged, page,
@@ -165,7 +233,8 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge) 
 
 MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
                        app::ConnectionWorker& connection_worker,
-                       std::shared_ptr<const profiles::ProfileRegistry> profile_registry)
+                       std::shared_ptr<const profiles::ProfileRegistry> profile_registry,
+                       std::vector<profiles::ProfileLoadIssue> profile_issues)
     : connection_worker_(connection_worker) {
     setObjectName("taureonMainWindow");
     setWindowTitle("TAUREON Synth Tool V4");
@@ -181,12 +250,12 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     backend_selector_->setObjectName("backendSelector");
     backend_selector_->setAccessibleName("MIDI backend");
     backend_selector_->setToolTip("Auto restores only an exactly resolvable saved route; none is saved yet.");
-    add_caption(*connection_bar, "MIDI Input");
+    add_caption(*connection_bar, "MIDI Input", 6);
     receive_selector_ = add_selector(*connection_bar, {"No input selected"});
     receive_selector_->setObjectName("receiveRouteSelector");
     receive_selector_->setAccessibleName("MIDI input route");
     receive_selector_->setEnabled(false);
-    add_caption(*connection_bar, "MIDI Output");
+    add_caption(*connection_bar, "MIDI Output", 6);
     transmit_selector_ = add_selector(*connection_bar, {"No output selected"});
     transmit_selector_->setObjectName("transmitRouteSelector");
     transmit_selector_->setAccessibleName("MIDI output route");
@@ -205,7 +274,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
 
     auto* central = new QWidget(this);
     auto* layout = new QHBoxLayout(central);
-    layout->setContentsMargins(12, 12, 12, 12);
+    layout->setContentsMargins(8, 8, 8, 8);
 
     navigation_ = new QListWidget(central);
     navigation_->setObjectName("workspaceNavigation");
@@ -220,7 +289,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     workspace_stack_->setObjectName("workspaceStack");
     monitor_model_ = new MidiMonitorModel(10'000, this);
     monitor_bridge_ = new MonitorEventBridge(monitor_queue, *monitor_model_, this);
-    workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_));
+    workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_, monitor_pause_button_));
     sysex_transfer_panel_ = new SysExTransferPanel(connection_worker_);
     workspace_stack_->addWidget(sysex_transfer_panel_);
     sysex_manager_panel_ = new SysExManagerPanel(
@@ -238,6 +307,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     workspace_stack_->addWidget(new LibrarianPanel(workspace_stack_));
     profile_panel_ = new ProfileMatchPanel;
     if (profile_registry) profile_panel_->set_available_profiles(profile_registry->profiles());
+    profile_panel_->set_profile_load_issue_count(profile_issues.size());
     profile_panel_->set_select_temporary_action([this](std::string profile_id) {
         sysex_transfer_panel_->request_select_temporary_profile(std::move(profile_id));
     });
@@ -252,12 +322,25 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     diagnostic_export_policy_ = std::make_shared<app::DiagnosticExportPolicy>();
     diagnostics_panel_ = new DiagnosticsPanel(
         connection_worker_, monitor_queue, diagnostic_export_policy_, workspace_stack_);
+    diagnostics_panel_->set_profile_load_issues(std::move(profile_issues));
     workspace_stack_->addWidget(diagnostics_panel_);
     const auto settings_location = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     settings_panel_ = new SettingsPanel(
         std::filesystem::path{settings_location.toStdWString()} / "taureon-settings.v1",
         diagnostics_log_, diagnostic_export_policy_, workspace_stack_);
-    workspace_stack_->addWidget(settings_panel_);
+    const auto apply_safe_settings = [this](const app::Settings& settings) {
+        monitor_model_->set_history_limit(settings.monitor_history_limit);
+        sysex_transfer_panel_->set_default_pacing(settings.sysex_pacing_milliseconds);
+    };
+    settings_panel_->set_applied_settings_callback(apply_safe_settings);
+    apply_safe_settings(settings_panel_->settings());
+    monitor_pause_button_->setChecked(settings_panel_->settings().monitor_start_paused);
+    auto* settings_scroll = new QScrollArea(workspace_stack_);
+    settings_scroll->setObjectName("settingsScrollArea");
+    settings_scroll->setFrameShape(QFrame::NoFrame);
+    settings_scroll->setWidgetResizable(true);
+    settings_scroll->setWidget(settings_panel_);
+    workspace_stack_->addWidget(settings_scroll);
     content_layout->addWidget(workspace_heading_);
     content_layout->addWidget(workspace_stack_);
 
@@ -306,13 +389,18 @@ void MainWindow::select_workspace(const int index) {
 
 void MainWindow::begin_backend_selection(const int index) {
     if (pending_connection_) return;
+    connection_error_latched_ = false;
     connected_ = false;
     receive_routes_.clear();
     transmit_routes_.clear();
-    receive_selector_->clear();
-    transmit_selector_->clear();
-    receive_selector_->addItem("No input selected");
-    transmit_selector_->addItem("No output selected");
+    {
+        const QSignalBlocker block_receive(receive_selector_);
+        const QSignalBlocker block_transmit(transmit_selector_);
+        receive_selector_->clear();
+        transmit_selector_->clear();
+        receive_selector_->addItem("No input selected");
+        transmit_selector_->addItem("No output selected");
+    }
     if (index == 0) {
         receive_selector_->setEnabled(false);
         transmit_selector_->setEnabled(false);
@@ -331,6 +419,7 @@ void MainWindow::begin_backend_selection(const int index) {
 
 void MainWindow::begin_connect_toggle() {
     if (pending_connection_) return;
+    connection_error_latched_ = false;
     if (connected_) {
         pending_connection_ = connection_worker_.disconnect();
         pending_action_ = PendingConnectionAction::disconnect;
@@ -360,11 +449,26 @@ void MainWindow::begin_connect_toggle() {
 
 void MainWindow::poll_connection_result() {
     using namespace std::chrono_literals;
+    if (refresh_pending_ && refresh_pending_->wait_for(0ms) == std::future_status::ready) {
+        auto refresh_result = refresh_pending_->get();
+        refresh_pending_.reset();
+        // A later user request must not be replaced by an older background snapshot.
+        if (!pending_connection_) {
+            if (refresh_result) {
+                apply_connection_snapshot(refresh_result.value(), false, false);
+                set_connection_busy(false);
+            } else {
+                connection_error_latched_ = true;
+                statusBar()->showMessage("MIDI status refresh failed: " +
+                                         QString::fromStdString(refresh_result.error().message));
+            }
+        }
+    }
     if (!pending_connection_) {
-        if (backend_selector_->currentIndex() > 0 && ++idle_poll_ticks_ >= 10) {
+        if (!refresh_pending_ && backend_selector_->currentIndex() > 0 &&
+            ++idle_poll_ticks_ >= 10) {
             idle_poll_ticks_ = 0;
-            pending_connection_ = connection_worker_.snapshot();
-            pending_action_ = PendingConnectionAction::snapshot;
+            refresh_pending_ = connection_worker_.snapshot();
         }
         return;
     }
@@ -375,36 +479,46 @@ void MainWindow::poll_connection_result() {
     if (!result) {
         connected_ = false;
         set_connection_busy(false);
+        connection_error_latched_ = true;
         statusBar()->showMessage("MIDI operation failed: " + QString::fromStdString(result.error().message));
         return;
     }
-    apply_connection_snapshot(result.value(), action == PendingConnectionAction::backend);
+    apply_connection_snapshot(result.value(), action == PendingConnectionAction::backend, true);
     set_connection_busy(false);
 }
 
 void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapshot,
-                                           const bool repopulate) {
+                                           const bool repopulate, const bool user_action) {
     if (settings_panel_) settings_panel_->set_connection_snapshot(snapshot);
     if (repopulate) {
         receive_routes_.clear();
         transmit_routes_.clear();
-        receive_selector_->clear();
-        transmit_selector_->clear();
-        receive_selector_->addItem("No input selected");
-        transmit_selector_->addItem("No output selected");
-        for (const auto& endpoint : snapshot.endpoints) {
-            if (endpoint.identity.direction == midi::MidiDirection::input) {
-                receive_routes_.push_back(endpoint.identity);
-                receive_selector_->addItem(endpoint_label(endpoint));
-            } else {
-                transmit_routes_.push_back(endpoint.identity);
-                transmit_selector_->addItem(endpoint_label(endpoint));
+        {
+            const QSignalBlocker block_receive(receive_selector_);
+            const QSignalBlocker block_transmit(transmit_selector_);
+            receive_selector_->clear();
+            transmit_selector_->clear();
+            receive_selector_->addItem("No input selected");
+            transmit_selector_->addItem("No output selected");
+            for (const auto& endpoint : snapshot.endpoints) {
+                if (endpoint.identity.direction == midi::MidiDirection::input) {
+                    receive_routes_.push_back(endpoint.identity);
+                    receive_selector_->addItem(endpoint_label(endpoint));
+                } else {
+                    transmit_routes_.push_back(endpoint.identity);
+                    transmit_selector_->addItem(endpoint_label(endpoint));
+                }
             }
         }
     }
+    const bool state_changed = !last_connection_state_ ||
+        *last_connection_state_ != snapshot.state || last_connection_detail_ != snapshot.detail;
+    last_connection_state_ = snapshot.state;
+    last_connection_detail_ = snapshot.detail;
     connected_ = snapshot.state == app::ConnectionPresentationState::connected ||
                  snapshot.state == app::ConnectionPresentationState::degraded;
     connect_button_->setText(connected_ ? "Disconnect" : "Connect");
+    if ((!user_action && !state_changed) || (!user_action && connection_error_latched_)) return;
     switch (snapshot.state) {
     case app::ConnectionPresentationState::connected:
         statusBar()->showMessage("Connected to the exact selected RX/TX routes.");
@@ -414,6 +528,7 @@ void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapsh
         break;
     case app::ConnectionPresentationState::error:
         statusBar()->showMessage("MIDI error: " + QString::fromStdString(snapshot.detail));
+        connection_error_latched_ = true;
         break;
     case app::ConnectionPresentationState::ready:
         statusBar()->showMessage("Backend ready — select exact RX/TX routes.");

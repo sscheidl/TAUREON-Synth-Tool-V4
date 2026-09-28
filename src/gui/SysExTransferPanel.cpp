@@ -1,17 +1,27 @@
 #include "gui/SysExTransferPanel.hpp"
+#include "gui/FocusWheelControls.hpp"
 
 #include <QFileDialog>
 #include <QGridLayout>
 #include <QHeaderView>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QProgressBar>
 #include <QPushButton>
-#include <QSpinBox>
+#include <QScrollBar>
+#include <QSignalBlocker>
+#include <QSizePolicy>
+#include <QSplitter>
+#include <QStringList>
+#include <QTabWidget>
 #include <QTableView>
 #include <QTimer>
+#include <QTextCursor>
+#include <QTextDocument>
 #include <QVBoxLayout>
 
+#include <algorithm>
 #include <chrono>
 #include <type_traits>
 #include <variant>
@@ -127,25 +137,36 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
     auto* summary = new QGridLayout;
     source_label_ = new QLabel("No file or capture loaded", this);
     source_label_->setObjectName("sysExSource");
+    source_label_->setWordWrap(true);
     evidence_label_ = new QLabel("Manufacturer / device: not identified — no verified evidence", this);
+    evidence_label_->setWordWrap(true);
     profile_label_ = new QLabel("Active profile: Generic · match status: not evaluated", this);
+    profile_label_->setWordWrap(true);
     profile_label_->setObjectName("sysExProfileMatch");
     counts_label_ = new QLabel("Frames 0 · bytes 0", this);
+    counts_label_->setWordWrap(true);
     integrity_label_ = new QLabel("Integrity: no data", this);
     integrity_label_->setObjectName("sysExIntegrity");
+    integrity_label_->setWordWrap(true);
     route_label_ = new QLabel("Actual TX route: No exact TX route connected", this);
     route_label_->setObjectName("sysExTxRoute");
+    route_label_->setWordWrap(true);
     pacing_label_ = new QLabel("Pacing: user-selected fixed inter-frame delay", this);
+    pacing_label_->setWordWrap(true);
     summary->addWidget(source_label_, 0, 0, 1, 2);
-    summary->addWidget(evidence_label_, 1, 0);
-    summary->addWidget(profile_label_, 1, 1);
-    summary->addWidget(counts_label_, 2, 0);
-    summary->addWidget(integrity_label_, 2, 1);
-    summary->addWidget(route_label_, 3, 0, 1, 2);
-    summary->addWidget(pacing_label_, 4, 0, 1, 2);
+    summary->addWidget(evidence_label_, 1, 0, 1, 2);
+    summary->addWidget(profile_label_, 2, 0, 1, 2);
+    summary->addWidget(counts_label_, 3, 0);
+    summary->addWidget(integrity_label_, 3, 1);
+    summary->addWidget(route_label_, 4, 0, 1, 2);
+    summary->addWidget(pacing_label_, 5, 0, 1, 2);
+    for (auto* label : {source_label_, evidence_label_, profile_label_, counts_label_,
+                        integrity_label_, route_label_, pacing_label_}) {
+        label->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    }
     root->addLayout(summary);
 
-    auto* actions = new QHBoxLayout;
+    auto* actions = new QGridLayout;
     open_button_ = new QPushButton("Open .syx…", this);
     open_button_->setObjectName("sysExOpen");
     receive_button_ = new QPushButton("Receive", this);
@@ -164,18 +185,27 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
     validated_restore_button_->setEnabled(false);
     validated_restore_button_->setToolTip(
         "Unavailable: no validated device restore protocol capability is implemented.");
-    pacing_delay_ = new QSpinBox(this);
+    pacing_delay_ = new FocusWheelSpinBox(this);
     pacing_delay_->setObjectName("sysExPacingDelay");
-    pacing_delay_->setRange(0, 10'000);
-    pacing_delay_->setSuffix(" ms between frames");
-    actions->addWidget(open_button_);
-    actions->addWidget(receive_button_);
-    actions->addWidget(send_button_);
-    actions->addWidget(cancel_button_);
-    actions->addWidget(save_button_);
-    actions->addWidget(clear_button_);
-    actions->addWidget(validated_restore_button_);
-    actions->addWidget(pacing_delay_);
+    pacing_delay_->setRange(0, 60'000);
+    pacing_delay_->setSuffix(" ms");
+    pacing_delay_->setToolTip("Fixed delay in milliseconds between SysEx frames for this Raw Send.");
+    actions->addWidget(open_button_, 0, 0);
+    actions->addWidget(receive_button_, 0, 1);
+    actions->addWidget(send_button_, 0, 2);
+    actions->addWidget(cancel_button_, 0, 3);
+    actions->addWidget(save_button_, 1, 0);
+    actions->addWidget(clear_button_, 1, 1);
+    actions->addWidget(validated_restore_button_, 1, 2);
+    actions->addWidget(pacing_delay_, 1, 3);
+    for (auto* button : {open_button_, receive_button_, send_button_, cancel_button_,
+                         save_button_, clear_button_, validated_restore_button_}) {
+        button->setMinimumWidth(0);
+        button->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+    }
+    pacing_delay_->setMinimumWidth(0);
+    pacing_delay_->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+    for (int column = 0; column < 4; ++column) actions->setColumnStretch(column, 1);
     root->addLayout(actions);
 
     progress_ = new QProgressBar(this);
@@ -190,21 +220,34 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
     frame_table_->setSelectionBehavior(QAbstractItemView::SelectRows);
     frame_table_->setSelectionMode(QAbstractItemView::SingleSelection);
     frame_table_->horizontalHeader()->setStretchLastSection(true);
-    root->addWidget(frame_table_, 2);
+    frame_table_->setMinimumHeight(0);
 
     raw_bytes_ = new QPlainTextEdit(this);
     raw_bytes_->setObjectName("sysExRawBytes");
     raw_bytes_->setReadOnly(true);
     raw_bytes_->setPlaceholderText("Select a frame to inspect its exact raw bytes.");
     raw_bytes_->setMaximumBlockCount(1);
-    root->addWidget(raw_bytes_, 1);
+    raw_bytes_->setMinimumHeight(0);
     transfer_log_ = new QPlainTextEdit(this);
     transfer_log_->setObjectName("sysExTransferLog");
     transfer_log_->setReadOnly(true);
     transfer_log_->setMaximumBlockCount(100);
-    root->addWidget(transfer_log_, 1);
+    transfer_log_->setMinimumHeight(0);
+    auto* inspector_tabs = new QTabWidget(this);
+    inspector_tabs->setObjectName("sysExInspectorTabs");
+    inspector_tabs->addTab(raw_bytes_, "Raw bytes");
+    inspector_tabs->addTab(transfer_log_, "Transfer log");
+    inspector_tabs->setMinimumHeight(0);
+    auto* work_splitter = new QSplitter(Qt::Vertical, this);
+    work_splitter->setObjectName("sysExWorkSplitter");
+    work_splitter->addWidget(frame_table_);
+    work_splitter->addWidget(inspector_tabs);
+    work_splitter->setStretchFactor(0, 2);
+    work_splitter->setStretchFactor(1, 1);
+    root->addWidget(work_splitter, 1);
     status_label_ = new QLabel("Idle — no automatic send is performed", this);
     status_label_->setObjectName("sysExStatus");
+    status_label_->setWordWrap(true);
     root->addWidget(status_label_);
 
     connect(open_button_, &QPushButton::clicked, this, [this] {
@@ -222,8 +265,25 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
         }
     });
     connect(send_button_, &QPushButton::clicked, this, [this] {
+        if (!snapshot_.can_raw_send || !snapshot_.transmit_route) return;
+        const auto confirmed_route = snapshot_.transmit_route;
+        QMessageBox confirmation(this);
+        confirmation.setIcon(QMessageBox::Warning);
+        confirmation.setWindowTitle("Confirm Raw Send");
+        confirmation.setTextFormat(Qt::PlainText);
+        confirmation.setText(QStringLiteral(
+            "Send %1 complete SysEx frame(s), %2 bytes, to the exact TX route below?\n\n%3\n\n"
+            "This is a raw transfer, not a validated device restore. No automatic backup or rollback is available.")
+            .arg(snapshot_.complete_frames)
+            .arg(snapshot_.byte_count)
+            .arg(route_text(confirmed_route)));
+        auto* confirm_send = confirmation.addButton("Send raw data", QMessageBox::AcceptRole);
+        confirmation.addButton(QMessageBox::Cancel);
+        confirmation.setDefaultButton(QMessageBox::Cancel);
+        confirmation.exec();
+        if (confirmation.clickedButton() != confirm_send) return;
         set_pending(worker_.start_raw_sysex_send(
-                        std::chrono::milliseconds{pacing_delay_->value()}),
+                        std::chrono::milliseconds{pacing_delay_->value()}, confirmed_route),
                     PendingAction::send, "Raw Send requested by user…");
     });
     connect(cancel_button_, &QPushButton::clicked, this, [this] {
@@ -239,7 +299,9 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
         set_pending(worker_.clear_sysex(), PendingAction::clear, "Clearing transfer workspace…");
     });
     connect(frame_table_->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
-            [this](const QModelIndex& current) { update_raw_inspector(current.row()); });
+            [this](const QModelIndex& current) {
+                if (!applying_snapshot_) update_raw_inspector(current.row());
+            });
 
     poll_timer_ = new QTimer(this);
     poll_timer_->setInterval(25);
@@ -301,6 +363,7 @@ void SysExTransferPanel::set_pending(
     if (pending_) return;
     pending_ = std::move(future);
     pending_action_ = action;
+    action_error_latched_ = false;
     status_label_->setText(std::move(status));
     open_button_->setEnabled(false);
     receive_button_->setEnabled(false);
@@ -312,10 +375,19 @@ void SysExTransferPanel::set_pending(
 
 void SysExTransferPanel::poll_result() {
     using namespace std::chrono_literals;
+    if (refresh_pending_ && refresh_pending_->wait_for(0ms) == std::future_status::ready) {
+        auto refresh_result = refresh_pending_->get();
+        refresh_pending_.reset();
+        // A user action queued after this snapshot owns the next visible state.
+        if (!pending_) {
+            if (refresh_result) apply_snapshot(refresh_result.value());
+            else show_error(refresh_result.error());
+        }
+    }
     if (!pending_) {
-        if (++idle_ticks_ >= 10) {
+        if (!refresh_pending_ && ++idle_ticks_ >= 10) {
             idle_ticks_ = 0;
-            set_pending(worker_.sysex_snapshot(), PendingAction::refresh, "Refreshing transfer state…");
+            refresh_pending_ = worker_.sysex_snapshot();
         }
         return;
     }
@@ -348,8 +420,28 @@ void SysExTransferPanel::poll_result() {
 
 void SysExTransferPanel::apply_snapshot(const app::SysExTransferSnapshot& snapshot) {
     const auto selected_row = frame_table_->currentIndex().row();
+    const bool frames_changed = snapshot.frames != snapshot_.frames;
+    const bool log_changed = snapshot.log != snapshot_.log;
+    const bool log_appended = log_changed && snapshot.log.size() >= snapshot_.log.size() &&
+        std::equal(snapshot_.log.begin(), snapshot_.log.end(), snapshot.log.begin());
+    const auto previous_log_size = snapshot_.log.size();
     snapshot_ = snapshot;
-    frame_model_->set_frames(snapshot.frames);
+    if (frames_changed) {
+        auto* scroll = frame_table_->verticalScrollBar();
+        const int prior_scroll = scroll->value();
+        const bool was_at_bottom = prior_scroll >= scroll->maximum();
+        applying_snapshot_ = true;
+        {
+            const QSignalBlocker blocked_selection(frame_table_->selectionModel());
+            frame_model_->set_frames(snapshot.frames);
+            const int row = selected_row >= 0 && selected_row < frame_model_->rowCount() ?
+                selected_row : (frame_model_->rowCount() > 0 ? 0 : -1);
+            if (row >= 0) frame_table_->selectRow(row);
+            update_raw_inspector(row);
+        }
+        applying_snapshot_ = false;
+        scroll->setValue(was_at_bottom ? scroll->maximum() : prior_scroll);
+    }
     source_label_->setText(snapshot.source_name.empty() ? "No file or capture loaded" :
                                                         QString::fromStdString(snapshot.source_name));
     if (snapshot.manufacturer || snapshot.model) {
@@ -392,14 +484,26 @@ void SysExTransferPanel::apply_snapshot(const app::SysExTransferSnapshot& snapsh
     progress_->setValue(static_cast<int>((std::min<std::uint64_t>)(
         snapshot.send_progress.bytes_accepted,
         static_cast<std::uint64_t>(progress_->maximum()))));
-    transfer_log_->setPlainText(QString::fromStdString([&] {
-        std::string joined;
-        for (const auto& line : snapshot.log) {
-            if (!joined.empty()) joined += '\n';
-            joined += line;
+    if (log_changed) {
+        auto* scroll = transfer_log_->verticalScrollBar();
+        const int prior_scroll = scroll->value();
+        const bool was_at_bottom = prior_scroll >= scroll->maximum();
+        const auto prior_cursor = transfer_log_->textCursor();
+        if (log_appended) {
+            for (std::size_t index = previous_log_size; index < snapshot.log.size(); ++index) {
+                transfer_log_->appendPlainText(QString::fromStdString(snapshot.log.at(index)));
+            }
+        } else {
+            QStringList lines;
+            for (const auto& line : snapshot.log) lines.push_back(QString::fromStdString(line));
+            transfer_log_->setPlainText(lines.join('\n'));
         }
-        return joined;
-    }()));
+        if (prior_cursor.hasSelection() &&
+            prior_cursor.position() < transfer_log_->document()->characterCount()) {
+            transfer_log_->setTextCursor(prior_cursor);
+        }
+        scroll->setValue(was_at_bottom ? scroll->maximum() : prior_scroll);
+    }
     const bool active = transfer_active(snapshot.send_progress.state);
     open_button_->setEnabled(!snapshot.receiving && !active);
     receive_button_->setEnabled(!active);
@@ -413,18 +517,11 @@ void SysExTransferPanel::apply_snapshot(const app::SysExTransferSnapshot& snapsh
     cancel_button_->setEnabled(active);
     save_button_->setEnabled(snapshot.can_save_verified_received && !active);
     clear_button_->setEnabled(!snapshot.receiving && !active);
-    if (selected_row >= 0 && selected_row < frame_model_->rowCount()) {
-        frame_table_->selectRow(selected_row);
-        update_raw_inspector(selected_row);
-    } else if (frame_model_->rowCount() > 0) {
-        frame_table_->selectRow(0);
-        update_raw_inspector(0);
-    } else {
-        raw_bytes_->clear();
-    }
     if (snapshot_observer_) snapshot_observer_(snapshot_);
     if (snapshot.send_error) {
         show_error(*snapshot.send_error);
+    } else if (action_error_latched_) {
+        return;
     } else if (snapshot.receiving) {
         status_label_->setText("Receive capture active");
     } else {
@@ -453,10 +550,18 @@ void SysExTransferPanel::apply_snapshot(const app::SysExTransferSnapshot& snapsh
 
 void SysExTransferPanel::update_raw_inspector(const int row) {
     const auto* frame = frame_model_->frame(row);
-    raw_bytes_->setPlainText(frame ? bytes_hex(frame->bytes) : QString{});
+    const auto text = frame ? bytes_hex(frame->bytes) : QString{};
+    if (raw_bytes_->toPlainText() != text) raw_bytes_->setPlainText(text);
+}
+
+void SysExTransferPanel::set_default_pacing(const std::uint32_t milliseconds) {
+    pacing_delay_->setValue(static_cast<int>(milliseconds));
+    pacing_label_->setText(QStringLiteral("Pacing: user-selected fixed inter-frame delay · %1 ms")
+                               .arg(pacing_delay_->value()));
 }
 
 void SysExTransferPanel::show_error(const midi::MidiError& error) {
+    action_error_latched_ = true;
     status_label_->setText("Error: " + QString::fromStdString(error.message));
 }
 

@@ -30,6 +30,8 @@ struct MidiTransportDiagnostics {
     std::uint64_t dropped_events{};
     std::uint64_t callbacks_after_acceptance_closed{};
     std::uint64_t queue_high_water_mark{};
+    // WMS-only evidence; false means not observed or not applicable for this backend.
+    bool worker_mta_apartment_observed{};
 };
 
 using MidiMessageHandler = std::function<void(const NativeMidiMessage&)>;

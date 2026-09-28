@@ -1,0 +1,12 @@
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+╭───────────┬──────────────────────────────────────────────────────────────────╮
+│ Processes │ Sessions                                                         │
+├───────────┼──────────────────────────────────────────────────────────────────┤
+│           │ No active sessions with open connections (use --all to see all   │
+│           │ sessions)                                                        │
+╰───────────┴──────────────────────────────────────────────────────────────────╯
+Enumerating sessions...

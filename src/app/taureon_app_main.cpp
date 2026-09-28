@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <memory>
 #include <string_view>
+#include <utility>
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
@@ -22,7 +23,8 @@ int main(int argc, char* argv[]) {
     const auto profile_directory =
         std::filesystem::path{QCoreApplication::applicationDirPath().toStdWString()} /
         "resources" / "device_profiles";
-    static_cast<void>(profile_registry->load_directory(profile_directory, profile_issues));
+    const auto profile_load = profile_registry->load_directory(profile_directory, profile_issues);
+    if (!profile_load) profile_issues.push_back({profile_directory, profile_load.error()});
     taureon::app::ConnectionWorker connection_worker(
         taureon::app::create_native_transport,
         [&monitor_queue, &monitor_sequence](const taureon::midi::NativeMidiMessage& message) {
@@ -30,7 +32,8 @@ int main(int argc, char* argv[]) {
                 {monitor_sequence.fetch_add(1, std::memory_order_relaxed),
                  taureon::midi::MidiDirection::input, message}));
         }, profile_registry);
-    taureon::gui::MainWindow window(monitor_queue, connection_worker, profile_registry);
+    taureon::gui::MainWindow window(monitor_queue, connection_worker, profile_registry,
+                                    std::move(profile_issues));
     const bool smoke_test = std::any_of(argv + 1, argv + argc, [](const char* argument) {
         return std::string_view(argument) == "--smoke-test";
     });

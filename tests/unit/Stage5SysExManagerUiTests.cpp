@@ -3,6 +3,7 @@
 #include "gui/SysExManagerPanel.hpp"
 
 #include <QApplication>
+#include <QHeaderView>
 #include <QItemSelectionModel>
 #include <QLabel>
 #include <QPlainTextEdit>
@@ -44,6 +45,9 @@ int main(int argc, char* argv[]) {
         auto* status = panel.findChild<QLabel*>("sysExManagerStatus");
         TAUREON_REQUIRE(panel.has_required_controls());
         TAUREON_REQUIRE(files != nullptr && files->model()->rowCount() == 1);
+        const auto device_header = files->model()->headerData(1, Qt::Horizontal).toString();
+        TAUREON_REQUIRE(files->horizontalHeader()->sectionSize(1) >=
+                        files->horizontalHeader()->fontMetrics().horizontalAdvance(device_header) + 16);
         TAUREON_REQUIRE(files->model()->index(0, 1).data().toString().contains("Novation"));
         TAUREON_REQUIRE(frames != nullptr && frames->model()->rowCount() == 1);
         const auto first_frame = frames->model()->index(0, 0);
