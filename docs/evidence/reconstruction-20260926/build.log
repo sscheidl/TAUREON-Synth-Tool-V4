@@ -1,39 +1,39 @@
 MSBuild-Version 17.14.40+3e7442088 für .NET Framework
 
   1>Checking Build System
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/src/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/src/CMakeLists.txt
   BoundedLog.cpp
   Generating pinned WMS C++/WinRT projection
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/spikes/winmm_direct/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/spikes/wms_direct/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/spikes/wms_direct/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/spikes/wms_direct/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/spikes/winmm_direct/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/spikes/wms_direct/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/spikes/wms_direct/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/spikes/wms_direct/CMakeLists.txt
   winmm_spike_main.cpp
   1>Automatic MOC and UIC for target taureon_wms_qt_harness
   bootstrap_main.cpp
   wms_spike_main.cpp
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/src/transports/wms/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/src/transports/wms/CMakeLists.txt
   wms_winmm_correlation.cpp
-  taureon_bootstrap.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\Debug\taureon_bootstrap.exe
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/spikes/wms_direct/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/spikes/wms_direct/CMakeLists.txt
+  taureon_bootstrap.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\Debug\taureon_bootstrap.exe
+  Building Custom Rule <LOCAL_PATH>/spikes/wms_direct/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/spikes/wms_direct/CMakeLists.txt
   mocs_compilation_Debug.cpp
   ConnectionController.cpp
-  taureon_winmm_spike.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\spikes\winmm_direct\Debug\taureon_winmm_spike.exe
+  taureon_winmm_spike.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\spikes\winmm_direct\Debug\taureon_winmm_spike.exe
   Diagnostics.cpp
   qcore_harness.cpp
-  taureon_wms_winmm_correlation.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\spikes\wms_direct\Debug\taureon_wms_winmm_correlation.exe
+  taureon_wms_winmm_correlation.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\spikes\wms_direct\Debug\taureon_wms_winmm_correlation.exe
   Librarian.cpp
-  taureon_wms_spike.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\spikes\wms_direct\Debug\taureon_wms_spike.exe
+  taureon_wms_spike.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\spikes\wms_direct\Debug\taureon_wms_spike.exe
   Settings.cpp
   wms_worker.cpp
-D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\app\Settings.cpp(125,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\src\taureon_midi_core.vcxproj]
+<LOCAL_PATH>\src\app\Settings.cpp(125,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [<LOCAL_PATH>\.work\reconstruction-20260926\src\taureon_midi_core.vcxproj]
   MonitorEventQueue.cpp
   ProfileSelectionService.cpp
   Code wird generiert...
   SysExTransferSession.cpp
-  taureon_wms_qt_harness.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\spikes\wms_direct\Debug\taureon_wms_qt_harness.exe
+  taureon_wms_qt_harness.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\spikes\wms_direct\Debug\taureon_wms_qt_harness.exe
   SysExManager.cpp
   MidiMessage.cpp
   MidiTypes.cpp
@@ -51,26 +51,26 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\app\Sett
   ProfileRegistry.cpp
   FakeMidiTransport.cpp
   Code wird generiert...
-  taureon_midi_core.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\src\Debug\taureon_midi_core.lib
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/src/transports/wms/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
+  taureon_midi_core.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\src\Debug\taureon_midi_core.lib
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/src/transports/wms/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
   Stage5ConnectionWorkerTests.cpp
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
   Stage3LargeSysexTests.cpp
   Stage2CoreTests.cpp
   Stage5SettingsDiagnosticsTests.cpp
@@ -79,100 +79,100 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\app\Sett
   Stage5ApplicationTests.cpp
   Stage5SettingsDiagnosticsUiTests.cpp
   Stage5MonitorStressTests.cpp
-  stage2_core_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage2_core_tests.exe
+  stage2_core_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage2_core_tests.exe
   Stage5ProfileFollowupTests.cpp
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
   Stage3TransferTests.cpp
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/src/transports/winmm/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/src/transports/winmm/CMakeLists.txt
   WinmmMidiHeader.cpp
   ConnectionWorker.cpp
   WinmmNativeApi.cpp
-  stage5_profile_followup_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_profile_followup_tests.exe
+  stage5_profile_followup_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_profile_followup_tests.exe
   Stage5ProfileUiTests.cpp
   WinmmTransport.cpp
-  stage3_transfer_unit.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage3_transfer_unit.exe
+  stage3_transfer_unit.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage3_transfer_unit.exe
   MonitorEventBridge.cpp
   Stage5SysExTransferSessionTests.cpp
   ConnectionWorker.cpp
   ConnectionWorker.cpp
-  stage3_midi_sysex_unit.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage3_midi_sysex_unit.exe
+  stage3_midi_sysex_unit.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage3_midi_sysex_unit.exe
   Stage4ProfileTests.cpp
   Code wird generiert...
-  stage5_connection_worker_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_connection_worker_tests.exe
+  stage5_connection_worker_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_connection_worker_tests.exe
   Stage5SysExManagerTests.cpp
   Code wird generiert...
-  stage5_sysex_transfer_session_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_sysex_transfer_session_tests.exe
+  stage5_sysex_transfer_session_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_sysex_transfer_session_tests.exe
   MidiMonitorFilterModel.cpp
   DiagnosticsPanel.cpp
-  taureon_winmm_transport.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\src\transports\winmm\Debug\taureon_winmm_transport.lib
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
+  taureon_winmm_transport.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\src\transports\winmm\Debug\taureon_winmm_transport.lib
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
   Stage3SyxFileTests.cpp
   MidiMonitorModel.cpp
-  taureon_wms_transport.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\src\transports\wms\Debug\taureon_wms_transport.lib
+  taureon_wms_transport.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\src\transports\wms\Debug\taureon_wms_transport.lib
   ProfileMatchPanel.cpp
-  stage4_profile_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage4_profile_tests.exe
-  stage5_settings_diagnostics_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_settings_diagnostics_tests.exe
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/integration/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/integration/CMakeLists.txt
-  stage3_large_sysex_unit.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage3_large_sysex_unit.exe
+  stage4_profile_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage4_profile_tests.exe
+  stage5_settings_diagnostics_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_settings_diagnostics_tests.exe
+  Building Custom Rule <LOCAL_PATH>/tests/integration/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/integration/CMakeLists.txt
+  stage3_large_sysex_unit.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage3_large_sysex_unit.exe
   Stage3WmsLocal.cpp
   Stage2WmsLocal.cpp
-  stage5_sysex_manager_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_sysex_manager_tests.exe
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
+  stage5_sysex_manager_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_sysex_manager_tests.exe
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
   Stage3HandleGrowthTests.cpp
-  stage3_syx_file_unit.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage3_syx_file_unit.exe
+  stage3_syx_file_unit.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage3_syx_file_unit.exe
   1>Automatic MOC for target stage5_librarian_tests
-  stage3_handle_growth_unit.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage3_handle_growth_unit.exe
+  stage3_handle_growth_unit.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage3_handle_growth_unit.exe
   MonitorEventBridge.cpp
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/integration/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  stage2_wms_local.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\integration\Debug\stage2_wms_local.exe
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/integration/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/src/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/integration/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  stage2_wms_local.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\integration\Debug\stage2_wms_local.exe
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/integration/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/src/CMakeLists.txt
   Stage3WinmmTransportTests.cpp
   Stage2WinmmTransportTests.cpp
   Stage2WinmmHeaderTests.cpp
   Stage2WinmmLocal.cpp
   Code wird generiert...
-  stage5_monitor_stress_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_monitor_stress_tests.exe
-  stage3_wms_local.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\integration\Debug\stage3_wms_local.exe
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/integration/CMakeLists.txt
+  stage5_monitor_stress_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_monitor_stress_tests.exe
+  stage3_wms_local.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\integration\Debug\stage3_wms_local.exe
+  Building Custom Rule <LOCAL_PATH>/tests/integration/CMakeLists.txt
   Code wird generiert...
   Stage3WinmmLocal.cpp
   SettingsPanel.cpp
-  stage2_winmm_header_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage2_winmm_header_tests.exe
-  stage5_profile_ui_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_profile_ui_tests.exe
+  stage2_winmm_header_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage2_winmm_header_tests.exe
+  stage5_profile_ui_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_profile_ui_tests.exe
   1>Automatic MOC for target stage5_sysex_manager_ui_tests
   1>Automatic MOC for target stage5_product_host_local
-  stage2_winmm_transport_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage2_winmm_transport_tests.exe
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
+  stage2_winmm_transport_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage2_winmm_transport_tests.exe
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
   mocs_compilation_Debug.cpp
   Stage5LibrarianTests.cpp
-  stage2_winmm_local.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\integration\Debug\stage2_winmm_local.exe
+  stage2_winmm_local.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\integration\Debug\stage2_winmm_local.exe
   1>Automatic MOC for target stage5_gui_preview_capture
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/integration/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/integration/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/integration/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/integration/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
   mocs_compilation_Debug.cpp
   mocs_compilation_Debug.cpp
   mocs_compilation_Debug.cpp
   MidiMonitorModel.cpp
-  stage3_winmm_transport_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage3_winmm_transport_tests.exe
+  stage3_winmm_transport_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage3_winmm_transport_tests.exe
   1>Automatic MOC for target taureon_app
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/src/CMakeLists.txt
-  stage3_winmm_local.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\integration\Debug\stage3_winmm_local.exe
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/src/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/src/CMakeLists.txt
+  stage3_winmm_local.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\integration\Debug\stage3_winmm_local.exe
+  Building Custom Rule <LOCAL_PATH>/src/CMakeLists.txt
   mocs_compilation_Debug.cpp
   1>Automatic MOC for target stage5_connection_ui_tests
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tests/CMakeLists.txt
-D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\stage5_settings_diagnostics_ui_tests.vcxproj]
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/tests/CMakeLists.txt
+<LOCAL_PATH>\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [<LOCAL_PATH>\.work\reconstruction-20260926\tests\stage5_settings_diagnostics_ui_tests.vcxproj]
   mocs_compilation_Debug.cpp
   Code wird generiert...
   Code wird generiert...
@@ -180,15 +180,15 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\gui\Sett
   Stage5SysExManagerUiTests.cpp
   Stage5GuiPreviewCapture.cpp
   LibrarianPanel.cpp
-  stage5_settings_diagnostics_ui_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_settings_diagnostics_ui_tests.exe
-  stage5_application_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_application_tests.exe
+  stage5_settings_diagnostics_ui_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_settings_diagnostics_ui_tests.exe
+  stage5_application_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_application_tests.exe
   ConnectionWorker.cpp
   Stage5ConnectionUiTests.cpp
   Code wird generiert...
   SysExManagerPanel.cpp
   NativeTransportFactory.cpp
   ConnectionWorker.cpp
-  stage5_librarian_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_librarian_tests.exe
+  stage5_librarian_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_librarian_tests.exe
   ConnectionWorker.cpp
   taureon_app_main.cpp
   ConnectionWorker.cpp
@@ -198,7 +198,7 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\gui\Sett
   DiagnosticsPanel.cpp
   DiagnosticsPanel.cpp
   DiagnosticsPanel.cpp
-  stage5_sysex_manager_ui_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_sysex_manager_ui_tests.exe
+  stage5_sysex_manager_ui_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_sysex_manager_ui_tests.exe
   MainWindow.cpp
   MainWindow.cpp
   MainWindow.cpp
@@ -227,11 +227,11 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\gui\Sett
   SettingsPanel.cpp
   SettingsPanel.cpp
   SettingsPanel.cpp
-D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\stage5_gui_preview_capture.vcxproj]
+<LOCAL_PATH>\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [<LOCAL_PATH>\.work\reconstruction-20260926\tests\stage5_gui_preview_capture.vcxproj]
   SysExTransferPanel.cpp
-D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\integration\stage5_product_host_local.vcxproj]
-D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\stage5_connection_ui_tests.vcxproj]
-D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\src\taureon_app.vcxproj]
+<LOCAL_PATH>\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [<LOCAL_PATH>\.work\reconstruction-20260926\tests\integration\stage5_product_host_local.vcxproj]
+<LOCAL_PATH>\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [<LOCAL_PATH>\.work\reconstruction-20260926\tests\stage5_connection_ui_tests.vcxproj]
+<LOCAL_PATH>\src\gui\SettingsPanel.cpp(40,29): warning C4996: 'std::filesystem::u8path': warning STL4021: The std::filesystem::u8path() overloads are deprecated in C++20. The constructors of std::filesystem::path provide equivalent functionality via construction from u8string, u8string_view, or iterators with value_type char8_t. You can define _SILENCE_CXX20_U8PATH_DEPRECATION_WARNING or _SILENCE_ALL_CXX20_DEPRECATION_WARNINGS to suppress this warning. [<LOCAL_PATH>\.work\reconstruction-20260926\src\taureon_app.vcxproj]
   SysExTransferPanel.cpp
   SysExTransferPanel.cpp
   SysExTransferPanel.cpp
@@ -240,12 +240,12 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\src\gui\Sett
   SysExManagerPanel.cpp
   SysExManagerPanel.cpp
   Code wird generiert...
-  stage5_gui_preview_capture.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_gui_preview_capture.exe
+  stage5_gui_preview_capture.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_gui_preview_capture.exe
   Code wird generiert...
   Code wird generiert...
   Code wird generiert...
-  stage5_product_host_local.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\integration\Debug\stage5_product_host_local.exe
-  stage5_connection_ui_tests.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\Debug\stage5_connection_ui_tests.exe
-  taureon_app.vcxproj -> D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\src\Debug\taureon_app.exe
+  stage5_product_host_local.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\integration\Debug\stage5_product_host_local.exe
+  stage5_connection_ui_tests.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\tests\Debug\stage5_connection_ui_tests.exe
+  taureon_app.vcxproj -> <LOCAL_PATH>\.work\reconstruction-20260926\src\Debug\taureon_app.exe
   Deploying Stage 4 device profiles beside taureon_app
-  Building Custom Rule D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/CMakeLists.txt
+  Building Custom Rule <LOCAL_PATH>/CMakeLists.txt

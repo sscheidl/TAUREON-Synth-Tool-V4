@@ -1,7 +1,7 @@
 Stage 5 Block B P1 100-cycle soak
 SHA: 7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f
 Started UTC: 2026-09-26T17:50:35.2299957Z
-Command: tools/RunStage5ProductHostLoopback.ps1 -Executable D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4\.work\reconstruction-20260926\tests\integration\Debug\stage5_product_host_local.exe -Cycles 100
+Command: tools/RunStage5ProductHostLoopback.ps1 -Executable <LOCAL_PATH>\.work\reconstruction-20260926\tests\integration\Debug\stage5_product_host_local.exe -Cycles 100
 PowerShell: 7.6.5
 OS: Microsoft Windows NT 10.0.26200.0
 MIDI Console: 1.0.17-rc.4.25
@@ -24,11 +24,11 @@ permanent loopback endpoints, use the MIDI Settings app.
 
 ╭────────────────┬─────────────────────────────────────────────────────────────╮
 │ Endpoint A     │ TAUREON S5 WMS A E4F9A7                                     │
-│                │ \\?\swd#midisrv#midiu_loop_a_taureonstage56497f353a10a42e78 │
+│                │ \\?\swd#midisrv#midiu_loop_a_<TEMP_LOOPBACK_KEY> │
 │                │ 6e019f16a027ef2#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
 │                │                                                             │
 │ Endpoint B     │ TAUREON S5 WMS B E4F9A7                                     │
-│                │ \\?\swd#midisrv#midiu_loop_b_taureonstage56497f353a10a42e78 │
+│                │ \\?\swd#midisrv#midiu_loop_b_<TEMP_LOOPBACK_KEY> │
 │                │ 6e019f16a027ef2#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
 │                │                                                             │
 │ Association Id │ 01212ca2-9339-4487-8c1c-9ebc105c170b                        │

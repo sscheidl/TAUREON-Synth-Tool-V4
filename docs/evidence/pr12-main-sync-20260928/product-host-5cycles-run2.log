@@ -1,6 +1,6 @@
-UpdateCTestConfiguration  from :D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate/DartConfiguration.tcl
-Parse Config file:D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate/DartConfiguration.tcl
-Test project D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate
+UpdateCTestConfiguration  from :<LOCAL_PATH>/build/pr12-gate/DartConfiguration.tcl
+Parse Config file:<LOCAL_PATH>/build/pr12-gate/DartConfiguration.tcl
+Test project <LOCAL_PATH>/build/pr12-gate
 Constructing a list of tests
 Done constructing a list of tests
 Updating test list for fixtures
@@ -10,8 +10,8 @@ Checking test dependency graph end
 test 29
     Start 29: stage5_local_product_host_lifecycle
 
-Test command: C:\Users\ssche\AppData\Local\Microsoft\WindowsApps\pwsh.exe "-NoProfile" "-ExecutionPolicy" "Bypass" "-File" "D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tools/RunStage5ProductHostLoopback.ps1" "-Executable" "D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate/tests/integration/Debug/stage5_product_host_local.exe" "-Cycles" "5"
-Working Directory: D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate/tests/integration
+Test command: <USER_PROFILE>\AppData\Local\Microsoft\WindowsApps\pwsh.exe "-NoProfile" "-ExecutionPolicy" "Bypass" "-File" "<LOCAL_PATH>/tools/RunStage5ProductHostLoopback.ps1" "-Executable" "<LOCAL_PATH>/build/pr12-gate/tests/integration/Debug/stage5_product_host_local.exe" "-Cycles" "5"
+Working Directory: <LOCAL_PATH>/build/pr12-gate/tests/integration
 Environment variable modifications: 
  PATH=path_list_prepend:C:/Qt/6.10.3/msvc2022_64/bin
 Test timeout computed to be: 120
@@ -33,11 +33,11 @@ permanent loopback endpoints, use the MIDI Settings app.
 
 ╭────────────────┬─────────────────────────────────────────────────────────────╮
 │ Endpoint A     │ TAUREON S5 WMS A 588878                                     │
-│                │ \\?\swd#midisrv#midiu_loop_a_taureonstage5e7124dff67a741098 │
+│                │ \\?\swd#midisrv#midiu_loop_a_<TEMP_LOOPBACK_KEY> │
 │                │ 0753c77c8196810#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
 │                │                                                             │
 │ Endpoint B     │ TAUREON S5 WMS B 588878                                     │
-│                │ \\?\swd#midisrv#midiu_loop_b_taureonstage5e7124dff67a741098 │
+│                │ \\?\swd#midisrv#midiu_loop_b_<TEMP_LOOPBACK_KEY> │
 │                │ 0753c77c8196810#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
 │                │                                                             │
 │ Association Id │ c020f684-51f5-46bc-851c-ce40340bf8bb                        │

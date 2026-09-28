@@ -6,13 +6,13 @@ SDK Release Candidate 4 (GitHub Preview)
 ╭────────────────────┬─────────────────────────────────────────────────────────╮
 │ Processes          │ Sessions                                                │
 ├────────────────────┼─────────────────────────────────────────────────────────┤
-│ MidiSrv.exe [5140] │ Session MIDI 2.0 Protocol Manager open since Samstag,   │
+│ MidiSrv.exe [<PROCESS_ID>] │ Session MIDI 2.0 Protocol Manager open since Samstag,   │
 │                    │ 26. September 2026 11:04:59                             │
 │                    │ Connected to 1 endpoint:                                │
 │                    │                                                         │
 │                    │ 🎹 Iridium                                              │
 │                    │                                                         │
-│                    │ \\?\swd#midisrv#midiu_ks_4113926610698897938_outpin.0_i │
+│                    │ \\?\swd#midisrv#<IRIDIUM_WMS_ENDPOINT_KEY>_outpin.0_i │
 │                    │ npin.2#{e7cce071-3c03-423f-88d3-f1045d02552b}           │
 │                    │                                                         │
 │                    │                                                         │

@@ -1,4 +1,4 @@
-Test project D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/pr12-gate
+Test project <LOCAL_PATH>/build/pr12-gate
       Start  1: taureon_bootstrap_runs
  1/24 Test  #1: taureon_bootstrap_runs ................   Passed    0.01 sec
       Start  2: stage2_core_unit

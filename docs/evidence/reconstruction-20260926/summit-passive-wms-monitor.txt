@@ -4,7 +4,7 @@ SDK Release Candidate 4 (GitHub Preview)
 1.0.17-rc.4.25
 
 Monitoring incoming messages on Summit with auto-reconnect
-\\?\swd#midisrv#midiu_ksa_7469713634660520082#{e7cce071-3c03-423f-88d3-f1045d025
+\\?\swd#midisrv#<SUMMIT_WMS_ENDPOINT_KEY>#{e7cce071-3c03-423f-88d3-f1045d025
 52b}
 Press escape to stop monitoring.
 

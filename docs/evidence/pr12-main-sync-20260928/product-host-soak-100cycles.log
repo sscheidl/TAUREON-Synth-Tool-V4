@@ -16,11 +16,11 @@ permanent loopback endpoints, use the MIDI Settings app.
 
 ╭────────────────┬─────────────────────────────────────────────────────────────╮
 │ Endpoint A     │ TAUREON S5 WMS A 54AF5C                                     │
-│                │ \\?\swd#midisrv#midiu_loop_a_taureonstage5169af05ec09c4947b │
+│                │ \\?\swd#midisrv#midiu_loop_a_<TEMP_LOOPBACK_KEY> │
 │                │ 79fdefa36853178#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
 │                │                                                             │
 │ Endpoint B     │ TAUREON S5 WMS B 54AF5C                                     │
-│                │ \\?\swd#midisrv#midiu_loop_b_taureonstage5169af05ec09c4947b │
+│                │ \\?\swd#midisrv#midiu_loop_b_<TEMP_LOOPBACK_KEY> │
 │                │ 79fdefa36853178#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
 │                │                                                             │
 │ Association Id │ e6d08260-8868-427c-b6e2-c2d3d2db6a20                        │

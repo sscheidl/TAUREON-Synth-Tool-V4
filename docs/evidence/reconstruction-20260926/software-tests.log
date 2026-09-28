@@ -1,4 +1,4 @@
-Test project D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/.work/reconstruction-20260926
+Test project <LOCAL_PATH>/.work/reconstruction-20260926
       Start  1: taureon_bootstrap_runs
  1/28 Test  #1: taureon_bootstrap_runs ................   Passed    0.03 sec
       Start  2: stage1_wms_identity_logic

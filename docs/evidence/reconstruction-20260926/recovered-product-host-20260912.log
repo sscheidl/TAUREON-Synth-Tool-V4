@@ -2,8 +2,8 @@ Start testing: Sep 12 00:07 Mitteleurop�ische Sommerzeit
 ----------------------------------------------------------
 34/34 Testing: stage5_local_product_host_lifecycle
 34/34 Test: stage5_local_product_host_lifecycle
-Command: "C:/Users/ssche/.cache/codex-runtimes/codex-primary-runtime/dependencies/native/powershell/pwsh.exe" "-NoProfile" "-ExecutionPolicy" "Bypass" "-File" "D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/tools/RunStage5ProductHostLoopback.ps1" "-Executable" "D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/.work/stage5-p1-build/tests/integration/Debug/stage5_product_host_local.exe" "-Cycles" "5"
-Directory: D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/.work/stage5-p1-build/tests/integration
+Command: "<USER_PROFILE>/.cache/codex-runtimes/codex-primary-runtime/dependencies/native/powershell/pwsh.exe" "-NoProfile" "-ExecutionPolicy" "Bypass" "-File" "<LOCAL_PATH>/tools/RunStage5ProductHostLoopback.ps1" "-Executable" "<LOCAL_PATH>/.work/stage5-p1-build/tests/integration/Debug/stage5_product_host_local.exe" "-Cycles" "5"
+Directory: <LOCAL_PATH>/.work/stage5-p1-build/tests/integration
 "stage5_local_product_host_lifecycle" start time: Sep 12 00:07 Mitteleurop�ische Sommerzeit
 Output:
 ----------------------------------------------------------
@@ -25,11 +25,11 @@ permanent loopback endpoints, use the MIDI Settings app.
 
 ╭────────────────┬─────────────────────────────────────────────────────────────╮
 │ Endpoint A     │ TAUREON S5 WMS A A4D4F1                                     │
-│                │ \\?\swd#midisrv#midiu_loop_a_taureonstage5613413b2dcd44beea │
+│                │ \\?\swd#midisrv#midiu_loop_a_<TEMP_LOOPBACK_KEY> │
 │                │ dbd7c37c0a3d3fc#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
 │                │                                                             │
 │ Endpoint B     │ TAUREON S5 WMS B A4D4F1                                     │
-│                │ \\?\swd#midisrv#midiu_loop_b_taureonstage5613413b2dcd44beea │
+│                │ \\?\swd#midisrv#midiu_loop_b_<TEMP_LOOPBACK_KEY> │
 │                │ dbd7c37c0a3d3fc#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
 │                │                                                             │
 │ Association Id │ de2dc62c-29d5-4542-914b-6d0cef757b19                        │
