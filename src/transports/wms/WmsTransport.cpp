@@ -1,6 +1,6 @@
-#include "WmsTransport.hpp"
+#include <taureon/transports/wms/WmsTransport.hpp>
 
-#include "core/midi/RouteResolver.hpp"
+#include <taureon/core/midi/RouteResolver.hpp>
 
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>

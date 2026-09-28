@@ -1,13 +1,15 @@
 #include "TestSupport.hpp"
 
-#include "core/sysex/SysExCaptureSession.hpp"
-#include "core/sysex/SyxFile.hpp"
-#include "transports/winmm/WinmmTransport.hpp"
+#include <taureon/core/sysex/SysExCaptureSession.hpp>
+#include <taureon/core/sysex/SyxFile.hpp>
+#include <taureon/transports/winmm/WinmmTransport.hpp>
+#include "transports/winmm/WinmmTransportTestAccess.hpp"
 
 #include <windows.h>
 #include <mmsystem.h>
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
@@ -79,7 +81,12 @@ public:
 
     MMRESULT unprepare_output(HMIDIOUT handle, MIDIHDR&) override {
         events.emplace_back("unprepare-output");
-        return output_open && handle == output_handle ? MMSYSERR_NOERROR : MMSYSERR_INVALHANDLE;
+        if (!output_open || handle != output_handle) return MMSYSERR_INVALHANDLE;
+        if (output_unprepare_failures > 0) {
+            --output_unprepare_failures;
+            return MMSYSERR_ERROR;
+        }
+        return MMSYSERR_NOERROR;
     }
 
     UINT input_device_count() const noexcept override { return 1; }
@@ -142,6 +149,10 @@ public:
     MMRESULT close_input(HMIDIIN handle) override {
         events.emplace_back("close-input");
         if (!input_open || handle != input_handle) return MMSYSERR_INVALHANDLE;
+        if (input_close_failures > 0) {
+            --input_close_failures;
+            return MMSYSERR_ERROR;
+        }
         input_open = false;
         return MMSYSERR_NOERROR;
     }
@@ -247,7 +258,9 @@ public:
     bool output_open{};
     bool fail_short_send{};
     bool fail_long_send{};
+    int output_unprepare_failures{};
     bool fail_next_add{};
+    int input_close_failures{};
     std::vector<MIDIHDR*> input_headers;
     std::vector<MIDIHDR*> submitted_headers;
     std::vector<DWORD> short_messages;
@@ -326,7 +339,8 @@ MidiConnectionRequest both_routes(const std::vector<MidiEndpointDescriptor>& end
 
 void realtime_send_receive_and_owned_completion() {
     auto api = std::make_shared<RealtimeApi>();
-    WinmmTransport transport(api);
+    auto transport_owner = WinmmTransportTestAccess::create(api);
+    auto& transport = *transport_owner;
     const auto endpoints = transport.enumerate();
     TAUREON_REQUIRE(endpoints);
     TAUREON_REQUIRE(endpoints.value().size() == 2);
@@ -404,7 +418,8 @@ void realtime_send_receive_and_owned_completion() {
 
 void ordered_transport_loss_reaches_sysex_capture() {
     auto api = std::make_shared<RealtimeApi>();
-    WinmmTransport transport(api);
+    auto transport_owner = WinmmTransportTestAccess::create(api);
+    auto& transport = *transport_owner;
     const auto endpoints = transport.enumerate();
     TAUREON_REQUIRE(endpoints);
 
@@ -490,7 +505,8 @@ void ordered_transport_loss_reaches_sysex_capture() {
 
 void sustained_queue_overflow_taints_each_affected_frame() {
     auto api = std::make_shared<RealtimeApi>();
-    WinmmTransport transport(api);
+    auto transport_owner = WinmmTransportTestAccess::create(api);
+    auto& transport = *transport_owner;
     const auto endpoints = transport.enumerate();
     TAUREON_REQUIRE(endpoints);
 
@@ -544,6 +560,74 @@ void sustained_queue_overflow_taints_each_affected_frame() {
     TAUREON_REQUIRE(transport.close());
 }
 
+void close_failure_quiesces_handlers_and_destruction_detaches_native_context() {
+    auto api = std::make_shared<RealtimeApi>();
+    std::atomic<std::size_t> deliveries{};
+    {
+        auto transport_owner = WinmmTransportTestAccess::create(api);
+        auto& transport = *transport_owner;
+        const auto endpoints = transport.enumerate();
+        TAUREON_REQUIRE(endpoints);
+        transport.set_message_handler(
+            [&](const NativeMidiMessage&) { deliveries.fetch_add(1); });
+        TAUREON_REQUIRE(transport.open({endpoints.value()[0].identity, std::nullopt}));
+
+        api->input_close_failures = 1;
+        const auto first_close = transport.close();
+        TAUREON_REQUIRE(!first_close);
+        TAUREON_REQUIRE(first_close.error().native_api == "midiInClose");
+
+        // The native handle is still alive, but close() has ended application delivery.
+        api->emit_short(0x00643C90u, 1);
+        TAUREON_REQUIRE(transport.close());
+        TAUREON_REQUIRE(deliveries.load() == 0);
+    }
+
+    {
+        auto transport = WinmmTransportTestAccess::create(api);
+        const auto endpoints = transport->enumerate();
+        TAUREON_REQUIRE(endpoints);
+        transport->set_message_handler(
+            [&](const NativeMidiMessage&) { deliveries.fetch_add(1); });
+        TAUREON_REQUIRE(transport->open({endpoints.value()[0].identity, std::nullopt}));
+        api->input_close_failures = 3;
+        TAUREON_REQUIRE(!transport->close());
+        transport.reset();
+    }
+
+    // Both destructor close attempts failed. The native callback context remains valid
+    // and detached, so even a misbehaving late driver callback is a safe no-op.
+    api->emit_short(0x00643D90u, 2);
+    TAUREON_REQUIRE(deliveries.load() == 0);
+}
+
+void failed_long_send_and_unprepare_is_retained_for_close_retry() {
+    auto api = std::make_shared<RealtimeApi>();
+    auto transport = WinmmTransportTestAccess::create(api);
+    const auto endpoints = transport->enumerate();
+    TAUREON_REQUIRE(endpoints);
+    TAUREON_REQUIRE(
+        transport->open({std::nullopt, endpoints.value()[1].identity}));
+
+    api->fail_long_send = true;
+    api->output_unprepare_failures = 1;
+    const std::vector<std::uint8_t> sysex{0xF0, 0x7D, 0x11, 0xF7};
+    const auto send = transport->send(
+        {MidiBackend::winmm, Midi1NativeMessage{sysex}, std::nullopt});
+    TAUREON_REQUIRE(!send);
+    TAUREON_REQUIRE(send.error().native_api == "midiOutUnprepareHeader");
+    TAUREON_REQUIRE(transport->state() == TransportState::open);
+    TAUREON_REQUIRE(std::count(api->events.begin(), api->events.end(),
+                               "unprepare-output") == 1);
+
+    // The still-prepared header remains owned by the transport. close() retries
+    // unprepare before releasing its storage and closing the native handle.
+    TAUREON_REQUIRE(transport->close());
+    TAUREON_REQUIRE(std::count(api->events.begin(), api->events.end(),
+                               "unprepare-output") == 2);
+    TAUREON_REQUIRE(!api->output_open);
+}
+
 } // namespace
 
 int main() {
@@ -551,5 +635,7 @@ int main() {
         realtime_send_receive_and_owned_completion();
         ordered_transport_loss_reaches_sysex_capture();
         sustained_queue_overflow_taints_each_affected_frame();
+        close_failure_quiesces_handlers_and_destruction_detaches_native_context();
+        failed_long_send_and_unprepare_is_retained_for_close_retry();
     });
 }

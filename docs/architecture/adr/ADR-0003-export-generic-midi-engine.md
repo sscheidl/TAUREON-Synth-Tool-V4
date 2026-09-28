@@ -1,6 +1,6 @@
 # ADR-0003 – Export the generic MIDI engine separately from the product host
 
-**Status:** Proposed — package exists at 0.2.0; stable SDK contract and Product Owner gate pending
+**Status:** Accepted — internal reuse package 0.3.0
 **Date:** 2026-09-27
 **Owner:** Codex / Implementation Lead
 
@@ -19,34 +19,37 @@ generic engine. No installed package or separate-consumer proof existed.
 - Keep application services and profiles in the product-only `taureon_midi_core`
   target, linked to the engine. Build fake transport in a separate, non-installed
   testing target when top-level tests are enabled.
-- Link native WMS and WinMM transports to the engine rather than the product
-  application-services target. Their own SDK/Windows requirements remain.
+- Export WinMM and WMS as optional package components linked to the engine rather
+  than the product application-services target. Their SDK/Windows requirements remain.
 - Prove package use from a distinct consumer project, built without Qt.
 
-This does **not** declare a stable SDK, change any wire-format behavior, or
-extend Stage 3 to MIDI 2.0 Channel Voice, MPE, SysEx8, or device protocols.
-The current source tree is MIT licensed. The independently versioned package is
-0.2.0; version zero does not imply a frozen source or binary interface.
+This is only a shared internal library for the owner's future TAUREON/Synth
+projects, not a public SDK or general MIDI framework. It does not change wire
+formats or extend Stage 3 to MIDI 2.0 Channel Voice, MPE, SysEx8, or device
+protocols. The current source tree is MIT licensed. Version 0.3.0 identifies
+the package but does not promise source or binary compatibility across revisions.
 
 ## Consequences and review questions
 
 - Existing product and test targets should preserve behavior; a build and the
   existing focused suites must verify linkage after the split.
-- Installed public headers still expose `core/...` and
-  `transports/IMidiTransport.hpp` without a project prefix. Select and review a
-  prefixed layout before a stable SDK release.
-- `MidiBackend` and persisted route identity currently model WMS and WinMM only.
-  A third-party transport must not impersonate either backend in a stable SDK;
-  any generic identity design must preserve ADR-0001's exact-selection rule.
-- `IMidiTransport` lacks a cross-backend callback thread, handler replacement,
-  and close-quiescence contract. Specify and verify these against the native
-  implementations before promising them to package consumers.
-- `TransferEngine` is explicitly one-shot at 0.2.0. Its owner serializes
+- Public headers live physically under `include/taureon/...`; the build and install
+  use the same files, with no generated rewrite copy. Backend implementation and
+  test-only headers remain private.
+- `MidiBackend::external` and provider-scoped endpoint IDs let another internal
+  transport avoid impersonating WMS or WinMM. Exact route matching remains
+  mandatory. Review schema-v1 compatibility and failure behavior; no global
+  provider registration system is needed for our own projects.
+- `IMidiTransport` documents callback-thread freedom, in-flight handler replacement,
+  and control serialization. WinMM additionally guarantees no application handler
+  after any `close()` return and uses a detached, leased native callback context plus
+  a bounded failed-handle quarantine to make close-error destruction safe.
+- `TransferEngine` is explicitly one-shot since 0.2.0. Its owner serializes
   `start()`/`wait()`/destruction, keeps the transport alive, and must not call
-  `wait()` or destroy the engine from a progress handler. Stable SDK review must
-  decide whether these restrictions are sufficient or need enforcement.
-- Native backend packaging, ABI policy, and cross-platform support remain
-  separate decisions. The installed package proves use of the generic engine,
-  not native transport deployment or non-Windows compatibility.
-- Claude Code should review the layer boundary, exported dependency closure,
-  and public transport/lifetime decisions before this ADR becomes Accepted.
+  `wait()` or destroy the engine from a progress handler. For internal reuse,
+  document this ownership pattern and verify it in the consuming application.
+- The installed package exports `TaureonMidiEngine::MidiEngine`,
+  `TaureonMidiEngine::WinmmTransport`, and, when enabled,
+  `TaureonMidiEngine::WmsTransport`. WMS still requires its installed Windows
+  runtime. ABI policy, public SDK governance, and platform-neutral packaging
+  remain out of scope.

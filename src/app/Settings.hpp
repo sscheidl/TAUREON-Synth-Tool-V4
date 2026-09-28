@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/midi/Result.hpp"
-#include "core/midi/RoutePersistence.hpp"
+#include <taureon/core/midi/Result.hpp>
+#include <taureon/core/midi/RoutePersistence.hpp>
 
 #include <cstddef>
 #include <cstdint>

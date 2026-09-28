@@ -1,6 +1,6 @@
 #include "TestSupport.hpp"
 
-#include "core/sysex/SyxFile.hpp"
+#include <taureon/core/sysex/SyxFile.hpp>
 
 #include <filesystem>
 #include <fstream>

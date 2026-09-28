@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SysExFrame.hpp"
+#include <taureon/core/sysex/SysExFrame.hpp>
 
 #include <cstdint>
 #include <span>

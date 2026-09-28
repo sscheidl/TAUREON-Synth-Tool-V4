@@ -1,18 +1,18 @@
-#include "core/midi/MidiMessage.hpp"
-#include "core/midi/MidiError.hpp"
-#include "core/midi/EngineVersion.hpp"
-#include "core/midi/MidiTypes.hpp"
-#include "core/midi/Result.hpp"
-#include "core/midi/RoutePersistence.hpp"
-#include "core/midi/RouteResolver.hpp"
-#include "core/midi/TransportState.hpp"
-#include "core/sysex/SysEx7.hpp"
-#include "core/sysex/SysExCaptureSession.hpp"
-#include "core/sysex/SysExFrame.hpp"
-#include "core/sysex/SysExStreamParser.hpp"
-#include "core/sysex/SyxFile.hpp"
-#include "core/transfer/TransferEngine.hpp"
-#include "transports/IMidiTransport.hpp"
+#include <taureon/core/midi/MidiMessage.hpp>
+#include <taureon/core/midi/MidiError.hpp>
+#include <taureon/core/midi/EngineVersion.hpp>
+#include <taureon/core/midi/MidiTypes.hpp>
+#include <taureon/core/midi/Result.hpp>
+#include <taureon/core/midi/RoutePersistence.hpp>
+#include <taureon/core/midi/RouteResolver.hpp>
+#include <taureon/core/midi/TransportState.hpp>
+#include <taureon/core/sysex/SysEx7.hpp>
+#include <taureon/core/sysex/SysExCaptureSession.hpp>
+#include <taureon/core/sysex/SysExFrame.hpp>
+#include <taureon/core/sysex/SysExStreamParser.hpp>
+#include <taureon/core/sysex/SyxFile.hpp>
+#include <taureon/core/transfer/TransferEngine.hpp>
+#include <taureon/transports/IMidiTransport.hpp>
 
 #include <array>
 #include <atomic>
@@ -24,7 +24,7 @@ namespace {
 class ConsumerTransport final : public taureon::midi::IMidiTransport {
 public:
     taureon::midi::MidiBackend backend() const noexcept override {
-        return taureon::midi::MidiBackend::winmm;
+        return taureon::midi::MidiBackend::external;
     }
     taureon::midi::MidiTransportCapabilities capabilities() const noexcept override {
         return {false, true, false, true, false};
@@ -39,9 +39,19 @@ public:
                               taureon::midi::TransportState::closed;
     }
     taureon::midi::Result<std::vector<taureon::midi::MidiEndpointDescriptor>> enumerate() override {
-        return taureon::midi::Result<std::vector<taureon::midi::MidiEndpointDescriptor>>::success({});
+        return taureon::midi::Result<std::vector<taureon::midi::MidiEndpointDescriptor>>::success(
+            {{{backend(), taureon::midi::MidiDirection::output,
+               taureon::midi::ExternalRouteIdentity{"org.taureon.consumer", "out-1"}},
+              "Consumer output", taureon::midi::MidiProtocol::midi1,
+              {false, true, true, false}, std::nullopt, std::nullopt}});
     }
-    taureon::midi::Result<void> open(const taureon::midi::MidiConnectionRequest&) override {
+    taureon::midi::Result<void> open(const taureon::midi::MidiConnectionRequest& request) override {
+        const auto endpoints = enumerate();
+        if (!request.transmit_route || request.receive_route || !endpoints ||
+            *request.transmit_route != endpoints.value().front().identity) {
+            return taureon::midi::Result<void>::failure(
+                {taureon::midi::MidiErrorCode::invalid_route, "wrong external route", {}, std::nullopt});
+        }
         open_.store(true);
         return taureon::midi::Result<void>::success();
     }
@@ -68,7 +78,7 @@ private:
 
 int main() {
     static_assert(taureon::midi::engine_version_major == 0 &&
-                  taureon::midi::engine_version_minor == 2);
+                  taureon::midi::engine_version_minor == 3);
     const std::array<std::uint8_t, 3> pressure{0xa2, 62, 40};
     const auto midi = taureon::midi::parse_midi1_message(pressure);
     if (!midi || midi.value().kind != taureon::midi::Midi1MessageKind::polyphonic_aftertouch ||
@@ -92,7 +102,10 @@ int main() {
 
     // Link and run the installed worker against a transport defined entirely by this consumer.
     ConsumerTransport transport;
-    if (!transport.open({})) return 5;
+    const auto endpoints = transport.enumerate();
+    if (!endpoints || endpoints.value().size() != 1 ||
+        !taureon::midi::is_valid(endpoints.value().front().identity)) return 5;
+    if (!transport.open({std::nullopt, endpoints.value().front().identity})) return 5;
     taureon::transfer::TransferEngine transfer(transport);
     taureon::midi::NativeMidiMessage note;
     note.backend = transport.backend();

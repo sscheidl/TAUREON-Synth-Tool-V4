@@ -11,6 +11,9 @@ All notable TAUREON V4 changes will be documented here.
 - Assigned the experimental engine package its own version, independent of the
   product application version. Version `0.2.0` makes the one-shot transfer
   lifecycle explicit and rejects a second start after cancellation or completion.
+- Version `0.3.0` prefixes installed headers with `taureon/`, adds honest
+  provider-scoped external routes with exact persistence/resolution, and states
+  the callback/close-lifetime contract for transport implementers.
 - Licensed the current repository source under MIT; the previously restricted
   real Summit dump was removed rather than included under that license.
 - Replaced the restricted real Summit SysEx test fixture with an artificial

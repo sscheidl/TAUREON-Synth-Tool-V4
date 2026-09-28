@@ -2,7 +2,7 @@
 
 #include "app/Librarian.hpp"
 #include "gui/LibrarianPanel.hpp"
-#include "core/sysex/SyxFile.hpp"
+#include <taureon/core/sysex/SyxFile.hpp>
 #include "profiles/ProfileRegistry.hpp"
 
 #include <QApplication>

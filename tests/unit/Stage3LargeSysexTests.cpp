@@ -1,8 +1,8 @@
 #include "TestSupport.hpp"
 
-#include "core/sysex/SysEx7.hpp"
-#include "core/sysex/SysExStreamParser.hpp"
-#include "core/transfer/TransferEngine.hpp"
+#include <taureon/core/sysex/SysEx7.hpp>
+#include <taureon/core/sysex/SysExStreamParser.hpp>
+#include <taureon/core/transfer/TransferEngine.hpp>
 #include "transports/fake/FakeMidiTransport.hpp"
 
 #include <algorithm>

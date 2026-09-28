@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Result.hpp"
+#include <taureon/core/midi/Result.hpp>
 
 #include <mutex>
 

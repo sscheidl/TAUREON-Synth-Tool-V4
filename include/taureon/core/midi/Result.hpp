@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MidiError.hpp"
+#include <taureon/core/midi/MidiError.hpp>
 
 #include <optional>
 #include <utility>

@@ -1,7 +1,7 @@
 #include "TestSupport.hpp"
 
 #include "app/ProfileSelectionService.hpp"
-#include "core/sysex/SyxFile.hpp"
+#include <taureon/core/sysex/SyxFile.hpp>
 #include "gui/ProfileMatchPanel.hpp"
 
 #include <QApplication>

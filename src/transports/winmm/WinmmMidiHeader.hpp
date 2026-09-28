@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/midi/Result.hpp"
+#include <taureon/core/midi/Result.hpp>
 
 #include <windows.h>
 #include <mmsystem.h>

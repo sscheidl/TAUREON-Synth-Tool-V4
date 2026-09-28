@@ -1,7 +1,7 @@
 #include "TestSupport.hpp"
 
 #include "app/ConnectionWorker.hpp"
-#include "core/sysex/SysEx7.hpp"
+#include <taureon/core/sysex/SysEx7.hpp>
 #include "transports/fake/FakeMidiTransport.hpp"
 
 #include <filesystem>

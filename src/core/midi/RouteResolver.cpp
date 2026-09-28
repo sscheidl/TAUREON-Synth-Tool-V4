@@ -1,4 +1,4 @@
-#include "RouteResolver.hpp"
+#include <taureon/core/midi/RouteResolver.hpp>
 
 namespace taureon::midi {
 
