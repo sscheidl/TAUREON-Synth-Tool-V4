@@ -8,3 +8,6 @@ docs/evidence/reconstruction-20260926/summit-passive-wms-monitor.txt -diff
 docs/evidence/reconstruction-20260926/p1-soak-100cycles.log -diff
 docs/evidence/reconstruction-20260926/p1-soak-endpoints-before.txt -diff
 docs/evidence/reconstruction-20260926/p1-soak-endpoints-after.txt -diff
+docs/evidence/pr12-main-sync-20260928/product-host-5cycles-run1.log -diff
+docs/evidence/pr12-main-sync-20260928/product-host-5cycles-run2.log -diff
+docs/evidence/pr12-main-sync-20260928/product-host-soak-100cycles.log -diff
