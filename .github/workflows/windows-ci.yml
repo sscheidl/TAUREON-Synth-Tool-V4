@@ -149,11 +149,15 @@ jobs:
       - name: Test all cloud-capable software
         run: ctest --test-dir build/ci -C Debug -LE local-midi --output-on-failure
 
+      # Package only push runs: there github.sha is the exact pushed commit. A pull_request
+      # run checks out GitHub's synthetic merge ref, which would mislabel the bundle.
       - name: Acquire pinned Windows MIDI Services build dependencies
+        if: github.event_name == 'push'
         shell: pwsh
         run: .\tools\AcquireStage1Dependencies.ps1
 
       - name: Configure internal hardware-test build
+        if: github.event_name == 'push'
         shell: pwsh
         run: |
           cmake -S . -B build/hardware-test -G "Visual Studio 17 2022" -A x64 -T v143 `
@@ -164,9 +168,11 @@ jobs:
             -DTAUREON_BUILD_REVISION="${{ github.sha }}"
 
       - name: Build internal hardware-test executable
+        if: github.event_name == 'push'
         run: cmake --build build/hardware-test --config RelWithDebInfo --target taureon_app --parallel
 
       - name: Assemble and smoke-test portable hardware-test folder
+        if: github.event_name == 'push'
         shell: pwsh
         run: |
           $sourceExecutable = Join-Path $PWD "build\hardware-test\src\RelWithDebInfo\taureon_app.exe"
@@ -181,6 +187,8 @@ jobs:
           Copy-Item -LiteralPath $sourceExecutable -Destination $bundleExecutable
           Copy-Item -LiteralPath (Join-Path (Split-Path $sourceExecutable) "resources") `
             -Destination (Join-Path $bundleDirectory "resources") -Recurse
+          $profiles = Get-ChildItem -LiteralPath (Join-Path $bundleDirectory "resources\device_profiles") -Filter *.profile.json -File
+          if (-not $profiles) { throw "Device profiles are missing from the hardware-test folder" }
 
           & windeployqt --release --no-translations --dir $bundleDirectory $bundleExecutable
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -221,6 +229,7 @@ jobs:
           }
 
       - name: Upload internal Windows hardware-test build
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02a # v4
         with:
           name: TAUREON-V4-hardware-test-win64-${{ github.sha }}
