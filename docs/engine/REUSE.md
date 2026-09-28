@@ -139,8 +139,10 @@ native close is the WinMM callback-quiescence boundary. If WinMM refuses to clos
 a handle, destruction first detaches and drains the callback context; storage that
 the still-live driver handle may reference is retained until process exit. A late
 driver callback then observes a detached context and becomes a no-op instead of
-touching the destroyed transport. The owner still serializes control methods and
-destruction.
+touching the destroyed transport. If long-message submission and its immediate
+unprepare both fail, the prepared output header likewise remains transport-owned
+for retry during `close()` rather than being destroyed. The owner still serializes
+control methods and destruction.
 
 ## Next capability work
 

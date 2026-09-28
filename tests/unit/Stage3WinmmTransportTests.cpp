@@ -81,7 +81,12 @@ public:
 
     MMRESULT unprepare_output(HMIDIOUT handle, MIDIHDR&) override {
         events.emplace_back("unprepare-output");
-        return output_open && handle == output_handle ? MMSYSERR_NOERROR : MMSYSERR_INVALHANDLE;
+        if (!output_open || handle != output_handle) return MMSYSERR_INVALHANDLE;
+        if (output_unprepare_failures > 0) {
+            --output_unprepare_failures;
+            return MMSYSERR_ERROR;
+        }
+        return MMSYSERR_NOERROR;
     }
 
     UINT input_device_count() const noexcept override { return 1; }
@@ -253,6 +258,7 @@ public:
     bool output_open{};
     bool fail_short_send{};
     bool fail_long_send{};
+    int output_unprepare_failures{};
     bool fail_next_add{};
     int input_close_failures{};
     std::vector<MIDIHDR*> input_headers;
@@ -593,6 +599,33 @@ void close_failure_quiesces_handlers_and_destruction_detaches_native_context() {
     TAUREON_REQUIRE(deliveries.load() == 0);
 }
 
+void failed_long_send_and_unprepare_is_retained_for_close_retry() {
+    auto api = std::make_shared<RealtimeApi>();
+    auto transport = WinmmTransportTestAccess::create(api);
+    const auto endpoints = transport->enumerate();
+    TAUREON_REQUIRE(endpoints);
+    TAUREON_REQUIRE(
+        transport->open({std::nullopt, endpoints.value()[1].identity}));
+
+    api->fail_long_send = true;
+    api->output_unprepare_failures = 1;
+    const std::vector<std::uint8_t> sysex{0xF0, 0x7D, 0x11, 0xF7};
+    const auto send = transport->send(
+        {MidiBackend::winmm, Midi1NativeMessage{sysex}, std::nullopt});
+    TAUREON_REQUIRE(!send);
+    TAUREON_REQUIRE(send.error().native_api == "midiOutUnprepareHeader");
+    TAUREON_REQUIRE(transport->state() == TransportState::open);
+    TAUREON_REQUIRE(std::count(api->events.begin(), api->events.end(),
+                               "unprepare-output") == 1);
+
+    // The still-prepared header remains owned by the transport. close() retries
+    // unprepare before releasing its storage and closing the native handle.
+    TAUREON_REQUIRE(transport->close());
+    TAUREON_REQUIRE(std::count(api->events.begin(), api->events.end(),
+                               "unprepare-output") == 2);
+    TAUREON_REQUIRE(!api->output_open);
+}
+
 } // namespace
 
 int main() {
@@ -601,5 +634,6 @@ int main() {
         ordered_transport_loss_reaches_sysex_capture();
         sustained_queue_overflow_taints_each_affected_frame();
         close_failure_quiesces_handlers_and_destruction_detaches_native_context();
+        failed_long_send_and_unprepare_is_retained_for_close_retry();
     });
 }

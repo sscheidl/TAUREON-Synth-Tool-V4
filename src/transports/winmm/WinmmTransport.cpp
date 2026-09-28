@@ -727,8 +727,8 @@ struct WinmmTransport::Impl {
         const auto submitted = output_buffers.back()->submit();
         if (!submitted) {
             const auto unprepared = output_buffers.back()->unprepare();
-            output_buffers.pop_back();
             if (!unprepared) return unprepared;
+            output_buffers.pop_back();
             return submitted;
         }
 
