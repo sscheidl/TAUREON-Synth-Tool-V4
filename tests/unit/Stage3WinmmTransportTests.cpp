@@ -587,6 +587,8 @@ void close_failure_quiesces_handlers_and_destruction_detaches_native_context() {
         auto transport = WinmmTransportTestAccess::create(api);
         const auto endpoints = transport->enumerate();
         TAUREON_REQUIRE(endpoints);
+        transport->set_message_handler(
+            [&](const NativeMidiMessage&) { deliveries.fetch_add(1); });
         TAUREON_REQUIRE(transport->open({endpoints.value()[0].identity, std::nullopt}));
         api->input_close_failures = 3;
         TAUREON_REQUIRE(!transport->close());

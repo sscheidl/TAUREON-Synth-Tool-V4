@@ -43,9 +43,10 @@ using EndpointChangeHandler = std::function<void(const EndpointChange&)>;
 //   It must not throw, block on a transport control call, or destroy its transport.
 // - Handler replacement is thread-safe against dispatch, but an already copied
 //   handler may still run after set_* returns. Clearing a handler is not a join.
-// - close() may deliver already-queued events while it runs. This experimental
-//   interface does not yet promise callback quiescence at close() return; keep
-//   handler-captured state alive until the transport has been safely destroyed.
+// - close() may deliver already-queued events while it runs. This interface does
+//   not promise callback quiescence at close() return (a backend may document a
+//   stronger guarantee); keep handler-captured state alive until the transport has
+//   been safely destroyed.
 //   A failed close() is never evidence that native callbacks have stopped.
 // - Implementations must publish events in stream sequence order and never call
 //   user handlers while holding a lock needed by set_* or control methods.

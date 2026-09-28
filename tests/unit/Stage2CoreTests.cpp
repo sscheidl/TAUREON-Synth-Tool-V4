@@ -68,6 +68,24 @@ void persistence_tests() {
     TAUREON_REQUIRE(restored_external);
     TAUREON_REQUIRE(restored_external.value() == external);
 
+    // Golden schema-v1 strings: existing persisted WMS/WinMM routes must stay byte-identical.
+    const std::string wms_golden =
+        "version=1;backend=wms;direction=input;endpoint=%5C%5C%3F%5Cswd%23midisrv%23abc;group=3";
+    const PersistedMidiRoute wms_expected{
+        1, wms_route(MidiDirection::input, R"(\\?\swd#midisrv#abc)", 3)};
+    const auto wms_golden_route = deserialize_route(wms_golden);
+    TAUREON_REQUIRE(wms_golden_route);
+    TAUREON_REQUIRE(wms_golden_route.value() == wms_expected);
+    TAUREON_REQUIRE(serialize_route(wms_expected).value() == wms_golden);
+
+    const std::string winmm_golden =
+        "version=1;backend=winmm;direction=output;name=Port%20A;wmid=1;wpid=26;driver=256";
+    const PersistedMidiRoute winmm_expected{1, winmm_route(MidiDirection::output, "Port A")};
+    const auto winmm_golden_route = deserialize_route(winmm_golden);
+    TAUREON_REQUIRE(winmm_golden_route);
+    TAUREON_REQUIRE(winmm_golden_route.value() == winmm_expected);
+    TAUREON_REQUIRE(serialize_route(winmm_expected).value() == winmm_golden);
+
     TAUREON_REQUIRE(!deserialize_route("version=2;backend=wms;direction=input;endpoint=x;group=0"));
     TAUREON_REQUIRE(!deserialize_route("version=1;backend=wms;direction=input;endpoint=x;group=16"));
     TAUREON_REQUIRE(!deserialize_route("version=1;backend=winmm;direction=output;name=x;wmid=1;wpid=2"));
