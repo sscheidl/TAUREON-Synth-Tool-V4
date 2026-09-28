@@ -1,6 +1,6 @@
-#include "WmsTransport.hpp"
+#include <taureon/transports/wms/WmsTransport.hpp>
 
-#include "core/midi/RouteResolver.hpp"
+#include <taureon/core/midi/RouteResolver.hpp>
 
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -87,6 +87,7 @@ struct WmsTransport::Impl {
     std::atomic<std::uint64_t> dropped_messages{0};
     std::atomic<std::uint64_t> queue_high_water_mark{0};
     std::atomic<std::uint64_t> next_stream_sequence{0};
+    std::atomic<bool> worker_mta_apartment_observed{false};
 
     std::mutex handler_mutex;
     MidiMessageHandler message_handler;
@@ -186,6 +187,14 @@ struct WmsTransport::Impl {
         try {
             winrt::init_apartment(winrt::apartment_type::multi_threaded);
             apartment_initialized = true;
+            APTTYPE apartment_type{};
+            APTTYPEQUALIFIER apartment_qualifier{};
+            const auto apartment_result =
+                CoGetApartmentType(&apartment_type, &apartment_qualifier);
+            if (FAILED(apartment_result) || apartment_type != APTTYPE_MTA) {
+                throw std::runtime_error("WMS worker did not enter the required MTA apartment");
+            }
+            worker_mta_apartment_observed.store(true, std::memory_order_release);
             initializer = std::make_shared<init::MidiDesktopAppSdkInitializer>();
             if (!initializer->IsServiceInstalled() || !initializer->InitializeSdkRuntime() ||
                 !initializer->CheckForMinimumRequiredSdkVersion(1, 0, 17) ||
@@ -538,7 +547,8 @@ MidiTransportDiagnostics WmsTransport::diagnostics() const noexcept {
     return {impl_->callback_gate->native_callbacks.load(), impl_->delivered_messages.load(),
             impl_->transmitted_messages.load(), impl_->dropped_messages.load(),
             impl_->callback_gate->late_callbacks.load(),
-            impl_->queue_high_water_mark.load()};
+            impl_->queue_high_water_mark.load(),
+            impl_->worker_mta_apartment_observed.load(std::memory_order_acquire)};
 }
 
 TransportState WmsTransport::state() const noexcept { return lifecycle_.state(); }

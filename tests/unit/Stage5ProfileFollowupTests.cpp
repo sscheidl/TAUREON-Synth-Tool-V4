@@ -1,6 +1,6 @@
 #include "TestSupport.hpp"
 
-#include "core/sysex/SyxFile.hpp"
+#include <taureon/core/sysex/SyxFile.hpp>
 #include "profiles/ProfileLoader.hpp"
 #include "profiles/ProfileRegistry.hpp"
 
@@ -26,7 +26,7 @@ int main() {
         TAUREON_REQUIRE(registry.register_profile(std::move(manual)));
 
         const auto fixture = sysex::load_syx_file(
-            root / "tests" / "fixtures" / "novation_summit_crazy_sine.syx");
+            std::filesystem::path{TAUREON_TEST_FIXTURE_PATH});
         TAUREON_REQUIRE(fixture);
         TAUREON_REQUIRE(fixture.value().frames.size() == 1);
 

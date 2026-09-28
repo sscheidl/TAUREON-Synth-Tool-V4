@@ -3,6 +3,7 @@
 #include "gui/SysExManagerPanel.hpp"
 
 #include <QApplication>
+#include <QHeaderView>
 #include <QItemSelectionModel>
 #include <QLabel>
 #include <QPlainTextEdit>
@@ -32,8 +33,7 @@ int main(int argc, char* argv[]) {
                 completion(true);
                 return true;
             });
-        const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
-                             "novation_summit_crazy_sine.syx";
+        const std::filesystem::path fixture{TAUREON_TEST_FIXTURE_PATH};
         const auto total_bytes = std::filesystem::file_size(fixture);
         panel.add_file(fixture);
 
@@ -45,6 +45,9 @@ int main(int argc, char* argv[]) {
         auto* status = panel.findChild<QLabel*>("sysExManagerStatus");
         TAUREON_REQUIRE(panel.has_required_controls());
         TAUREON_REQUIRE(files != nullptr && files->model()->rowCount() == 1);
+        const auto device_header = files->model()->headerData(1, Qt::Horizontal).toString();
+        TAUREON_REQUIRE(files->horizontalHeader()->sectionSize(1) >=
+                        files->horizontalHeader()->fontMetrics().horizontalAdvance(device_header) + 16);
         TAUREON_REQUIRE(files->model()->index(0, 1).data().toString().contains("Novation"));
         TAUREON_REQUIRE(frames != nullptr && frames->model()->rowCount() == 1);
         const auto first_frame = frames->model()->index(0, 0);
@@ -63,7 +66,7 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(status != nullptr &&
                         status->text().contains("Opened inspected Manager bytes in SysEx Transfer"));
         TAUREON_REQUIRE(opened.has_value());
-        TAUREON_REQUIRE(opened->source_name == "novation_summit_crazy_sine.syx");
+        TAUREON_REQUIRE(opened->source_name == "synthetic_summit_header.syx");
         TAUREON_REQUIRE(opened->document.raw_bytes.size() == total_bytes);
         TAUREON_REQUIRE(opened->document.raw_bytes.size() > 256);
 

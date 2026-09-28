@@ -1,7 +1,7 @@
 #include "TestSupport.hpp"
 
-#include "core/sysex/SysEx7.hpp"
-#include "core/sysex/SyxFile.hpp"
+#include <taureon/core/sysex/SysEx7.hpp>
+#include <taureon/core/sysex/SyxFile.hpp>
 #include "profiles/ProfileLoader.hpp"
 #include "profiles/ProfileRegistry.hpp"
 
@@ -17,8 +17,7 @@ namespace {
 
 const std::filesystem::path source_root{TAUREON_SOURCE_DIR};
 const auto profile_directory = source_root / "resources" / "device_profiles";
-const auto fixture_path =
-    source_root / "tests" / "fixtures" / "novation_summit_crazy_sine.syx";
+const std::filesystem::path fixture_path{TAUREON_TEST_FIXTURE_PATH};
 
 std::string read_text(const std::filesystem::path& path) {
     std::ifstream stream(path, std::ios::binary);

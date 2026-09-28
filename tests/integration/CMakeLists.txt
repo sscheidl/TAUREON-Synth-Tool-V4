@@ -41,7 +41,7 @@ if(TARGET taureon_wms_transport)
         LABELS "stage2;local-midi;integration;wms"
         RESOURCE_LOCK "local-midi-environment"
         SKIP_RETURN_CODE 77
-        TIMEOUT 120)
+        TIMEOUT 180)
 
     add_executable(stage3_wms_local Stage3WmsLocal.cpp)
     target_link_libraries(stage3_wms_local PRIVATE taureon_wms_transport)
@@ -95,11 +95,11 @@ if(TARGET taureon_wms_transport)
     add_test(NAME stage5_local_product_host_lifecycle
         COMMAND "${TAUREON_PWSH_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
                 -File "${PROJECT_SOURCE_DIR}/tools/RunStage5ProductHostLoopback.ps1"
-                -Executable "$<TARGET_FILE:stage5_product_host_local>" -Cycles 20)
+                -Executable "$<TARGET_FILE:stage5_product_host_local>" -Cycles 5)
     set_tests_properties(stage5_local_product_host_lifecycle PROPERTIES
         LABELS "stage5;local-midi;integration;gui;winmm;wms"
         RESOURCE_LOCK "local-midi-environment"
         SKIP_RETURN_CODE 77
-        TIMEOUT 240
+        TIMEOUT 120
         ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
 endif()

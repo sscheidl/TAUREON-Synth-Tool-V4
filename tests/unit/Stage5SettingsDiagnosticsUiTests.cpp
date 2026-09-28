@@ -11,10 +11,13 @@
 
 #include <QApplication>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QEventLoop>
 #include <QLabel>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QTimer>
+#include <QWheelEvent>
 
 #include <filesystem>
 #include <memory>
@@ -68,6 +71,29 @@ int main(int argc, char* argv[]) {
         gui::SettingsPanel settings(path, log, export_policy);
         TAUREON_REQUIRE(diagnostics.has_required_controls());
         TAUREON_REQUIRE(settings.has_required_controls());
+        auto* scope_notice = settings.findChild<QLabel*>("settingsScopeNotice");
+        TAUREON_REQUIRE(scope_notice != nullptr &&
+                        scope_notice->text().contains("does not gate Raw Send"));
+        auto* backend_preference = settings.findChild<QComboBox*>("settingsPreferredBackend");
+        auto* confirmation_preference = settings.findChild<QComboBox*>("settingsConfirmationPolicy");
+        auto* generic_pacing = settings.findChild<QSpinBox*>("settingsSysExPacing");
+        TAUREON_REQUIRE(backend_preference != nullptr && generic_pacing != nullptr &&
+                        confirmation_preference != nullptr);
+        TAUREON_REQUIRE(!confirmation_preference->isEnabled() &&
+                        confirmation_preference->toolTip().contains("not enforced"));
+        backend_preference->clearFocus();
+        generic_pacing->clearFocus();
+        const int backend_before_wheel = backend_preference->currentIndex();
+        const int pacing_before_wheel = generic_pacing->value();
+        QWheelEvent backend_wheel(QPointF{5, 5}, QPointF{5, 5}, QPoint{}, QPoint{0, -120},
+                                  Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+        QWheelEvent pacing_wheel(QPointF{5, 5}, QPointF{5, 5}, QPoint{}, QPoint{0, 120},
+                                 Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+        QApplication::sendEvent(backend_preference, &backend_wheel);
+        QApplication::sendEvent(generic_pacing, &pacing_wheel);
+        TAUREON_REQUIRE(backend_preference->currentIndex() == backend_before_wheel);
+        TAUREON_REQUIRE(generic_pacing->value() == pacing_before_wheel);
+
         TAUREON_REQUIRE(diagnostics.findChild<QPushButton*>("diagnosticsExportBundle") != nullptr);
         TAUREON_REQUIRE(settings.findChild<QPushButton*>("settingsSave") != nullptr);
         TAUREON_REQUIRE(settings.findChild<QLabel*>("settingsPreferredReceiveRoute")->text().contains("No exact"));

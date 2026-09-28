@@ -1,7 +1,7 @@
 #pragma once
 
-#include "core/midi/Result.hpp"
-#include "core/sysex/SyxFile.hpp"
+#include <taureon/core/midi/Result.hpp>
+#include <taureon/core/sysex/SyxFile.hpp>
 #include "profiles/ProfileRegistry.hpp"
 
 #include <cstddef>

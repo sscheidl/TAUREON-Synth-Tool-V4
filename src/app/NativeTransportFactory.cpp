@@ -1,9 +1,9 @@
 #include "app/NativeTransportFactory.hpp"
 
-#include "transports/winmm/WinmmTransport.hpp"
+#include <taureon/transports/winmm/WinmmTransport.hpp>
 
 #if defined(TAUREON_HAS_WMS_TRANSPORT)
-#include "transports/wms/WmsTransport.hpp"
+#include <taureon/transports/wms/WmsTransport.hpp>
 #endif
 
 #include <stdexcept>

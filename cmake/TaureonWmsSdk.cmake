@@ -3,10 +3,13 @@ function(taureon_configure_wms_projection target)
     set(cppwinrt_package_root "${TAUREON_WMS_DEPENDENCY_ROOT}/cppwinrt-package")
     set(cppwinrt_tool "${cppwinrt_package_root}/bin/cppwinrt.exe")
     set(wms_winmd "${wms_package_root}/ref/native/Microsoft.Windows.Devices.Midi2.winmd")
+    set(cppwinrt_fast_forwarder
+        "${cppwinrt_package_root}/build/native/lib/x64/cppwinrt_fast_forwarder.lib")
     set(generated_root "${CMAKE_CURRENT_BINARY_DIR}/generated")
     set(projection_stamp "${generated_root}/projection.stamp")
 
-    foreach(required_file IN ITEMS "${cppwinrt_tool}" "${wms_winmd}")
+    foreach(required_file IN ITEMS
+            "${cppwinrt_tool}" "${wms_winmd}" "${cppwinrt_fast_forwarder}")
         if(NOT EXISTS "${required_file}")
             message(FATAL_ERROR
                 "Missing pinned WMS dependency: ${required_file}. "
@@ -32,9 +35,16 @@ function(taureon_configure_wms_projection target)
     target_include_directories(${target} PRIVATE
         "${generated_root}"
         "${wms_package_root}/build/native/include")
+    if(NOT TARGET TaureonMidiEngine::CppWinRTFastForwarder)
+        add_library(TaureonMidiEngine::CppWinRTFastForwarder STATIC IMPORTED GLOBAL)
+        set_target_properties(TaureonMidiEngine::CppWinRTFastForwarder PROPERTIES
+            IMPORTED_LOCATION "${cppwinrt_fast_forwarder}")
+    endif()
     target_link_libraries(${target} PRIVATE
         OneCoreUap.lib
         ole32.lib
         runtimeobject.lib
-        "${cppwinrt_package_root}/build/native/lib/x64/cppwinrt_fast_forwarder.lib")
+        TaureonMidiEngine::CppWinRTFastForwarder)
+    install(FILES "${cppwinrt_fast_forwarder}"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 endfunction()

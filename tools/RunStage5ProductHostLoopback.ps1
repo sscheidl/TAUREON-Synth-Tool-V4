@@ -50,8 +50,11 @@ try {
     } while ([DateTime]::UtcNow -lt $deadline)
     if ($LASTEXITCODE -ne 0) { throw 'Temporary Stage 5 routes did not become visible.' }
 
-    & $Executable --exercise $nameB $nameA $Cycles
-    if ($LASTEXITCODE -ne 0) { throw 'Stage 5 native product-host regression failed.' }
+    & $Executable --exercise-wms $nameB $nameA $Cycles
+    if ($LASTEXITCODE -ne 0) { throw 'Stage 5 WMS product-host regression failed.' }
+
+    & $Executable --exercise-winmm $nameB $nameA $Cycles
+    if ($LASTEXITCODE -ne 0) { throw 'Stage 5 WinMM product-host regression failed.' }
 }
 finally {
     Remove-Loopback

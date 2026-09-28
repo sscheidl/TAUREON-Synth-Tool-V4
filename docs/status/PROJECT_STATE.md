@@ -1,7 +1,18 @@
 # TAUREON V4 – Project State
 
-**Last updated:** 2026-09-09
+**Last updated:** 2026-09-26
 **Maintained by:** ChatGPT Classic / Project Manager
+
+**Current branch note (2026-09-28):** PR #14 packages the generic MIDI/SysEx
+engine experimentally at version 0.2.0 and is merged into `main`. PR #15 updates
+the internal package to version 0.3.0: physical `include/taureon` public headers,
+separately reusable Core/WinMM/WMS CMake targets, and a WinMM callback context
+that remains safe when native close fails. The package is for the owner's own
+TAUREON projects, not a public SDK. Hardware validation remains separate. The former
+real Summit SysEx fixture is absent from the current `main` tree, but four older
+remote branch tips and public history still contain it; see
+`docs/reference/PROVENANCE.md`. This
+branch note does not change the Stage-5 gate recorded below.
 
 ## Current stage
 
@@ -30,8 +41,8 @@ Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
 
 Stage 5 – Qt 6 Product GUI
-Status: HOLD/ACTIVE — Block A merged; Block B B-3 and B-5 completed locally
-Gate: HOLD — native 150%/200% visual and physical-hardware evidence remains outstanding
+Status: HOLD/ACTIVE — Block A merged; B-3 technical closure evidence complete with formal PR-thread resolution pending; B-5 closed
+Gate: HOLD — formal PR-#12 thread resolution, native 150%/200% visual inspection, and product-path hardware evidence remain
 Implementation lead: Codex
 ```
 
@@ -41,10 +52,12 @@ Slice 9a was merged at `6b6b4d9191e592826afa1bfa2ea7f0ad5703e562`. Block A was m
 
 PR #9 was merged at `0ea82e526e89fddb2d6e8ae10a24b481c0937813`. Windows CI #236 passed at its exact head `434727d729097f844b42df7746e8d7b4b71b4d87` with whitespace PASS, Debug build PASS, capture/artifact upload PASS, and 24/24 CTest PASS, 0 failed, 0 skipped. The `stage5-gui-preview-1920x1080` artifact contains one capture of each actual workspace; the hosted offscreen raster was 2164×1080 at DPR 1.0. It is **VISUAL PREVIEW ONLY**, not Windows desktop, High-DPI, or Block-B evidence.
 
-Enforced branch protection is not available for this private repository on the
-GitHub Free plan, so no protection rule or ruleset is enforced here.
-The standing control is therefore the manual pre-merge verification
-that has been applied to every Stage-5 pull request: the exact PR
+At the earlier Stage-5 gate, enforced branch protection was not available for
+the then-private repository on the GitHub Free plan, so no protection rule or
+ruleset was enforced at that time. The repository is now public; the current
+branch-protection configuration has not been re-audited in this PR.
+The standing control at that gate was manual pre-merge verification,
+applied to every Stage-5 pull request: the exact PR
 HEAD, a green Windows CI run identified by that `head_sha` rather
 than by a badge, and a conflict-free base. The PR whitespace check
 remains advisory. This is a plan limitation that has been assessed
@@ -52,28 +65,45 @@ and accepted, not an unaddressed gap.
 
 Stage 5 cloud/software work is closed at
 `d5f3a0bad140032fb6ef35c3cf5e1bb38c31d824`. On 2026-09-09, local Block-B work was
-continued on the Product Owner's Windows machine. B-3 product-host lifecycle evidence
-passes for native WMS and WinMM, and B-5's minimum-size defect is corrected. B-4 passes
-at native 125%; process-local 150% and 200% simulations pass but do not replace native
-OS display-scaling inspection. Stage 5 remains HOLD/ACTIVE and Stage 6 has not begun.
+continued on the Product Owner's Windows machine. PR #12 subsequently received three
+P1 findings against the B-3 evidence. Their six-file remediation is present only in the
+dirty worktree at branch HEAD `7dc09c9bd241cb773b25b41402d1aea892926d3f` and passed
+fresh local verification on 2026-09-26. Independent targeted review accepted all three
+code corrections. Commit `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f` then passed
+both push and pull-request Windows CI plus a retained new 100-cycle soak per backend.
+The review's technical closure conditions are complete; formal PR-thread resolution
+remains pending.
+B-5's minimum-size defect is corrected. B-4 passes at native 125%; process-local 150%
+and 200% simulations pass but do not replace native OS display-scaling inspection.
+Stage 5 remains HOLD/ACTIVE and Stage 6 has not begun.
 
 Block A closes deterministic cloud/software evidence: N-1, N-2, N-3, N-6, S7-3, S7-4, the fake close-while-in-flight proof, large SysEx malformed/incomplete/tainted rejection, and Stage-5-specific large cancellation. L-3 is unchanged: 256 MiB per document and 512 MiB aggregate raw workspace payload are resource limits, not MIDI/SysEx protocol limits and not total-process-memory bounds. Detailed traceability is in [`STAGE_5_REPORT.md`](../stages/STAGE_5_REPORT.md).
 
 Block-B disposition on the Product Owner's Windows machine:
 
-- B-3 **PASS:** actual production `QApplication` and `MainWindow`, native WMS/WinMM,
-  20 lifecycle cycles per backend, receive-active close, send-active close, callback
-  closure, bounded queue, joined shutdown, and process-handle trend all pass.
+- B-3 **PASS-READY / FORMAL PR-THREAD RESOLUTION PENDING:** the regular product-host gate runs
+  five cycles per backend, proves real receive activity before receive-active close,
+  requires every native close to succeed with final state `closed`, observes GUI
+  `MAINSTA` and WMS-worker MTA, and runs WMS and WinMM in separate processes. The short
+  run records but does not gate process-handle growth. A retained 100-cycle soak on
+  immutable code SHA `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f` applied the gate
+  for both backends and passed with negative slopes, no sustained growth, zero drops and
+  zero late callbacks. Both Windows-CI runs on the same SHA are green.
 - B-4 **PARTIAL:** all seven 1920x1080 workspaces pass native Windows 125% inspection.
   Effective 150% and 200% Qt simulations also fit and remain usable, but native Windows
   150% and 200% inspection is still required.
 - B-5 **CLOSED:** the measured minimum changed from 1170x903 to 758x419 logical pixels;
   captures at DPR 1.25, 1.5, and 2.0 are now exactly 1920x1080.
 
-The opt-in local build registers five retained MIDI regressions plus the new product-host
-test. All retained tests pass, and the corrected product-host test passes with temporary
-loopback endpoints removed and confirmed absent. No physical MIDI device evidence is
-claimed. Detailed measurements and captures are in
+Fresh 2026-09-26 verification built the dirty snapshot, passed 28/28 non-local tests,
+and passed the corrected five-cycle product-host test in 34.65 seconds. WMS recorded
+receive callbacks/delivery 1/1, WinMM 3/1, both with one transmit, zero drops, zero late
+callbacks, successful closes and final `closed`; GUI apartment was `main_sta` and the
+WMS worker MTA assertion passed. The other five long local regressions were not rerun,
+so no new 6/6 claim is made. Temporary loopback endpoints were removed and confirmed
+absent. Detailed current evidence is in
+[`docs/evidence/reconstruction-20260926`](../evidence/reconstruction-20260926/STATUSBERICHT.md);
+the historical Block-B measurements remain in
 [`docs/evidence/stage5-block-b-20260909`](../evidence/stage5-block-b-20260909/README.md).
 
 ## Project location
@@ -87,7 +117,7 @@ D:\Eigene Dateien\Eigene Dokumente\Playground\TAUREON-Synth-Tool-V4
 GitHub repository:
 
 ```text
-https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (private; `main` includes the dedicated Stage-3 completion commit recorded in Git history)
+https://github.com/sscheidl/TAUREON-Synth-Tool-V4 (public as of 2026-09-27; `main` includes the dedicated Stage-3 completion commit recorded in Git history)
 ```
 
 Legacy local reference:
@@ -167,6 +197,13 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
+PR #12 has three formally unresolved P1 review threads. Targeted independent review
+accepted the code corrections for measurable receive-active shutdown, successful
+close/final `closed`, and GUI/WMS apartment observation. Its two evidence conditions are
+now fulfilled: both Windows-CI runs are green and the retained 100-cycle soak passes on
+immutable SHA `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f`. Only formal thread
+resolution remains; there is no currently reproduced runtime failure.
+
 No known Stage-4 implementation P0/P1 exists. Stage 4 is PASS/CLOSED at revision `986115d` after the mandatory
 Claude Code architecture review, with FU-3 carried forward as a non-blocking Stage-5 GUI/evidence refinement.
 No Stage-3 blocker or unresolved P0/P1 remains. The historical review P1 ordered-loss gap and both P2 findings
@@ -198,8 +235,10 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
   bounded Summit profile, and the User-approved read-only fixture were accepted. FU-3 (P3) requires the future
   Stage-5 GUI to disclose a manual selection overridden by stronger fingerprint evidence and offer saved-binding
   promotion; the matching order itself remains unchanged.
-- **Stage 5:** Actual `QApplication` WMS/WinMM lifecycle and active-close validation passed
-  locally on 2026-09-09; native 150%/200% visual and physical-device evidence remains.
+- **Stage 5:** Targeted review accepts the code remediation for all three PR-#12 B-3 P1
+  findings, and its immutable-SHA CI plus retained 100-cycle-soak conditions now pass.
+  Formal review-thread resolution remains. Native 150%/200% visual inspection and
+  product-path physical-device evidence also remain.
 
 ## Stage 0 evidence correction (2026-08-24)
 
@@ -211,13 +250,20 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Keep Stage 5 at **HOLD/ACTIVE**. Perform native Windows 1920x1080 visual inspection at
-150% and 200% display scaling, then run the explicitly approved physical MIDI/SysEx
-hardware checks. Do not begin Stage 6.
+Keep Stage 5 at **HOLD/ACTIVE**. Present the immutable-SHA CI and retained 100-cycle
+evidence for formal resolution of the three PR-#12 threads. Then perform native Windows
+1920x1080 visual inspection at 150% and 200% display scaling. Any later product-path
+physical MIDI/SysEx work still requires its own safe, explicit scope. Do not begin
+Stage 6.
 
 ## Hardware validation
 
-Temporary WMS/WinMM loopback validation is complete. Physical MIDI/SysEx hardware
-validation has not started for V4.
+Temporary WMS/WinMM loopback validation is complete. On 2026-09-26 the Product Owner
+generated real channel-MIDI input while the Microsoft WMS console passively monitored
+three exact USB endpoints: Summit (905 messages), KONTROL S61 MK3 Main (232), and
+MiniFreak (789). No output route or request was used. This proves the Windows WMS
+receive substrate for those endpoints only; it is not V4 product-path, SysEx, WinMM,
+losslessness, latency, or Stage-5 hardware acceptance evidence. Two coordinated Summit
+WinMM helper runs received zero bytes and remain a bounded compatibility-path question.
 
 Previous hardware evidence belongs to the legacy/reference inventory until explicitly migrated as fixture/evidence.

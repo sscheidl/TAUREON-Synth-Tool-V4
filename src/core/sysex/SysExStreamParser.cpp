@@ -1,4 +1,4 @@
-#include "SysExStreamParser.hpp"
+#include <taureon/core/sysex/SysExStreamParser.hpp>
 
 #include <utility>
 

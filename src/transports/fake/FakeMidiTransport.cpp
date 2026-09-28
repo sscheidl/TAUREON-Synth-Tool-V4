@@ -1,6 +1,6 @@
 #include "FakeMidiTransport.hpp"
 
-#include "core/midi/RouteResolver.hpp"
+#include <taureon/core/midi/RouteResolver.hpp>
 
 #include <algorithm>
 

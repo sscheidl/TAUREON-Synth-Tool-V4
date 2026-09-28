@@ -1,0 +1,16 @@
+{
+  "Timestamp": "2026-09-26T15:29:32.7516538+02:00",
+  "SourceHead": "7dc09c9bd241cb773b25b41402d1aea892926d3f",
+  "ProtectedSourcesUnchanged": true,
+  "SoftwareTestsPassed": 28,
+  "SoftwareTestSeconds": 10.29,
+  "ProductHostPassed": true,
+  "ProductHostSeconds": 34.65,
+  "CyclesPerBackend": 5,
+  "PhysicalHardwareTested": false,
+  "Native150And200Tested": false,
+  "TemporaryMidiEndpointsRemoved": true,
+  "TemporaryBuildRemoved": false,
+  "BuildCleanupBlockReason": "Automatic approval review: blocked by policy",
+  "ExistingBuildPreserved": true
+}

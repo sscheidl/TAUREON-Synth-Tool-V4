@@ -1,5 +1,5 @@
-#include "transports/winmm/WinmmTransport.hpp"
-#include "core/sysex/SysExStreamParser.hpp"
+#include <taureon/transports/winmm/WinmmTransport.hpp>
+#include <taureon/core/sysex/SysExStreamParser.hpp>
 
 #include <windows.h>
 

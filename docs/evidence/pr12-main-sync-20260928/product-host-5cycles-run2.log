@@ -1,0 +1,78 @@
+UpdateCTestConfiguration  from :<LOCAL_PATH>/build/pr12-gate/DartConfiguration.tcl
+Parse Config file:<LOCAL_PATH>/build/pr12-gate/DartConfiguration.tcl
+Test project <LOCAL_PATH>/build/pr12-gate
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 29
+    Start 29: stage5_local_product_host_lifecycle
+
+Test command: <USER_PROFILE>\AppData\Local\Microsoft\WindowsApps\pwsh.exe "-NoProfile" "-ExecutionPolicy" "Bypass" "-File" "<LOCAL_PATH>/tools/RunStage5ProductHostLoopback.ps1" "-Executable" "<LOCAL_PATH>/build/pr12-gate/tests/integration/Debug/stage5_product_host_local.exe" "-Cycles" "5"
+Working Directory: <LOCAL_PATH>/build/pr12-gate/tests/integration
+Environment variable modifications: 
+ PATH=path_list_prepend:C:/Qt/6.10.3/msvc2022_64/bin
+Test timeout computed to be: 120
+PASS
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+Loopback endpoints created.
+
+Unlike classic MIDI 1.0 loopbacks, these are fully MIDI 2.0-compatible 
+bidirectional endpoints. Messages sent to Loopback A will be received by 
+Loopback B. Messages sent by B will be received by A. MIDI 1.0 apps will see 4 
+created ports (2 sources, 2 destinations) as a result.
+
+These endpoints will disappear when the service or PC is restarted. To create 
+permanent loopback endpoints, use the MIDI Settings app.
+
+╭────────────────┬─────────────────────────────────────────────────────────────╮
+│ Endpoint A     │ TAUREON S5 WMS A 588878                                     │
+│                │ \\?\swd#midisrv#midiu_loop_a_<TEMP_LOOPBACK_KEY> │
+│                │ 0753c77c8196810#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
+│                │                                                             │
+│ Endpoint B     │ TAUREON S5 WMS B 588878                                     │
+│                │ \\?\swd#midisrv#midiu_loop_b_<TEMP_LOOPBACK_KEY> │
+│                │ 0753c77c8196810#{e7cce071-3c03-423f-88d3-f1045d02552b}      │
+│                │                                                             │
+│ Association Id │ c020f684-51f5-46bc-851c-ce40340bf8bb                        │
+╰────────────────┴─────────────────────────────────────────────────────────────╯
+
+PASS
+{"event":"stage5_gui_apartment","type":"main_sta","qualifier":0}
+{"event":"stage5_product_host_handle_trend","backend":"wms","steady_slope":0.5,"new_steady_high":true,"sustained_growth":true,"gate_applied":false,"handle_samples":[467,468,468,469,469]}
+{"event":"stage5_product_host","backend":"wms","cycles":5,"receive_active_callbacks":1,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":1,"max_shutdown_ms":75,"steady_handle_min":468,"steady_handle_max":469,"steady_handle_slope":0.5,"handle_growth_gate_applied":false,"sustained_handle_growth":true}
+PASS
+{"event":"stage5_gui_apartment","type":"main_sta","qualifier":0}
+{"event":"stage5_product_host_handle_trend","backend":"winmm","steady_slope":0,"new_steady_high":false,"sustained_growth":false,"gate_applied":false,"handle_samples":[488,489,489,489,489]}
+{"event":"stage5_product_host","backend":"winmm","cycles":5,"receive_active_callbacks":3,"receive_active_delivered":1,"tx":1,"rx_callbacks":1,"dropped":0,"late":0,"queue_high_water":2,"max_shutdown_ms":31,"steady_handle_min":489,"steady_handle_max":489,"steady_handle_slope":0,"handle_growth_gate_applied":false,"sustained_handle_growth":false}
+PASS
+
+Microsoft Windows MIDI Services Console
+SDK Release Candidate 4 (GitHub Preview)
+1.0.17-rc.4.25
+
+Loopback endpoint pair removed.
+
+PASS
+1/1 Test #29: stage5_local_product_host_lifecycle ...   Passed   19.53 sec
+
+The following tests passed:
+	stage5_local_product_host_lifecycle
+
+100% tests passed out of 1
+
+Label Time Summary:
+gui            =  19.53 sec*proc (1 test)
+integration    =  19.53 sec*proc (1 test)
+local-midi     =  19.53 sec*proc (1 test)
+stage5         =  19.53 sec*proc (1 test)
+winmm          =  19.53 sec*proc (1 test)
+wms            =  19.53 sec*proc (1 test)
+
+Total Test time (real) =  19.57 sec

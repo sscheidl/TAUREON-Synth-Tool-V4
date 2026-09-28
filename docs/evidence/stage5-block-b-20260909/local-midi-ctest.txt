@@ -1,4 +1,4 @@
-Test project D:/Eigene Dateien/Eigene Dokumente/Playground/TAUREON-Synth-Tool-V4/build/vs2022-x64-block-b
+Test project <LOCAL_PATH>/build/vs2022-x64-block-b
     Start 29: stage2_local_winmm_wms_loopback
 1/6 Test #29: stage2_local_winmm_wms_loopback ............   Passed    9.88 sec
     Start 30: stage3_local_winmm_realtime

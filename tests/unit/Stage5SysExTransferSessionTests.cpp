@@ -1,7 +1,7 @@
 #include "TestSupport.hpp"
 
 #include "app/SysExTransferSession.hpp"
-#include "core/transfer/TransferEngine.hpp"
+#include <taureon/core/transfer/TransferEngine.hpp>
 #include "transports/fake/FakeMidiTransport.hpp"
 
 #include <condition_variable>
@@ -38,8 +38,7 @@ midi::MidiEndpointDescriptor output_endpoint() {
 
 int main() {
     return test::run([] {
-        const auto fixture = std::filesystem::path{TAUREON_SOURCE_DIR} / "tests" / "fixtures" /
-                             "novation_summit_crazy_sine.syx";
+        const std::filesystem::path fixture{TAUREON_TEST_FIXTURE_PATH};
         auto registry = std::make_shared<profiles::ProfileRegistry>();
         std::vector<profiles::ProfileLoadIssue> issues;
         TAUREON_REQUIRE(registry->load_directory(
@@ -49,7 +48,7 @@ int main() {
         TAUREON_REQUIRE(session.load_file(fixture));
         auto imported = session.snapshot();
         TAUREON_REQUIRE(imported.source_kind == app::SysExSourceKind::imported_file);
-        TAUREON_REQUIRE(imported.source_name == "novation_summit_crazy_sine.syx");
+        TAUREON_REQUIRE(imported.source_name == "synthetic_summit_header.syx");
         TAUREON_REQUIRE(imported.frames.size() == 1);
         TAUREON_REQUIRE(imported.complete_frames == 1);
         TAUREON_REQUIRE(imported.can_raw_send);
@@ -63,9 +62,9 @@ int main() {
         TAUREON_REQUIRE(!imported.profile_supports_validated_restore);
         sysex::SyxDocument inspected_document{imported.frames.front().bytes, imported.frames};
         TAUREON_REQUIRE(session.load_document(std::move(inspected_document),
-                                              "Manager copy of Crazy Sine.syx"));
+                                              "Manager copy of synthetic fixture"));
         const auto handed_off = session.snapshot();
-        TAUREON_REQUIRE(handed_off.source_name == "Manager copy of Crazy Sine.syx");
+        TAUREON_REQUIRE(handed_off.source_name == "Manager copy of synthetic fixture");
         TAUREON_REQUIRE(handed_off.frames == imported.frames);
         TAUREON_REQUIRE(handed_off.byte_count == imported.byte_count);
 

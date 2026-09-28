@@ -1,6 +1,6 @@
 #include "app/SysExTransferSession.hpp"
 
-#include "core/sysex/SysEx7.hpp"
+#include <taureon/core/sysex/SysEx7.hpp>
 
 #include <algorithm>
 #include <iterator>

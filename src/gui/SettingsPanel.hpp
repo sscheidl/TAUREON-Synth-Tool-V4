@@ -8,6 +8,7 @@
 #include <QWidget>
 
 #include <filesystem>
+#include <functional>
 #include <memory>
 
 class QCheckBox;
@@ -27,6 +28,7 @@ public:
 
     void set_connection_snapshot(const app::ConnectionSnapshot& snapshot);
     [[nodiscard]] midi::Result<void> save();
+    void set_applied_settings_callback(std::function<void(const app::Settings&)> callback);
     [[nodiscard]] const app::Settings& settings() const noexcept;
     [[nodiscard]] bool has_required_controls() const noexcept;
 
@@ -41,6 +43,7 @@ private:
     std::shared_ptr<app::DiagnosticExportPolicy> diagnostic_export_policy_;
     app::Settings settings_;
     app::ConnectionSnapshot connection_;
+    std::function<void(const app::Settings&)> applied_settings_callback_;
     QLabel* status_{};
     QLabel* receive_route_{};
     QLabel* transmit_route_{};
