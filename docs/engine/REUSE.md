@@ -72,9 +72,31 @@ path transitively from the linked CMake target.
 The standalone consumer is deliberately configured from a separate source tree
 against the **installed** package. It compiles all core headers, runs a transfer
 with its own transport, and constructs the installed WinMM component without
-opening hardware. When WMS is present, a separate executable is also compiled and
-linked to prove the installed dependency closure without claiming a runtime or
-hardware acceptance test.
+opening hardware. The WMS consumer is opt-in even when the installed package
+contains WMS. Configure it explicitly with
+`-DTAUREON_CONSUMER_WITH_WMS=ON`; this builds and links a separate executable to
+prove the installed dependency closure without claiming a runtime or hardware
+acceptance test:
+
+```powershell
+# AcquireStage1Dependencies.ps1 verifies the pinned package and WINMD hashes.
+.\tools\AcquireStage1Dependencies.ps1
+cmake -S . -B build/engine-wms -G "Visual Studio 17 2022" -A x64 `
+  -DTAUREON_BUILD_PRODUCT_APP=OFF -DBUILD_TESTING=ON `
+  -DTAUREON_ENABLE_WMS_TRANSPORT=ON `
+  -DCMAKE_INSTALL_PREFIX="$PWD/build/engine-wms-install"
+foreach ($configuration in @('Debug', 'Release')) {
+  cmake --build build/engine-wms --config $configuration
+  cmake --install build/engine-wms --config $configuration
+}
+cmake -S tests/consumer -B build/consumer-wms -G "Visual Studio 17 2022" -A x64 `
+  -DCMAKE_PREFIX_PATH="$PWD/build/engine-wms-install" `
+  -DTAUREON_CONSUMER_WITH_WMS=ON
+foreach ($configuration in @('Debug', 'Release')) {
+  cmake --build build/consumer-wms --config $configuration `
+    --target taureon_wms_consumer
+}
+```
 
 `TransferEngine` is one-shot: create a new instance for each transfer attempt.
 Its transport must remain alive until `wait()` and destruction complete. The
