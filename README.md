@@ -2,6 +2,20 @@
 
 TAUREON Synth Tool V4 is a native Windows desktop application for working with hardware synthesizers and other MIDI devices.
 
+![Redacted preview of TAUREON Synth Tool V4 showing the SysEx Manager](docs/images/taureon-synth-tool-v4-public.png)
+
+*Public preview: device names and file contents have been replaced with example placeholders.*
+
+## First public alpha
+
+The [Windows x64 alpha release](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases) is an experimental preview for interested users and contributors. Download the ZIP, extract the complete folder, and run `TAUREON-Synth-Tool-V4.exe`. Keep the DLLs, `resources`, and plugin folders next to the executable. No installer is provided.
+
+Windows 11 x64 is the primary target. The WinMM backend uses Windows' native MIDI support. The Windows MIDI Services (WMS) backend additionally requires a compatible Windows MIDI Services runtime installed separately; the release does not change drivers or Windows MIDI configuration. Select the exact receive and transmit routes yourself before connecting.
+
+The alpha is **not yet validated for real product-path MIDI/SysEx transfer or device restore**. Stage 5 remains open pending native 150%/200% display checks and physical-device testing in the application. Back up important synth data and use receive/inspection features first. The Summit profile currently supports bounded identification and inspection, not semantic preset editing or validated restore.
+
+Developers are welcome to [contribute](CONTRIBUTING.md). The generic MIDI engine has an [experimental internal CMake package](docs/engine/REUSE.md); it is not a stable public SDK.
+
 Its purpose is to replace a collection of fragmented, outdated, or unreliable MIDI/SysEx utilities with one coherent tool for modern Windows systems. TAUREON is intended to support both current USB MIDI devices and older DIN MIDI hardware without making the application depend on any one synthesizer.
 
 The central product principle is:

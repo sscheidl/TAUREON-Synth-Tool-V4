@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-project(TAUREON_Synth_Tool_V4 VERSION 0.0.0 LANGUAGES CXX)
+project(TAUREON_Synth_Tool_V4 VERSION 0.1.0 LANGUAGES CXX)
 
 option(TAUREON_BUILD_PRODUCT_APP "Build the Qt product application and native transports" ${PROJECT_IS_TOP_LEVEL})
 

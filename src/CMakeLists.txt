@@ -152,7 +152,7 @@ set_target_properties(taureon_app PROPERTIES AUTOMOC ON)
 target_link_libraries(taureon_app PRIVATE taureon_midi_core Qt6::Widgets)
 target_compile_features(taureon_app PRIVATE cxx_std_20)
 target_compile_definitions(taureon_app PRIVATE
-    TAUREON_APP_VERSION="${PROJECT_VERSION}"
+    TAUREON_APP_VERSION="${PROJECT_VERSION}-alpha.1"
     TAUREON_BUILD_REVISION="${TAUREON_BUILD_REVISION}")
 add_custom_command(TARGET taureon_app POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
