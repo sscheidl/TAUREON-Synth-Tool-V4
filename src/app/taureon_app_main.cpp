@@ -10,11 +10,44 @@
 #include <atomic>
 #include <filesystem>
 #include <memory>
+#include <iostream>
 #include <string_view>
 #include <utility>
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
+
+    // Read-only product-path diagnosis: no endpoint is opened and no MIDI is sent.
+    if (argc == 3 && std::string_view{argv[1]} == "--list-midi") {
+        const std::string_view backend_name{argv[2]};
+        if (backend_name != "wms" && backend_name != "winmm") {
+            std::cerr << "Expected --list-midi wms|winmm\n";
+            return 2;
+        }
+        try {
+            auto transport = taureon::app::create_native_transport(backend_name == "wms" ?
+                taureon::midi::MidiBackend::windows_midi_services : taureon::midi::MidiBackend::winmm);
+            const auto endpoints = transport->enumerate();
+            if (!endpoints) {
+                std::cerr << endpoints.error().message << '\n';
+                return 1;
+            }
+            std::size_t inputs = 0;
+            std::size_t outputs = 0;
+            for (const auto& endpoint : endpoints.value()) {
+                if (endpoint.identity.direction == taureon::midi::MidiDirection::input) ++inputs;
+                else ++outputs;
+                std::cout << (endpoint.identity.direction == taureon::midi::MidiDirection::input ? "RX " : "TX ")
+                          << endpoint.display_name << '\n';
+            }
+            std::cout << backend_name << ": " << inputs << " input routes, " << outputs
+                      << " output routes; enumeration only, no endpoint opened\n";
+            return 0;
+        } catch (const std::exception& error) {
+            std::cerr << error.what() << '\n';
+            return 1;
+        }
+    }
 
     taureon::app::MonitorEventQueue monitor_queue(4096);
     std::atomic<std::uint64_t> monitor_sequence{};

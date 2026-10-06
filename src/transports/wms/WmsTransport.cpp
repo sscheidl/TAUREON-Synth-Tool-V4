@@ -196,11 +196,19 @@ struct WmsTransport::Impl {
             }
             worker_mta_apartment_observed.store(true, std::memory_order_release);
             initializer = std::make_shared<init::MidiDesktopAppSdkInitializer>();
-            if (!initializer->IsServiceInstalled() || !initializer->InitializeSdkRuntime() ||
-                !initializer->CheckForMinimumRequiredSdkVersion(1, 0, 17) ||
-                !initializer->EnsureServiceAvailable()) {
+            std::string unavailable;
+            if (!initializer->IsServiceInstalled()) {
+                unavailable = "Windows MIDI Services transport is not installed/registered; choose WinMM";
+            } else if (!initializer->InitializeSdkRuntime()) {
+                unavailable = "Windows MIDI Services SDK runtime is not installed/registered; choose WinMM";
+            } else if (!initializer->CheckForMinimumRequiredSdkVersion(1, 0, 17)) {
+                unavailable = "Windows MIDI Services SDK runtime 1.0.17 or newer is required; choose WinMM";
+            } else if (!initializer->EnsureServiceAvailable()) {
+                unavailable = "Windows MIDI Services cannot be reached; choose WinMM";
+            }
+            if (!unavailable.empty()) {
                 startup_error = wms_error(MidiErrorCode::backend_unavailable,
-                                          "WMS runtime initialization failed");
+                                          std::move(unavailable));
             }
         } catch (const winrt::hresult_error& error) {
             startup_error = wms_error(MidiErrorCode::backend_unavailable,
@@ -292,10 +300,11 @@ struct WmsTransport::Impl {
                         const auto group = static_cast<std::uint8_t>(first_group + offset);
                         if (block.Direction() ==
                             native::MidiGroupTerminalBlockDirection::BlockInput) {
-                            append_route(routes, endpoint, group, MidiDirection::input);
+                            // Block directions are from the device's perspective: its input is our TX.
+                            append_route(routes, endpoint, group, MidiDirection::output);
                         } else if (block.Direction() ==
                                    native::MidiGroupTerminalBlockDirection::BlockOutput) {
-                            append_route(routes, endpoint, group, MidiDirection::output);
+                            append_route(routes, endpoint, group, MidiDirection::input);
                         } else {
                             append_route(routes, endpoint, group, MidiDirection::input);
                             append_route(routes, endpoint, group, MidiDirection::output);

@@ -19,7 +19,7 @@ std::unique_ptr<midi::IMidiTransport> create_native_transport(const midi::MidiBa
         return std::make_unique<midi::wms::WmsTransport>();
     }
 #endif
-    throw std::runtime_error("requested MIDI backend is not available in this build");
+    throw std::runtime_error("Windows MIDI Services was not included in this build; choose WinMM or a WMS-enabled build");
 }
 
 } // namespace taureon::app

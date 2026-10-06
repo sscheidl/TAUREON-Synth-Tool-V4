@@ -3,6 +3,7 @@
 #include "app/ConnectionWorker.hpp"
 #include "app/MonitorEventQueue.hpp"
 #include "gui/MainWindow.hpp"
+#include "gui/MidiMonitorModel.hpp"
 #include "gui/ProfileMatchPanel.hpp"
 #include "gui/SysExTransferPanel.hpp"
 #include "gui/SysExManagerPanel.hpp"
@@ -11,6 +12,9 @@
 
 #include <QApplication>
 #include <QComboBox>
+#include <QCheckBox>
+#include <QScrollBar>
+#include <QSortFilterProxyModel>
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include <QLabel>
@@ -116,13 +120,65 @@ int main(int argc, char* argv[]) {
         }
         TAUREON_REQUIRE(padded_midi_captions == 2);
 
-        backend->setCurrentIndex(1);
+        TAUREON_REQUIRE(receive->isEnabled() && transmit->isEnabled());
+        TAUREON_REQUIRE(!connect->isEnabled());
+        // Fresh Auto must offer an actionable backend choice in either port field.
+        receive->setCurrentIndex(1);
+        TAUREON_REQUIRE(backend->currentIndex() == 1);
         TAUREON_REQUIRE(process_until([&] {
             return receive->count() == 2 && transmit->count() == 2 && receive->isEnabled();
         }));
-        TAUREON_REQUIRE(receive->itemText(1).contains("fake-rx-id"));
+        TAUREON_REQUIRE(receive->itemData(1, Qt::ToolTipRole).toString().contains("fake-rx-id"));
         TAUREON_REQUIRE(receive->itemText(1).contains("group 4"));
-        TAUREON_REQUIRE(transmit->itemText(1).contains("fake-tx-id"));
+        TAUREON_REQUIRE(transmit->itemData(1, Qt::ToolTipRole).toString().contains("fake-tx-id"));
+
+        const QString long_port = "M8U eX port 16 — very long descriptive hardware MIDI port name";
+        receive->setItemText(1, long_port);
+        receive->showPopup();
+        TAUREON_REQUIRE(receive->view()->minimumWidth() >=
+                        receive->fontMetrics().horizontalAdvance(long_port));
+        receive->hidePopup();
+
+        auto* monitor_table = window.findChild<QTableView*>("midiMonitorTable");
+        auto* follow = window.findChild<QCheckBox*>("monitorFollowLatest");
+        TAUREON_REQUIRE(monitor_table && follow && follow->isChecked());
+        auto* proxy = dynamic_cast<QSortFilterProxyModel*>(monitor_table->model());
+        TAUREON_REQUIRE(proxy != nullptr);
+        auto* model = dynamic_cast<gui::MidiMonitorModel*>(proxy->sourceModel());
+        TAUREON_REQUIRE(model != nullptr);
+        const auto append_events = [model](int count) {
+            std::vector<app::MonitorEvent> events;
+            for (int index = 0; index < count; ++index) {
+                events.push_back({static_cast<std::uint64_t>(index), midi::MidiDirection::input,
+                    {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x90, 60, 127}}, {}}});
+            }
+            model->append_batch(std::move(events));
+        };
+        append_events(100);
+        auto* scroll = monitor_table->verticalScrollBar();
+        TAUREON_REQUIRE(process_until([&] {
+            return scroll->maximum() > 0 && scroll->value() == scroll->maximum();
+        }));
+        scroll->triggerAction(QAbstractSlider::SliderSingleStepSub);
+        TAUREON_REQUIRE(!follow->isChecked());
+        const int inspection_position = scroll->value();
+        append_events(10);
+        QApplication::processEvents(QEventLoop::AllEvents);
+        TAUREON_REQUIRE(scroll->value() == inspection_position);
+        follow->setChecked(true);
+        TAUREON_REQUIRE(process_until([&] { return scroll->value() == scroll->maximum(); }));
+        model->set_history_limit(50);
+        append_events(100); // A history replacement resets the model; following must survive it.
+        TAUREON_REQUIRE(process_until([&] {
+            return model->rowCount() == 50 && scroll->value() == scroll->maximum();
+        }));
+
+        // Auto backend choice is equally usable through the output field.
+        backend->setCurrentIndex(0);
+        transmit->setCurrentIndex(1);
+        TAUREON_REQUIRE(process_until([&] {
+            return backend->currentIndex() == 1 && receive->count() == 2 && receive->isEnabled();
+        }));
 
         receive->setCurrentIndex(1);
         TAUREON_REQUIRE(connect->isEnabled());
@@ -275,6 +331,38 @@ int main(int argc, char* argv[]) {
 
         connect->click();
         TAUREON_REQUIRE(process_until([&] { return connect->text() == "Connect"; }));
+
+        // A failed backend must remain visibly failed, with no empty selectable port list or
+        // background snapshot overwriting the initialization error.
+        app::ConnectionWorker unavailable_worker([](midi::MidiBackend)
+            -> std::unique_ptr<midi::IMidiTransport> {
+            throw std::runtime_error("WMS SDK runtime test unavailable");
+        });
+        app::MonitorEventQueue unavailable_queue(32);
+        gui::MainWindow unavailable_window(unavailable_queue, unavailable_worker);
+        auto* unavailable_backend = unavailable_window.findChild<QComboBox*>("backendSelector");
+        auto* unavailable_input = unavailable_window.findChild<QComboBox*>("receiveRouteSelector");
+        unavailable_backend->setCurrentIndex(1);
+        TAUREON_REQUIRE(process_until([&] {
+            return unavailable_window.statusBar()->currentMessage().contains("WMS SDK runtime test unavailable");
+        }));
+        TAUREON_REQUIRE(!unavailable_input->isEnabled());
+        status_check.restart();
+        while (status_check.elapsed() < 650) {
+            QApplication::processEvents(QEventLoop::AllEvents);
+            std::this_thread::yield();
+        }
+        TAUREON_REQUIRE(unavailable_window.statusBar()->currentMessage().contains("WMS SDK runtime test unavailable"));
+
+        app::ConnectionWorker empty_worker([](midi::MidiBackend selected_backend) {
+            return std::make_unique<midi::FakeMidiTransport>(selected_backend);
+        });
+        app::MonitorEventQueue empty_queue(32);
+        gui::MainWindow empty_window(empty_queue, empty_worker);
+        empty_window.findChild<QComboBox*>("backendSelector")->setCurrentIndex(1);
+        TAUREON_REQUIRE(process_until([&] {
+            return empty_window.statusBar()->currentMessage().contains("no MIDI routes found");
+        }));
 
         receive->setCurrentIndex(0);
         transmit->setCurrentIndex(1);

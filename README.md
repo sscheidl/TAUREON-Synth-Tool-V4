@@ -12,6 +12,11 @@ The [Windows x64 alpha release](https://github.com/sscheidl/TAUREON-Synth-Tool-V
 
 Windows 11 x64 is the primary target. The WinMM backend uses Windows' native MIDI support. The Windows MIDI Services (WMS) backend additionally requires a compatible Windows MIDI Services runtime installed separately; the release does not change drivers or Windows MIDI configuration. Select the exact receive and transmit routes yourself before connecting.
 
+For read-only backend diagnosis, run `TAUREON-Synth-Tool-V4.exe --list-midi wms`
+or `--list-midi winmm` from a terminal in the portable folder (local builds use
+`taureon_app.exe`). These commands list routes or the initialization error without
+opening a MIDI endpoint or sending data.
+
 The alpha is **not yet validated for real product-path MIDI/SysEx transfer or device restore**. Stage 5 remains open pending native 150%/200% display checks and physical-device testing in the application. Back up important synth data and use receive/inspection features first. The Summit profile currently supports bounded identification and inspection, not semantic preset editing or validated restore.
 
 Developers are welcome to [contribute](CONTRIBUTING.md). The generic MIDI engine has an [experimental internal CMake package](docs/engine/REUSE.md); it is not a stable public SDK.
