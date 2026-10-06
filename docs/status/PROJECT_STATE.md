@@ -21,10 +21,10 @@ WinMM callback context that remains safe when native close fails. It is for the
 owner's own TAUREON projects, not a public SDK. The repository is public since
 2026-09-27 and MIT-licensed (D-024).
 
-**Provenance note:** the former real Summit SysEx fixture is absent from `main` and all
-`codex/*` branch tips. On 2026-10-06 it remained at the two older remote branch tips
-`claude/reference-archive-v1` and `claude/stage5-gate-cleanup`, and in public Git
-history; see `docs/reference/PROVENANCE.md`.
+**Provenance note:** the former real Summit SysEx fixture is absent from every remote
+branch tip since the Product Owner deleted `claude/reference-archive-v1` and
+`claude/stage5-gate-cleanup` on 2026-10-06 (local bundle backups exist). It remains in
+public Git history; see `docs/reference/PROVENANCE.md`.
 
 ## Current stage
 

@@ -7,7 +7,7 @@ All notable TAUREON V4 changes will be documented here.
 ### Documentation
 
 - Reconciled project status with GitHub: PR-#12 review threads resolved and B-3
-  closed, first alpha recorded, remaining Summit-fixture branch tips updated.
+  closed, first alpha recorded, Summit fixture absent from all branch tips.
 
 ## [0.1.0-alpha.1] - 2026-10-02
 
