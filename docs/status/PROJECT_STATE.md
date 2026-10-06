@@ -1,18 +1,30 @@
 # TAUREON V4 – Project State
 
-**Last updated:** 2026-09-26
+**Last updated:** 2026-10-06 (status reconciliation by Claude Code at Product Owner request)
 **Maintained by:** ChatGPT Classic / Project Manager
 
-**Current branch note (2026-09-28):** PR #14 packages the generic MIDI/SysEx
-engine experimentally at version 0.2.0 and is merged into `main`. PR #15 updates
-the internal package to version 0.3.0: physical `include/taureon` public headers,
-separately reusable Core/WinMM/WMS CMake targets, and a WinMM callback context
-that remains safe when native close fails. The package is for the owner's own
-TAUREON projects, not a public SDK. Hardware validation remains separate. The former
-real Summit SysEx fixture is absent from the current `main` tree, but four older
-remote branch tips and public history still contain it; see
-`docs/reference/PROVENANCE.md`. This
-branch note does not change the Stage-5 gate recorded below.
+**Current `main` (2026-10-06):** `bab37a544f8bd7802a9b427b29fb3ec001149fd5`, the merge
+of PR #16. Windows CI is green on that commit and on tag `v0.1.0-alpha.1`. No pull
+request or issue is open.
+
+**First public alpha (2026-10-02):** PR #16 set the application version to
+`0.1.0-alpha.1`. The Product Owner published the GitHub pre-release
+[`v0.1.0-alpha.1`](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases/tag/v0.1.0-alpha.1)
+from `bab37a5` as a portable, unsigned Windows x64 ZIP with a SHA-256 sums file. It is
+an experimental preview: product-path MIDI/SysEx transfer and device restore are not
+validated, and it is **not** a Stage-5 gate (D-026).
+
+**Engine package:** PR #14 and PR #15 (merged 2026-09-27) separate the generic
+MIDI/SysEx engine into an internal CMake package, currently version 0.3.0, with
+`include/taureon` public headers, separately reusable Core/WinMM/WMS targets, and a
+WinMM callback context that remains safe when native close fails. It is for the
+owner's own TAUREON projects, not a public SDK. The repository is public since
+2026-09-27 and MIT-licensed (D-024).
+
+**Provenance note:** the former real Summit SysEx fixture is absent from `main` and all
+`codex/*` branch tips. On 2026-10-06 it remained at the two older remote branch tips
+`claude/reference-archive-v1` and `claude/stage5-gate-cleanup`, and in public Git
+history; see `docs/reference/PROVENANCE.md`.
 
 ## Current stage
 
@@ -41,8 +53,8 @@ Implementation lead: Codex
 Target: Generic profile plus exactly one Novation Summit data profile
 
 Stage 5 – Qt 6 Product GUI
-Status: HOLD/ACTIVE — Block A merged; B-3 technical closure evidence complete with formal PR-thread resolution pending; B-5 closed
-Gate: HOLD — formal PR-#12 thread resolution, native 150%/200% visual inspection, and product-path hardware evidence remain
+Status: HOLD/ACTIVE — Block A merged; B-3 closed (PR #12 threads resolved and merged 2026-09-28); B-5 closed
+Gate: HOLD — native 150%/200% visual inspection (B-4) and product-path hardware evidence remain
 Implementation lead: Codex
 ```
 
@@ -66,13 +78,14 @@ and accepted, not an unaddressed gap.
 Stage 5 cloud/software work is closed at
 `d5f3a0bad140032fb6ef35c3cf5e1bb38c31d824`. On 2026-09-09, local Block-B work was
 continued on the Product Owner's Windows machine. PR #12 subsequently received three
-P1 findings against the B-3 evidence. Their six-file remediation is present only in the
+P1 findings against the B-3 evidence. Their six-file remediation was initially present only in the
 dirty worktree at branch HEAD `7dc09c9bd241cb773b25b41402d1aea892926d3f` and passed
 fresh local verification on 2026-09-26. Independent targeted review accepted all three
 code corrections. Commit `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f` then passed
 both push and pull-request Windows CI plus a retained new 100-cycle soak per backend.
-The review's technical closure conditions are complete; formal PR-thread resolution
-remains pending.
+The review's technical closure conditions are complete. After a main-sync re-verification
+(`docs/evidence/pr12-main-sync-20260928`), the Product Owner resolved all three PR-#12
+review threads and merged PR #12 on 2026-09-28 as `a932287` from head `5a0d795`.
 B-5's minimum-size defect is corrected. B-4 passes at native 125%; process-local 150%
 and 200% simulations pass but do not replace native OS display-scaling inspection.
 Stage 5 remains HOLD/ACTIVE and Stage 6 has not begun.
@@ -81,7 +94,9 @@ Block A closes deterministic cloud/software evidence: N-1, N-2, N-3, N-6, S7-3, 
 
 Block-B disposition on the Product Owner's Windows machine:
 
-- B-3 **PASS-READY / FORMAL PR-THREAD RESOLUTION PENDING:** the regular product-host gate runs
+- B-3 **CLOSED** (formal PR-#12 thread resolution completed 2026-09-28; main-sync
+  re-verification passed 24/24 non-local CTest, two 5-cycle runs, and one gated
+  100-cycle soak per backend): the regular product-host gate runs
   five cycles per backend, proves real receive activity before receive-active close,
   requires every native close to succeed with final state `closed`, observes GUI
   `MAINSTA` and WMS-worker MTA, and runs WMS and WinMM in separate processes. The short
@@ -197,12 +212,15 @@ Earlier TAUREON2 planning documents are reference sources, not active specificat
 
 ## Current blockers
 
-PR #12 has three formally unresolved P1 review threads. Targeted independent review
-accepted the code corrections for measurable receive-active shutdown, successful
-close/final `closed`, and GUI/WMS apartment observation. Its two evidence conditions are
-now fulfilled: both Windows-CI runs are green and the retained 100-cycle soak passes on
-immutable SHA `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f`. Only formal thread
-resolution remains; there is no currently reproduced runtime failure.
+No open review blocker remains. The three PR-#12 P1 threads (measurable receive-active
+shutdown, successful close/final `closed`, GUI/WMS apartment observation) were resolved
+on 2026-09-28 after immutable-SHA CI, the retained 100-cycle soak on
+`7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f`, and the main-sync re-verification; PR #12
+is merged. There is no currently reproduced runtime failure.
+
+The Stage-5 gate is held only by Product-Owner evidence that automated or hosted runs
+cannot supply: native Windows 150%/200% visual inspection and product-path physical
+MIDI/SysEx evidence.
 
 No known Stage-4 implementation P0/P1 exists. Stage 4 is PASS/CLOSED at revision `986115d` after the mandatory
 Claude Code architecture review, with FU-3 carried forward as a non-blocking Stage-5 GUI/evidence refinement.
@@ -235,10 +253,10 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
   bounded Summit profile, and the User-approved read-only fixture were accepted. FU-3 (P3) requires the future
   Stage-5 GUI to disclose a manual selection overridden by stronger fingerprint evidence and offer saved-binding
   promotion; the matching order itself remains unchanged.
-- **Stage 5:** Targeted review accepts the code remediation for all three PR-#12 B-3 P1
-  findings, and its immutable-SHA CI plus retained 100-cycle-soak conditions now pass.
-  Formal review-thread resolution remains. Native 150%/200% visual inspection and
-  product-path physical-device evidence also remain.
+- **Stage 5:** B-3 is closed: targeted review accepted the code remediation for all three
+  PR-#12 P1 findings, its immutable-SHA CI and retained 100-cycle-soak conditions pass,
+  and the threads were formally resolved on 2026-09-28. Native 150%/200% visual
+  inspection and product-path physical-device evidence remain.
 
 ## Stage 0 evidence correction (2026-08-24)
 
@@ -250,11 +268,11 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Keep Stage 5 at **HOLD/ACTIVE**. Present the immutable-SHA CI and retained 100-cycle
-evidence for formal resolution of the three PR-#12 threads. Then perform native Windows
-1920x1080 visual inspection at 150% and 200% display scaling. Any later product-path
-physical MIDI/SysEx work still requires its own safe, explicit scope. Do not begin
-Stage 6.
+Keep Stage 5 at **HOLD/ACTIVE**. The Product Owner performs native Windows 1920x1080
+visual inspection of all seven workspaces at 150% and 200% display scaling (B-4). Any
+later product-path physical MIDI/SysEx work still requires its own safe, explicit scope.
+Feedback on alpha `v0.1.0-alpha.1` is handled through issues and focused pull requests
+and does not by itself change the Stage-5 gate. Do not begin Stage 6.
 
 ## Hardware validation
 

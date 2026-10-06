@@ -24,3 +24,6 @@
 
 # SysEx captures and presets are local user data, never repository fixtures.
 *.syx
+
+# Local working material (review bundles, release staging); never committed
+/.work/

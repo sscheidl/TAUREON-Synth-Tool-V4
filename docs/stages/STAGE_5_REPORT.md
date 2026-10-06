@@ -4,7 +4,7 @@
 **Date opened:** 2026-08-24
 **Implementation lead:** Codex
 **Baseline revision:** `070cf6be1c4f562d7a3b8455616204e45b3f6d85`
-**Status:** ACTIVE
+**Status:** HOLD/ACTIVE (see the 2026-10-06 reconciliation at the end of this report)
 
 ## Start-gate record
 
@@ -806,3 +806,24 @@ The independent review's technical conditions for B-3 closure are satisfied. B-3
 **PASS-READY / FORMAL PR-THREAD RESOLUTION PENDING** because the three GitHub review
 threads have not been resolved automatically. B-4 remains **PARTIAL**, B-5 remains
 **CLOSED**, Stage 5 remains **HOLD/ACTIVE**, and Stage 6 has not begun.
+
+## B-3 formal closure and status reconciliation — 2026-10-06
+
+The pending formal condition is fulfilled. All three PR-#12 review threads are
+resolved on GitHub; the Product Owner (`sscheidl`) resolved them on 2026-09-28,
+citing remediation commit `5a0d795` and the main-sync evidence retained in
+[`docs/evidence/pr12-main-sync-20260928`](../evidence/pr12-main-sync-20260928/README.md)
+(24/24 non-local CTest, two 5-cycle product-host runs, and one gated 100-cycle soak
+per backend on merge `28275605b4479d43544b29ba02663697444ed283`). PR #12 was then
+merged on 2026-09-28 as `a932287839a0a6f6038eec4e211b6af22dd6d343` from head `5a0d795`.
+B-3 is therefore **CLOSED**.
+
+PR #16 (merged as `bab37a544f8bd7802a9b427b29fb3ec001149fd5`) set the product version
+to `0.1.0-alpha.1`, and the Product Owner published the GitHub pre-release
+`v0.1.0-alpha.1` from that commit on 2026-10-02. Windows CI passed on both the `main`
+push and the tag. The release is an explicitly experimental preview; it is not a
+Stage-5 gate and does not add visual or hardware evidence.
+
+Remaining Stage-5 gate items are unchanged: B-4 stays **PARTIAL** until native Windows
+150% and 200% display-scaling inspection, and product-path physical MIDI/SysEx evidence
+is still outstanding. Stage 5 remains **HOLD/ACTIVE**, and Stage 6 has not begun.
