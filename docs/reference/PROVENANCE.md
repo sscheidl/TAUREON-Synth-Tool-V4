@@ -34,7 +34,7 @@ any `origin/codex/*` tip. It remains only at `origin/claude/reference-archive-v1
 history. The Product Owner deleted both branches on 2026-10-06 after local Git-bundle
 backups were made outside the repository's tracked tree. A follow-up check on the same
 day found no `.syx` file at any remote branch tip. The files remain in public Git
-history; rewriting history is a separate Product Owner decision.
+history; per D-027 the Product Owner decided not to rewrite history.
 
 Rules:
 

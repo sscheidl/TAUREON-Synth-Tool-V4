@@ -26,7 +26,7 @@ owner's own TAUREON projects, not a public SDK. The repository is public since
 **Provenance note:** the former real Summit SysEx fixture is absent from every remote
 branch tip since the Product Owner deleted `claude/reference-archive-v1` and
 `claude/stage5-gate-cleanup` on 2026-10-06 (local bundle backups exist). It remains in
-public Git history; see `docs/reference/PROVENANCE.md`.
+public Git history, which is not rewritten (D-027); see `docs/reference/PROVENANCE.md`.
 
 ## Current stage
 
