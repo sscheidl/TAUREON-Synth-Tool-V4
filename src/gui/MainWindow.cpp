@@ -559,7 +559,9 @@ void MainWindow::poll_connection_result() {
     pending_connection_.reset();
     if (!result) {
         connected_ = false;
-        backend_ready_ = false;
+        // Only a failed backend selection leaves no usable route list. After a failed
+        // connect or disconnect the enumerated routes stay selectable so the user can retry.
+        if (action == PendingConnectionAction::backend) backend_ready_ = false;
         set_connection_busy(false);
         connection_error_latched_ = true;
         statusBar()->showMessage("MIDI operation failed: " + QString::fromStdString(result.error().message));

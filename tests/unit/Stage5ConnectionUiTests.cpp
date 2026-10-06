@@ -458,5 +458,20 @@ int main(int argc, char* argv[]) {
 
         connect->click();
         TAUREON_REQUIRE(process_until([&] { return connect->text() == "Connect"; }));
+
+        // A failed connect (here: the selected output vanished) must keep the route
+        // selectors and Connect usable for a retry without re-selecting the backend.
+        TAUREON_REQUIRE(transmit->currentIndex() == 1);
+        connect->click();
+        TAUREON_REQUIRE(process_until([&] {
+            return window.statusBar()->currentMessage().startsWith("MIDI operation failed:");
+        }));
+        TAUREON_REQUIRE(connect->text() == "Connect");
+        TAUREON_REQUIRE(backend->isEnabled());
+        TAUREON_REQUIRE(receive->isEnabled() && transmit->isEnabled());
+        TAUREON_REQUIRE(connect->isEnabled());
+        receive->setCurrentIndex(1);
+        transmit->setCurrentIndex(0);
+        TAUREON_REQUIRE(connect->isEnabled());
     });
 }
