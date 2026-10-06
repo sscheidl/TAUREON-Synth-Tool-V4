@@ -4,7 +4,9 @@
 **Maintained by:** ChatGPT Classic / Project Manager
 
 **Current `main` (2026-10-06):** `bab37a544f8bd7802a9b427b29fb3ec001149fd5`, the merge
-of PR #16. Windows CI is green on that commit and on tag `v0.1.0-alpha.1`. No pull
+of PR #16. Windows CI runs `37047126183` (`main` push) and `37048217459` (tag
+`v0.1.0-alpha.1`) both have this `head_sha`; in each, `software` passed 24/24 CTest
+and `engine-consumer` passed all its CTest runs (details in `STAGE_5_REPORT.md`). No pull
 request or issue is open.
 
 **First public alpha (2026-10-02):** PR #16 set the application version to
@@ -85,7 +87,8 @@ code corrections. Commit `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f` then passed
 both push and pull-request Windows CI plus a retained new 100-cycle soak per backend.
 The review's technical closure conditions are complete. After a main-sync re-verification
 (`docs/evidence/pr12-main-sync-20260928`), the Product Owner resolved all three PR-#12
-review threads and merged PR #12 on 2026-09-28 as `a932287` from head `5a0d795`.
+review threads and merged PR #12 on 2026-09-28 as `a932287` (code remediation `693fd52`; verified
+main-sync merge `2827560`; final head `5a0d795` only sanitizes evidence).
 B-5's minimum-size defect is corrected. B-4 passes at native 125%; process-local 150%
 and 200% simulations pass but do not replace native OS display-scaling inspection.
 Stage 5 remains HOLD/ACTIVE and Stage 6 has not begun.
