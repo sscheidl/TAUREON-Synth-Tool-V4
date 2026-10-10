@@ -1,13 +1,24 @@
 # TAUREON V4 – Project State
 
-**Last updated:** 2026-10-06 (status reconciliation by Claude Code at Product Owner request)
+**Last updated:** 2026-10-10 (status reconciliation by Claude Code at Product Owner request)
 **Maintained by:** ChatGPT Classic / Project Manager
 
 **Current `main` (2026-10-06):** `bab37a544f8bd7802a9b427b29fb3ec001149fd5`, the merge
 of PR #16. Windows CI runs `37047126183` (`main` push) and `37048217459` (tag
 `v0.1.0-alpha.1`) both have this `head_sha`; in each, `software` passed 24/24 CTest
-and `engine-consumer` passed all its CTest runs (details in `STAGE_5_REPORT.md`). No pull
-request or issue is open.
+and `engine-consumer` passed all its CTest runs (details in `STAGE_5_REPORT.md`). No issue
+is open.
+
+**Open stacked pull requests (2026-10-10), merge in this order:** PR #18 (alpha
+port-selection/Monitor fixes and the failed-connect recovery fix) → PR #19 (production
+WMS client moved from RC4 `Microsoft.Windows.Devices.Midi2` to `Windows.Devices.Midi2`
+`0.99.83-devpreview.9`; Preview-9 API files excluded from public CI artifacts) → PR #20
+(Monitor filters, SysEx UI, Auto WMS→WinMM fallback, manual Protein CC labels). All
+three heads have green Windows CI and no open review thread. Their evidence is software
+and read-only enumeration only; native GUI and physical MIDI/SysEx behavior remain with
+the Product Owner. The Product Owner plans to install In-box Preview 10
+(`0.99.88-preview.10`) next; that update is expected to need only a new dependency pin
+and re-verification, not an API migration.
 
 **First public alpha (2026-10-02):** PR #16 set the application version to
 `0.1.0-alpha.1`. The Product Owner published the GitHub pre-release
@@ -16,7 +27,7 @@ from `bab37a5` as a portable, unsigned Windows x64 ZIP with a SHA-256 sums file.
 an experimental preview: product-path MIDI/SysEx transfer and device restore are not
 validated, and it is **not** a Stage-5 gate (D-026).
 
-**Engine package:** PR #14 and PR #15 (merged 2026-09-27) separate the generic
+**Engine package:** PR #14 (merged 2026-09-27) and PR #15 (merged 2026-09-28) separate the generic
 MIDI/SysEx engine into an internal CMake package, currently version 0.3.0, with
 `include/taureon` public headers, separately reusable Core/WinMM/WMS targets, and a
 WinMM callback context that remains safe when native close fails. It is for the
@@ -275,7 +286,9 @@ Keep Stage 5 at **HOLD/ACTIVE**. The Product Owner performs native Windows 1920x
 visual inspection of all seven workspaces at 150% and 200% display scaling (B-4). Any
 later product-path physical MIDI/SysEx work still requires its own safe, explicit scope.
 Feedback on alpha `v0.1.0-alpha.1` is handled through issues and focused pull requests
-and does not by itself change the Stage-5 gate. Do not begin Stage 6.
+and does not by itself change the Stage-5 gate. Merge the stacked PRs #18 → #19 → #20,
+then re-pin WMS to In-box Preview 10 and repeat read-only enumeration before any WMS
+product-path evidence. Do not begin Stage 6.
 
 ## Hardware validation
 
