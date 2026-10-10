@@ -2,11 +2,13 @@
 
 #include <taureon/core/midi/RouteResolver.hpp>
 
+#include <windows.h>
+#include <objbase.h>
+
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
-#include <winrt/Microsoft.Windows.Devices.Midi2.h>
-
-#include "winmidi/init/Microsoft.Windows.Devices.Midi2.Initialization.hpp"
+#include <winrt/Windows.Devices.Midi2.h>
+#include <winrt/Windows.Devices.Midi2.Enumeration.h>
 
 #include <algorithm>
 #include <bitset>
@@ -25,8 +27,8 @@
 #include <vector>
 
 namespace taureon::midi::wms {
-namespace native = winrt::Microsoft::Windows::Devices::Midi2;
-namespace init = Microsoft::Windows::Devices::Midi2::Initialization;
+namespace native = winrt::Windows::Devices::Midi2;
+namespace enumeration = winrt::Windows::Devices::Midi2::Enumeration;
 
 namespace {
 
@@ -75,7 +77,6 @@ struct WmsTransport::Impl {
     std::thread worker;
 
     bool apartment_initialized{};
-    std::shared_ptr<init::MidiDesktopAppSdkInitializer> initializer;
     std::optional<MidiError> startup_error;
     native::MidiSession session{nullptr};
     std::vector<ConnectionState> connections;
@@ -195,20 +196,23 @@ struct WmsTransport::Impl {
                 throw std::runtime_error("WMS worker did not enter the required MTA apartment");
             }
             worker_mta_apartment_observed.store(true, std::memory_order_release);
-            initializer = std::make_shared<init::MidiDesktopAppSdkInitializer>();
-            std::string unavailable;
-            if (!initializer->IsServiceInstalled()) {
-                unavailable = "Windows MIDI Services transport is not installed/registered; choose WinMM";
-            } else if (!initializer->InitializeSdkRuntime()) {
-                unavailable = "Windows MIDI Services SDK runtime is not installed/registered; choose WinMM";
-            } else if (!initializer->CheckForMinimumRequiredSdkVersion(1, 0, 17)) {
-                unavailable = "Windows MIDI Services SDK runtime 1.0.17 or newer is required; choose WinMM";
-            } else if (!initializer->EnsureServiceAvailable()) {
-                unavailable = "Windows MIDI Services cannot be reached; choose WinMM";
-            }
-            if (!unavailable.empty()) {
+            // Preview 9 uses Windows' WinRT activation (including the app-local API
+            // fallback). The separate Microsoft.Windows.Devices.Midi2 RC4
+            // registration/bootstrapper is no longer part of this API.
+            winrt::hresult_error activation_error;
+            const auto api = winrt::try_get_activation_factory<
+                native::MidiApi, native::IMidiApiStatics>(activation_error);
+            if (!api) {
                 startup_error = wms_error(MidiErrorCode::backend_unavailable,
-                                          std::move(unavailable));
+                    "Windows MIDI Services Preview 9 API could not be activated; "
+                    "keep Windows.Devices.Midi2.dll beside the application or choose WinMM",
+                    &activation_error);
+            } else if (!api.EnsureServiceAvailable()) {
+                const auto mode = api.GetCurrentlySelectedApiMode();
+                startup_error = wms_error(MidiErrorCode::backend_unavailable,
+                    mode == native::MidiApiMode::LegacyMode
+                        ? "Windows MIDI Services is in Legacy API mode; choose WinMM"
+                        : "Windows MIDI Services cannot be reached; choose WinMM");
             }
         } catch (const winrt::hresult_error& error) {
             startup_error = wms_error(MidiErrorCode::backend_unavailable,
@@ -219,10 +223,6 @@ struct WmsTransport::Impl {
     }
 
     void shutdown_runtime() noexcept {
-        if (initializer) {
-            initializer->ShutdownSdkRuntime();
-            initializer.reset();
-        }
         if (apartment_initialized) {
             winrt::uninit_apartment();
             apartment_initialized = false;
@@ -269,7 +269,7 @@ struct WmsTransport::Impl {
     }
 
     void append_route(std::vector<MidiEndpointDescriptor>& routes,
-                      const native::MidiEndpointDeviceInformation& endpoint,
+                      const enumeration::MidiEndpointDeviceInformation& endpoint,
                       const std::uint8_t group, const MidiDirection direction) const {
         const auto endpoint_id = winrt::to_string(endpoint.EndpointDeviceId());
         const auto name = winrt::to_string(endpoint.Name());
@@ -287,11 +287,11 @@ struct WmsTransport::Impl {
             return Result<std::vector<MidiEndpointDescriptor>>::failure(runtime.error());
         }
         try {
-            const auto filters = native::MidiEndpointDeviceInformationFilters::AllStandardEndpoints |
-                                 native::MidiEndpointDeviceInformationFilters::DiagnosticLoopback |
-                                 native::MidiEndpointDeviceInformationFilters::VirtualDeviceResponder;
-            const auto endpoints = native::MidiEndpointDeviceInformation::FindAll(
-                native::MidiEndpointDeviceInformationSortOrder::EndpointDeviceId, filters);
+            const auto filters = enumeration::MidiEndpointDeviceInformationFilters::AllStandardEndpoints |
+                                 enumeration::MidiEndpointDeviceInformationFilters::DiagnosticLoopback |
+                                 enumeration::MidiEndpointDeviceInformationFilters::VirtualDeviceResponder;
+            const auto endpoints = enumeration::MidiEndpointDeviceInformation::FindAll(
+                enumeration::MidiEndpointDeviceInformationSortOrder::EndpointDeviceId, filters);
             std::vector<MidiEndpointDescriptor> routes;
             for (const auto& endpoint : endpoints) {
                 for (const auto& block : endpoint.GetGroupTerminalBlocks()) {
@@ -299,11 +299,11 @@ struct WmsTransport::Impl {
                     for (std::uint8_t offset = 0; offset < block.GroupCount(); ++offset) {
                         const auto group = static_cast<std::uint8_t>(first_group + offset);
                         if (block.Direction() ==
-                            native::MidiGroupTerminalBlockDirection::BlockInput) {
+                            enumeration::MidiGroupTerminalBlockDirection::BlockInput) {
                             // Block directions are from the device's perspective: its input is our TX.
                             append_route(routes, endpoint, group, MidiDirection::output);
                         } else if (block.Direction() ==
-                                   native::MidiGroupTerminalBlockDirection::BlockOutput) {
+                                   enumeration::MidiGroupTerminalBlockDirection::BlockOutput) {
                             append_route(routes, endpoint, group, MidiDirection::input);
                         } else {
                             append_route(routes, endpoint, group, MidiDirection::input);

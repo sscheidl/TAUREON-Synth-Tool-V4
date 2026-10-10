@@ -31,6 +31,8 @@ set_tests_properties(stage3_local_winmm_realtime PROPERTIES
 if(TARGET taureon_wms_transport)
     add_executable(stage2_wms_local Stage2WmsLocal.cpp)
     target_link_libraries(stage2_wms_local PRIVATE taureon_wms_transport)
+    include("${PROJECT_SOURCE_DIR}/cmake/TaureonWmsSdk.cmake")
+    taureon_deploy_wms_runtime(stage2_wms_local)
     target_compile_definitions(stage2_wms_local PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
     target_compile_options(stage2_wms_local PRIVATE /W4 /permissive- /EHsc)
     add_test(NAME stage2_local_wms_lifecycle
@@ -45,6 +47,7 @@ if(TARGET taureon_wms_transport)
 
     add_executable(stage3_wms_local Stage3WmsLocal.cpp)
     target_link_libraries(stage3_wms_local PRIVATE taureon_wms_transport)
+    taureon_deploy_wms_runtime(stage3_wms_local)
     target_compile_definitions(stage3_wms_local PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
     target_compile_options(stage3_wms_local PRIVATE /W4 /permissive- /EHsc)
     add_test(NAME stage3_local_wms_realtime
@@ -88,6 +91,7 @@ if(TARGET taureon_wms_transport)
         "${PROJECT_SOURCE_DIR}/tests")
     target_link_libraries(stage5_product_host_local PRIVATE
         taureon_midi_core taureon_winmm_transport taureon_wms_transport Qt6::Widgets)
+    taureon_deploy_wms_runtime(stage5_product_host_local)
     target_compile_definitions(stage5_product_host_local PRIVATE
         TAUREON_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
         TAUREON_HAS_WMS_TRANSPORT=1)

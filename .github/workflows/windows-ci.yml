@@ -154,7 +154,7 @@ jobs:
       - name: Acquire pinned Windows MIDI Services build dependencies
         if: github.event_name == 'push'
         shell: pwsh
-        run: .\tools\AcquireStage1Dependencies.ps1
+        run: .\tools\AcquireWmsDependencies.ps1
 
       - name: Configure internal hardware-test build
         if: github.event_name == 'push'
@@ -185,6 +185,10 @@ jobs:
 
           New-Item -ItemType Directory -Force -Path $bundleDirectory | Out-Null
           Copy-Item -LiteralPath $sourceExecutable -Destination $bundleExecutable
+          foreach ($apiFile in @('Windows.Devices.Midi2.dll', 'Windows.Devices.Midi2.pri')) {
+            Copy-Item -LiteralPath (Join-Path (Split-Path $sourceExecutable) $apiFile) `
+              -Destination $bundleDirectory
+          }
           Copy-Item -LiteralPath (Join-Path (Split-Path $sourceExecutable) "resources") `
             -Destination (Join-Path $bundleDirectory "resources") -Recurse
           $profiles = Get-ChildItem -LiteralPath (Join-Path $bundleDirectory "resources\device_profiles") -Filter *.profile.json -File
@@ -216,9 +220,11 @@ jobs:
           not a release. Real MIDI/SysEx behavior is not yet accepted until the
           Product Owner records the physical-hardware results.
 
-          Windows MIDI Services requires the matching Windows MIDI Services
-          runtime already installed on the test PC. The WinMM backend remains
-          available independently.
+          WMS API: Windows.Devices.Midi2 0.99.83-devpreview.9 (app-local).
+          Requires Windows 11 25H2 or newer with Windows MIDI Services available.
+          This package is for internal development/testing under Microsoft's
+          Preview 9 terms, not public redistribution or a production release.
+          The WinMM backend remains available independently.
           "@
           $notice.Trim() | Set-Content -LiteralPath (Join-Path $bundleDirectory "INTERNAL-TEST-BUILD.txt") -Encoding utf8
 

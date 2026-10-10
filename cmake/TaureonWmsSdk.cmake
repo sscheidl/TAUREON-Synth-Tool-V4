@@ -2,7 +2,7 @@ function(taureon_configure_wms_projection target)
     set(wms_package_root "${TAUREON_WMS_DEPENDENCY_ROOT}/package")
     set(cppwinrt_package_root "${TAUREON_WMS_DEPENDENCY_ROOT}/cppwinrt-package")
     set(cppwinrt_tool "${cppwinrt_package_root}/bin/cppwinrt.exe")
-    set(wms_winmd "${wms_package_root}/ref/native/Microsoft.Windows.Devices.Midi2.winmd")
+    set(wms_winmd "${wms_package_root}/ref/native/Windows.Devices.Midi2.winmd")
     set(cppwinrt_fast_forwarder
         "${cppwinrt_package_root}/build/native/lib/x64/cppwinrt_fast_forwarder.lib")
     set(generated_root "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -13,7 +13,7 @@ function(taureon_configure_wms_projection target)
         if(NOT EXISTS "${required_file}")
             message(FATAL_ERROR
                 "Missing pinned WMS dependency: ${required_file}. "
-                "Run tools/AcquireStage1Dependencies.ps1 or set TAUREON_WMS_DEPENDENCY_ROOT.")
+                "Run tools/AcquireWmsDependencies.ps1 or set TAUREON_WMS_DEPENDENCY_ROOT.")
         endif()
     endforeach()
 
@@ -47,4 +47,20 @@ function(taureon_configure_wms_projection target)
         TaureonMidiEngine::CppWinRTFastForwarder)
     install(FILES "${cppwinrt_fast_forwarder}"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+endfunction()
+
+# Internal test builds may deploy the Preview 9 API beside the executable,
+# following Microsoft's native NuGet targets. This does not install/register
+# a system runtime. Public preview distribution has additional upstream terms.
+function(taureon_deploy_wms_runtime target)
+    set(runtime_root "${TAUREON_WMS_DEPENDENCY_ROOT}/package/runtimes/win-x64/native")
+    foreach(runtime_file IN ITEMS Windows.Devices.Midi2.dll Windows.Devices.Midi2.pri)
+        if(NOT EXISTS "${runtime_root}/${runtime_file}")
+            message(FATAL_ERROR "Missing Preview 9 runtime file: ${runtime_root}/${runtime_file}")
+        endif()
+        add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${runtime_root}/${runtime_file}" "$<TARGET_FILE_DIR:${target}>/${runtime_file}"
+            VERBATIM)
+    endforeach()
 endfunction()
