@@ -14,12 +14,30 @@
 #include <mutex>
 #include <optional>
 #include <queue>
+#include <string>
 #include <thread>
+#include <vector>
 
 namespace taureon::app {
 
 using TransportFactory =
     std::function<std::unique_ptr<midi::IMidiTransport>(midi::MidiBackend)>;
+
+// Read-only availability of one MIDI backend: enumeration only, no endpoint opened.
+struct BackendProbe {
+    midi::MidiBackend backend{midi::MidiBackend::winmm};
+    bool available{};
+    std::size_t receive_routes{};
+    std::size_t transmit_routes{};
+    std::string detail;
+};
+
+struct BackendProbeReport {
+    std::vector<BackendProbe> backends;
+    // Where this process loaded Windows.Devices.Midi2.dll from, as a location class
+    // rather than a path so diagnostics never contain user directories.
+    std::string wms_api_location;
+};
 
 class ConnectionWorker {
 public:
@@ -56,6 +74,9 @@ public:
         std::optional<midi::MidiRouteIdentity> expected_transmit_route = {});
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> cancel_sysex_transfer();
     [[nodiscard]] std::future<midi::Result<SysExTransferSnapshot>> sysex_snapshot();
+    // Enumerates WMS and WinMM with fresh transports from the factory. Refused while a
+    // SysEx send or receive is active so it cannot delay that stream.
+    [[nodiscard]] std::future<midi::Result<BackendProbeReport>> probe_backends();
 
 private:
     struct State;

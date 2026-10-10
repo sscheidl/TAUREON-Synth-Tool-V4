@@ -38,6 +38,8 @@ protected:
 
 private:
     [[nodiscard]] app::DiagnosticExportPolicy effective_export_policy() const;
+    [[nodiscard]] app::DiagnosticSnapshot current_snapshot() const;
+    void check_engines();
     void refresh();
     void poll();
     void present();
@@ -48,9 +50,12 @@ private:
     QPlainTextEdit* details_{};
     QLabel* status_{};
     QPushButton* export_button_{};
+    QPushButton* check_engines_button_{};
     QTimer* timer_{};
     std::optional<std::future<midi::Result<app::ConnectionSnapshot>>> pending_connection_;
     std::optional<std::future<midi::Result<app::SysExTransferSnapshot>>> pending_transfer_;
+    std::optional<std::future<midi::Result<app::BackendProbeReport>>> pending_engines_;
+    std::string engine_summary_{"not checked: use Check MIDI engines (enumeration only, no port opened)"};
     app::ConnectionSnapshot connection_;
     app::SysExTransferSnapshot transfer_;
     bool have_connection_{};

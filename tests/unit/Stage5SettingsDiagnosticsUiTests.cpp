@@ -12,14 +12,18 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QLabel>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QTimer>
 #include <QWheelEvent>
 
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <thread>
@@ -149,5 +153,43 @@ int main(int argc, char* argv[]) {
             "Safe snapshots refreshed"));
         diagnostics.hide();
         TAUREON_REQUIRE(transport == nullptr);
+
+        // Only the explicit engine check creates transports: enumeration only, result shown
+        // and exported in the MIDI engines field.
+        auto* check_engines = diagnostics.findChild<QPushButton*>("diagnosticsCheckEngines");
+        auto* details = diagnostics.findChild<QPlainTextEdit*>("diagnosticsSnapshotText");
+        TAUREON_REQUIRE(check_engines != nullptr && details != nullptr);
+        TAUREON_REQUIRE(details->toPlainText().contains("MIDI engines: not checked"));
+        diagnostics.show();
+        check_engines->click();
+        // The panel polls its worker futures on a 250 ms timer; an iteration-bounded wait can
+        // end on a fast runner before that timer fires once.
+        const auto engines_shown = [&] {
+            const auto text = details->toPlainText();
+            return text.contains("WMS: available, 1 RX / 1 TX routes") &&
+                   text.contains("WinMM: available, 1 RX / 1 TX routes");
+        };
+        QElapsedTimer engines_wait;
+        engines_wait.start();
+        while (!engines_shown() && engines_wait.elapsed() < 5000) {
+            QApplication::processEvents(QEventLoop::AllEvents);
+            std::this_thread::yield();
+        }
+        TAUREON_REQUIRE(engines_shown());
+        TAUREON_REQUIRE(check_engines->isEnabled());
+        TAUREON_REQUIRE(diagnostics.findChild<QLabel*>("diagnosticsStatus")->text().contains(
+            "no port was opened"));
+        TAUREON_REQUIRE(transport != nullptr);
+        diagnostics.hide();
+        const auto engines_bundle = std::filesystem::path{TAUREON_TEST_OUTPUT_DIR} /
+                                    "stage5-diagnostics-engines.txt";
+        std::filesystem::remove(engines_bundle, error);
+        TAUREON_REQUIRE(diagnostics.export_bundle(engines_bundle));
+        std::ifstream engines_file(engines_bundle);
+        const std::string engines_text{std::istreambuf_iterator<char>{engines_file},
+                                       std::istreambuf_iterator<char>{}};
+        engines_file.close();
+        TAUREON_REQUIRE(engines_text.find("WinMM: available, 1 RX / 1 TX routes") != std::string::npos);
+        std::filesystem::remove(engines_bundle, error);
     });
 }

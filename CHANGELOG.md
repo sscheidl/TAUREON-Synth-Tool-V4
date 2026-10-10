@@ -4,6 +4,16 @@ All notable TAUREON V4 changes will be documented here.
 
 ## [Unreleased]
 
+### Diagnostics
+
+- The Diagnostics tab has a "Check MIDI engines" button. It lists WMS and WinMM
+  routes through fresh transports without opening a port, shows each engine as
+  available with route counts or with its error, and reports where the WMS API
+  was loaded from (beside the application, Windows MIDI Services Tools, Windows,
+  or another location; never a path). The result replaces the former fixed
+  "not observed" runtime text in the panel and the exported bundle. The check is
+  refused while SysEx is being sent or received.
+
 ### Windows MIDI Services
 
 - The WMS backend now builds against the In-box Preview 10 API
