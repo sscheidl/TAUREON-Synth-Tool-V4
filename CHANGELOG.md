@@ -4,6 +4,42 @@ All notable TAUREON V4 changes will be documented here.
 
 ## [Unreleased]
 
+## [0.1.0-alpha.2] - 2026-10-10
+
+Second experimental Windows x64 preview (GitHub pre-release `v0.1.0-alpha.2`).
+Product-path MIDI/SysEx transfer and device restore are still not validated;
+Stage 5 remains open.
+
+### Connection and WMS
+
+- Auto now tries Windows MIDI Services first and falls back to WinMM when WMS is
+  unavailable or lists no routes; it never opens a route automatically. Either
+  port field offers the backend choice on a fresh start.
+- After a failed connect or disconnect the route selectors and Connect stay
+  usable for a retry.
+- The WMS backend uses the Windows MIDI Services Developer Preview 9 API
+  (`Windows.Devices.Midi2` `0.99.83-devpreview.9`) instead of the RC4 SDK and
+  reports missing API activation, Legacy API mode and unreachable service
+  separately. The release ZIP does not contain Microsoft's preview API files, so
+  WMS works only where that API is provided by Windows or obtained separately;
+  WinMM is unaffected.
+- `--list-midi wms|winmm` lists routes or the initialization error without
+  opening an endpoint.
+- Port fields and dropdowns show long route names; the title shows the version
+  and build revision.
+
+### MIDI Monitor and SysEx
+
+- Follow latest keeps up with incoming batches and pauses when you scroll up.
+- RX/TX and event-type filters with "All event types" and "Notes only" presets;
+  split WinMM SysEx chunks stay in the SysEx category and the channel filter
+  covers MIDI 2.0 channel-voice messages.
+- A manually selected profile can label known CCs; a conservative Waldorf Protein
+  profile is included.
+- SysEx Transfer shows raw bytes as the main view; the Raw Send prompt is short,
+  the exact route stays visible and is rechecked before sending. The SysEx
+  Manager tab is hidden.
+
 ### Documentation
 
 - Reconciled project status with GitHub: PR-#12 review threads resolved and B-3
