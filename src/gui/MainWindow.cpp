@@ -35,6 +35,7 @@
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStandardPaths>
+#include <QStyle>
 #include <QStringList>
 #include <QToolBar>
 #include <QToolButton>
@@ -241,6 +242,13 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
         });
     }
     event_types->setText("Event types: All");
+    const auto label_width = std::max(event_types->fontMetrics().horizontalAdvance("Event types: All"),
+                                      event_types->fontMetrics().horizontalAdvance("Event types: 0/9"));
+    const auto arrow_width = event_types->style()->pixelMetric(QStyle::PM_MenuButtonIndicator,
+                                                               nullptr, event_types);
+    const auto margin = event_types->style()->pixelMetric(QStyle::PM_ButtonMargin,
+                                                          nullptr, event_types);
+    event_types->setMinimumWidth(label_width + arrow_width + 2 * margin + 12);
     QObject::connect(show_all, &QAction::triggered, page, [category_actions] {
         for (auto* action : *category_actions) action->setChecked(true);
     });

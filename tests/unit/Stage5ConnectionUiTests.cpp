@@ -25,11 +25,13 @@
 #include <QPushButton>
 #include <QSplitter>
 #include <QStatusBar>
+#include <QStyle>
 #include <QTableView>
 #include <QTabWidget>
 #include <QTimer>
 #include <QToolButton>
 
+#include <algorithm>
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -179,6 +181,11 @@ int main(int argc, char* argv[]) {
             if (button->accessibleName() == "Monitor event type filter") event_types = button;
         }
         TAUREON_REQUIRE(event_types && event_types->menu());
+        const auto widest_label = std::max(event_types->fontMetrics().horizontalAdvance("Event types: All"),
+                                           event_types->fontMetrics().horizontalAdvance("Event types: 0/9"));
+        TAUREON_REQUIRE(event_types->minimumWidth() >= widest_label +
+                        event_types->style()->pixelMetric(QStyle::PM_MenuButtonIndicator,
+                                                           nullptr, event_types) + 12);
         QAction* notes = nullptr;
         QAction* clock = nullptr;
         for (auto* action : event_types->menu()->actions()) {
