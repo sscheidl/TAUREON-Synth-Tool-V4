@@ -61,7 +61,7 @@ namespace taureon::gui {
 namespace {
 
 #ifndef TAUREON_APP_VERSION
-#define TAUREON_APP_VERSION "0.1.0-alpha.1"
+#define TAUREON_APP_VERSION "0.1.0-alpha.2"
 #endif
 #ifndef TAUREON_BUILD_REVISION
 #define TAUREON_BUILD_REVISION "local"

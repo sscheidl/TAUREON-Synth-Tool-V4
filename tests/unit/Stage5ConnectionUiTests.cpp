@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
         auto* transmit = window.findChild<QComboBox*>("transmitRouteSelector");
         auto* connect = window.findChild<QPushButton*>("connectButton");
         TAUREON_REQUIRE(backend != nullptr);
-        TAUREON_REQUIRE(window.windowTitle().contains("0.1.0-alpha.1"));
+        TAUREON_REQUIRE(window.windowTitle().contains("0.1.0-alpha.2"));
         TAUREON_REQUIRE(receive != nullptr);
         TAUREON_REQUIRE(transmit != nullptr);
         TAUREON_REQUIRE(connect != nullptr);

@@ -6,11 +6,11 @@ TAUREON Synth Tool V4 is a native Windows desktop application for working with h
 
 *Public preview: device names and file contents have been replaced with example placeholders.*
 
-## First public alpha
+## Alpha releases
 
-The [Windows x64 alpha release](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases) is an experimental preview for interested users and contributors. Download the ZIP, extract the complete folder, and run `TAUREON-Synth-Tool-V4.exe`. Keep the DLLs, `resources`, and plugin folders next to the executable. No installer is provided.
+The [Windows x64 alpha releases](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases) are experimental previews for interested users and contributors. Download the ZIP, extract the complete folder, and run `TAUREON-Synth-Tool-V4.exe`. Keep the DLLs, `resources`, and plugin folders next to the executable. No installer is provided.
 
-Windows 11 x64 is the primary target. The WinMM backend uses Windows' native MIDI support. The Windows MIDI Services (WMS) backend additionally requires a compatible Windows MIDI Services runtime installed separately; the release does not change drivers or Windows MIDI configuration. Select the exact receive and transmit routes yourself before connecting.
+Windows 11 x64 is the primary target. The WinMM backend uses Windows' native MIDI support. The Windows MIDI Services (WMS) backend of `0.1.0-alpha.2` targets the Developer Preview 9 API (`Windows.Devices.Midi2`); the ZIP does not contain Microsoft's preview API files, so WMS works only where Windows provides that API or you place permitted API files beside the executable. Otherwise Auto falls back to WinMM. The release does not change drivers or Windows MIDI configuration. Select the exact receive and transmit routes yourself before connecting.
 
 For read-only backend diagnosis, run `TAUREON-Synth-Tool-V4.exe --list-midi wms`
 or `--list-midi winmm` from a terminal in the portable folder (local builds use
@@ -22,8 +22,8 @@ Local development/test builds use the
 resource file beside the executable. Public CI downloads omit those Preview 9
 files; WMS needs a permitted API obtained separately or supplied by Windows.
 Developers acquire the pinned inputs with
-`tools/AcquireWmsDependencies.ps1`. The first public alpha still uses the older RC4
-runtime; this change does not update that published download.
+`tools/AcquireWmsDependencies.ps1`. The first alpha (`0.1.0-alpha.1`) used the older
+RC4 runtime.
 
 The alpha is **not yet validated for real product-path MIDI/SysEx transfer or device restore**. Stage 5 remains open pending native 150%/200% display checks and physical-device testing in the application. Back up important synth data and use receive/inspection features first. The Summit profile currently supports bounded identification and inspection, not semantic preset editing or validated restore.
 
