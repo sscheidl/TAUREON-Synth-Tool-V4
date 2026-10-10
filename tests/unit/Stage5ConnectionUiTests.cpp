@@ -20,6 +20,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QMenu>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSplitter>
@@ -27,6 +28,7 @@
 #include <QTableView>
 #include <QTabWidget>
 #include <QTimer>
+#include <QToolButton>
 
 #include <filesystem>
 #include <memory>
@@ -172,6 +174,28 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(process_until([&] {
             return model->rowCount() == 50 && scroll->value() == scroll->maximum();
         }));
+        QToolButton* event_types = nullptr;
+        for (auto* button : window.findChildren<QToolButton*>()) {
+            if (button->accessibleName() == "Monitor event type filter") event_types = button;
+        }
+        TAUREON_REQUIRE(event_types && event_types->menu());
+        QAction* notes = nullptr;
+        QAction* clock = nullptr;
+        for (auto* action : event_types->menu()->actions()) {
+            if (action->text() == "Notes") notes = action;
+            if (action->text() == "Clock") clock = action;
+        }
+        TAUREON_REQUIRE(notes && clock && notes->isChecked() && clock->isChecked());
+        notes->setChecked(false);
+        TAUREON_REQUIRE(proxy->rowCount() == 0 && model->rowCount() == 50);
+        model->append_batch({{101, midi::MidiDirection::input,
+                              {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xF8}}, {}}}});
+        TAUREON_REQUIRE(proxy->rowCount() == 1);
+        clock->setChecked(false);
+        TAUREON_REQUIRE(proxy->rowCount() == 0);
+        notes->setChecked(true);
+        clock->setChecked(true);
+        TAUREON_REQUIRE(proxy->rowCount() == model->rowCount());
 
         // Auto backend choice is equally usable through the output field.
         backend->setCurrentIndex(0);

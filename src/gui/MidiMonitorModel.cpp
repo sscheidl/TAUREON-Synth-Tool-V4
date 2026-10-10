@@ -136,7 +136,64 @@ QString message_type(const midi::NativeMidiMessage& message) {
         default: return "MIDI 1.0";
         }
     }
+    const auto& words = std::get<midi::UmpNativeMessage>(message.data).words;
+    if (words.empty()) return "Malformed UMP";
+    const auto word = words.front();
+    const auto ump_type = word >> 28u;
+    if (ump_type == 0x3u) return "SysEx7";
+    if (ump_type == 0x5u && ((word >> 20u) & 0xfu) <= 0x3u) return "SysEx8";
+    if (ump_type == 0x1u) {
+        switch ((word >> 16u) & 0xffu) {
+        case 0xf8u: return "Clock";
+        case 0xfeu: return "Active Sensing";
+        default: break;
+        }
+    }
     return "UMP";
+}
+
+MonitorEventCategory channel_category(const std::uint8_t status) {
+    switch (status & 0xf0u) {
+    case 0x80u:
+    case 0x90u: return MonitorEventCategory::notes;
+    case 0xa0u:
+    case 0xd0u: return MonitorEventCategory::aftertouch;
+    case 0xb0u: return MonitorEventCategory::controllers;
+    case 0xc0u: return MonitorEventCategory::program_change;
+    case 0xe0u: return MonitorEventCategory::pitch_bend;
+    default: return MonitorEventCategory::other;
+    }
+}
+
+MonitorEventCategory system_category(const std::uint8_t status) {
+    switch (status) {
+    case 0xf0u:
+    case 0xf7u: return MonitorEventCategory::sysex;
+    case 0xf8u: return MonitorEventCategory::clock;
+    case 0xfeu: return MonitorEventCategory::active_sensing;
+    default: return MonitorEventCategory::other;
+    }
+}
+
+MonitorEventCategory event_category(const midi::NativeMidiMessage& message) {
+    if (const auto* midi1 = std::get_if<midi::Midi1NativeMessage>(&message.data)) {
+        if (midi1->bytes.empty()) return MonitorEventCategory::other;
+        const auto status = midi1->bytes.front();
+        return status < 0xf0u ? channel_category(status) : system_category(status);
+    }
+    const auto& words = std::get<midi::UmpNativeMessage>(message.data).words;
+    if (words.empty()) return MonitorEventCategory::other;
+    const auto word = words.front();
+    const auto message_type = static_cast<std::uint8_t>(word >> 28u);
+    if (message_type == 0x3u ||
+        (message_type == 0x5u && ((word >> 20u) & 0xfu) <= 0x3u)) {
+        return MonitorEventCategory::sysex;
+    }
+    if (message_type == 0x1u) return system_category(static_cast<std::uint8_t>(word >> 16u));
+    if (message_type == 0x2u || message_type == 0x4u) {
+        return channel_category(static_cast<std::uint8_t>(word >> 16u));
+    }
+    return MonitorEventCategory::other;
 }
 
 } // namespace
@@ -155,9 +212,11 @@ int MidiMonitorModel::columnCount(const QModelIndex& parent) const {
 }
 
 QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const {
-    if (!index.isValid() || role != Qt::DisplayRole || index.row() >= rowCount()) return {};
+    if (!index.isValid() || index.row() >= rowCount()) return {};
     const auto& event = events_.at(static_cast<std::size_t>(index.row()));
     const auto& message = event.message;
+    if (role == CategoryRole) return static_cast<int>(event_category(message));
+    if (role != Qt::DisplayRole) return {};
     const auto* midi1 = std::get_if<midi::Midi1NativeMessage>(&message.data);
     const auto parsed_voice = index.column() >= Channel && index.column() <= Value
                                   ? channel_voice_message(message) : std::nullopt;

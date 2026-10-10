@@ -5,14 +5,21 @@
 #include <QAbstractTableModel>
 
 #include <cstddef>
+#include <cstdint>
 #include <deque>
 #include <vector>
 
 namespace taureon::gui {
 
+enum class MonitorEventCategory : std::uint8_t {
+    notes, controllers, program_change, pitch_bend, aftertouch,
+    sysex, clock, active_sensing, other, count
+};
+
 class MidiMonitorModel final : public QAbstractTableModel {
 public:
     enum Column { Time, Direction, Route, Channel, Type, Event, Value, Raw, ColumnCount };
+    enum Role { CategoryRole = Qt::UserRole + 1 };
 
     explicit MidiMonitorModel(std::size_t history_limit, QObject* parent = nullptr);
 

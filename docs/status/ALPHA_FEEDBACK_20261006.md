@@ -2,7 +2,7 @@
 
 The Product Owner prioritised bugs 1–4. Bug 5 (SysEx Transfer button flicker) was
 observed with the internal September test package and is already fixed. Requests
-6–9 remain deferred; the Manager-navigation change is prepared separately.
+7–9 remain deferred; the Manager-navigation change is prepared separately.
 
 **2026-10-10 update:** the Preview-9 production client now enumerates 21 RX / 24 TX
 WMS routes successfully. This supersedes the bug-2 initialization blocker below;
@@ -34,12 +34,26 @@ WMS Group Terminal Block direction is defined from the device's viewpoint in
 
 ## Deferred requests
 
-6. Structured MIDI Monitor filters: Clock, Active Sensing, SysEx, Notes, CC, Program
-   Change, Pitch Bend, Aftertouch and other system/realtime messages.
 7. Automatic restoration of an exactly saved backend and routes; further WMS test
    activation/compatibility work if the current runtime requires it.
 8. Visible application version and build identity in the title/About UI.
 9. Hide SysEx Manager navigation; retain its code as a removal candidate.
+
+## MIDI Monitor filter follow-up (request 6)
+
+The Monitor now has an event-type menu for Notes, Control Change, Program Change,
+Pitch Bend, Aftertouch, SysEx, Clock, Active Sensing and Other/System. The menu
+supports selecting several types and resetting to all. Direction, channel, route
+and the existing free-text filter can be combined. Classification uses MIDI 1.0
+status bytes or UMP message types and is a view-only proxy filter: source history,
+raw bytes, capture and transfer are unchanged. Channel filtering excludes system
+messages, which have no channel. MIDI 2.0 SysEx8 is included; UMP Mixed Data Set
+is Other/System.
+
+Local MSVC/Qt build and 24 registered tests passed, including MIDI 1.0/UMP type
+classification, compound filtering, source-history preservation and GUI action
+wiring. Native visual readability and live hardware traffic remain Product Owner
+checks.
 
 ## Display-scaling disposition
 

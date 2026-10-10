@@ -24,6 +24,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QMenu>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSaveFile>
@@ -36,6 +37,7 @@
 #include <QStandardPaths>
 #include <QStringList>
 #include <QToolBar>
+#include <QToolButton>
 #include <QTableView>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -46,6 +48,7 @@
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
+#include <memory>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -201,6 +204,61 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
 
     auto* proxy = new MidiMonitorFilterModel(page);
     proxy->setSourceModel(&model);
+    auto* filter_controls = new QHBoxLayout;
+    auto* event_types = new QToolButton(page);
+    event_types->setAccessibleName("Monitor event type filter");
+    event_types->setPopupMode(QToolButton::InstantPopup);
+    auto* event_menu = new QMenu(event_types);
+    event_types->setMenu(event_menu);
+    const auto categories = std::array{
+        std::pair{MonitorEventCategory::notes, "Notes"},
+        std::pair{MonitorEventCategory::controllers, "Control Change"},
+        std::pair{MonitorEventCategory::program_change, "Program Change"},
+        std::pair{MonitorEventCategory::pitch_bend, "Pitch Bend"},
+        std::pair{MonitorEventCategory::aftertouch, "Aftertouch"},
+        std::pair{MonitorEventCategory::sysex, "SysEx"},
+        std::pair{MonitorEventCategory::clock, "Clock"},
+        std::pair{MonitorEventCategory::active_sensing, "Active Sensing"},
+        std::pair{MonitorEventCategory::other, "Other / System"},
+    };
+    auto* show_all = event_menu->addAction("Show all event types");
+    event_menu->addSeparator();
+    auto category_actions = std::make_shared<std::vector<QAction*>>();
+    for (const auto& [category, name] : categories) {
+        auto* action = event_menu->addAction(name);
+        action->setCheckable(true);
+        action->setChecked(true);
+        category_actions->push_back(action);
+        QObject::connect(action, &QAction::toggled, page,
+                         [proxy, category, event_types, category_actions](const bool checked) {
+            proxy->set_category_enabled(category, checked);
+            const auto selected = std::count_if(category_actions->begin(), category_actions->end(),
+                                                [](const QAction* item) { return item->isChecked(); });
+            event_types->setText(selected == static_cast<int>(category_actions->size())
+                                     ? "Event types: All"
+                                     : QStringLiteral("Event types: %1/%2")
+                                           .arg(selected).arg(category_actions->size()));
+        });
+    }
+    event_types->setText("Event types: All");
+    QObject::connect(show_all, &QAction::triggered, page, [category_actions] {
+        for (auto* action : *category_actions) action->setChecked(true);
+    });
+    auto* channel = new QComboBox(page);
+    channel->setAccessibleName("Monitor channel filter");
+    channel->addItem("All channels", 0);
+    for (int value = 1; value <= 16; ++value) channel->addItem(QStringLiteral("Channel %1").arg(value), value);
+    auto* route = new QComboBox(page);
+    route->setAccessibleName("Monitor route filter");
+    route->addItem("All routes", QString{});
+    route->addItem("Windows MIDI Services", "wms");
+    route->addItem("WinMM", "winmm");
+    route->addItem("External", "external");
+    filter_controls->addWidget(event_types);
+    filter_controls->addWidget(channel);
+    filter_controls->addWidget(route);
+    filter_controls->addStretch();
+    layout->addLayout(filter_controls);
     auto* table = new QTableView(page);
     table->setObjectName("midiMonitorTable");
     table->setModel(proxy);
@@ -274,6 +332,10 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
                      [proxy](const QString& value) {
                          proxy->set_direction(value == "All directions" ? QString{} : value);
                      });
+    QObject::connect(channel, &QComboBox::currentIndexChanged, page,
+                     [proxy, channel] { proxy->set_channel(channel->currentData().toInt()); });
+    QObject::connect(route, &QComboBox::currentIndexChanged, page,
+                     [proxy, route] { proxy->set_route(route->currentData().toString()); });
     QObject::connect(type_filter, &QLineEdit::textChanged, page,
                      [proxy](const QString& value) { proxy->set_type_filter(value); });
     QObject::connect(pause, &QPushButton::toggled, page, [&bridge, pause](const bool paused) {
@@ -283,11 +345,13 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
     QObject::connect(clear, &QPushButton::clicked, page, [&model] { model.clear(); });
     auto* accounting_timer = new QTimer(page);
     accounting_timer->setInterval(250);
-    QObject::connect(accounting_timer, &QTimer::timeout, page, [&bridge, accounting] {
+    QObject::connect(accounting_timer, &QTimer::timeout, page, [&bridge, accounting, &model, proxy] {
         const auto stats = bridge.presentation_stats();
         accounting->setText(
-            QStringLiteral("%1 · displayed %2 · paused-discarded %3")
+            QStringLiteral("%1 · visible %2/%3 · presented %4 · paused-discarded %5")
                 .arg(stats.paused ? "Paused" : "Running")
+                .arg(proxy->rowCount())
+                .arg(model.rowCount())
                 .arg(stats.displayed)
                 .arg(stats.discarded_while_paused));
     });
