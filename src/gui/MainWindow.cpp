@@ -15,6 +15,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QComboBox>
+#include <QCheckBox>
 #include <QFileDialog>
 #include <QFrame>
 #include <QHBoxLayout>
@@ -27,6 +28,8 @@
 #include <QPushButton>
 #include <QSaveFile>
 #include <QScrollArea>
+#include <QScrollBar>
+#include <QScreen>
 #include <QSignalBlocker>
 #include <QStackedWidget>
 #include <QStatusBar>
@@ -77,6 +80,31 @@ QComboBox* add_selector(QToolBar& bar, const QStringList& values) {
     return selector;
 }
 
+class RouteSelector final : public QComboBox {
+public:
+    explicit RouteSelector(QWidget* parent) : QComboBox(parent) {
+        setSizeAdjustPolicy(AdjustToMinimumContentsLengthWithIcon);
+        setMinimumContentsLength(18);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        connect(this, &QComboBox::currentIndexChanged, this, [this](int index) {
+            const auto detail = itemData(index, Qt::ToolTipRole).toString();
+            setToolTip(detail.isEmpty() ? currentText() : detail);
+        });
+    }
+
+    void showPopup() override {
+        int content_width = width();
+        for (int index = 0; index < count(); ++index) {
+            content_width = (std::max)(content_width,
+                fontMetrics().horizontalAdvance(itemText(index)) + 48);
+        }
+        const int screen_width = screen()->availableGeometry().width();
+        view()->setMinimumWidth((std::min)(content_width, (std::max)(width(), screen_width - 32)));
+        view()->setTextElideMode(Qt::ElideRight);
+        QComboBox::showPopup();
+    }
+};
+
 QString endpoint_label(const midi::MidiEndpointDescriptor& endpoint) {
     return std::visit(
         [&endpoint](const auto& identity) -> QString {
@@ -99,6 +127,14 @@ QString endpoint_label(const midi::MidiEndpointDescriptor& endpoint) {
                          QString::fromStdString(identity.endpoint_id));
             }
         }, endpoint.identity.native);
+}
+
+QString endpoint_name(const midi::MidiEndpointDescriptor& endpoint) {
+    const auto name = QString::fromStdString(endpoint.display_name);
+    if (const auto* wms = std::get_if<midi::WmsRouteIdentity>(&endpoint.identity.native)) {
+        return QStringLiteral("%1 · group %2").arg(name).arg(wms->group + 1);
+    }
+    return name;
 }
 
 QWidget* make_workspace_page(const QString& name) {
@@ -149,12 +185,17 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
     pause_button = pause;
     pause->setToolTip("Presentation events are counted and discarded while paused; transport capture continues.");
     auto* clear = new QPushButton("Clear", page);
+    auto* follow = new QCheckBox("Follow latest", page);
+    follow->setObjectName("monitorFollowLatest");
+    follow->setChecked(true);
+    follow->setToolTip("Follow new events. Scrolling up pauses following; check this to resume.");
     auto* accounting = new QLabel("Presentation running", page);
     accounting->setObjectName("monitorPresentationAccounting");
     controls->addWidget(direction);
     controls->addWidget(type_filter, 1);
     controls->addWidget(pause);
     controls->addWidget(clear);
+    controls->addWidget(follow);
     controls->addWidget(accounting);
     layout->addLayout(controls);
 
@@ -204,6 +245,31 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
     });
     layout->addWidget(table);
 
+    // Coalesce a burst into one scroll after Qt has updated the view geometry. This also
+    // follows resets/evictions at the bounded history limit and changes to the visible filter.
+    auto scroll_queued = std::make_shared<bool>(false);
+    const auto follow_latest = [table, follow, scroll_queued] {
+        if (!follow->isChecked() || *scroll_queued) return;
+        *scroll_queued = true;
+        QTimer::singleShot(0, table, [table, follow, scroll_queued] {
+            *scroll_queued = false;
+            if (follow->isChecked()) table->scrollToBottom();
+        });
+    };
+    QObject::connect(proxy, &QAbstractItemModel::rowsInserted, table, follow_latest);
+    QObject::connect(proxy, &QAbstractItemModel::modelReset, table, follow_latest);
+    QObject::connect(proxy, &QAbstractItemModel::layoutChanged, table, follow_latest);
+    QObject::connect(follow, &QCheckBox::toggled, table, follow_latest);
+    auto* vertical_scroll = table->verticalScrollBar();
+    QObject::connect(vertical_scroll, &QScrollBar::actionTriggered, table,
+                     [vertical_scroll, follow] {
+        follow->setChecked(vertical_scroll->sliderPosition() >= vertical_scroll->maximum());
+    });
+    QObject::connect(vertical_scroll, &QScrollBar::sliderMoved, table,
+                     [vertical_scroll, follow](int position) {
+        follow->setChecked(position >= vertical_scroll->maximum());
+    });
+
     QObject::connect(direction, &QComboBox::currentTextChanged, page,
                      [proxy](const QString& value) {
                          proxy->set_direction(value == "All directions" ? QString{} : value);
@@ -249,14 +315,18 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
                                      {"Auto", "Windows MIDI Services", "WinMM"});
     backend_selector_->setObjectName("backendSelector");
     backend_selector_->setAccessibleName("MIDI backend");
-    backend_selector_->setToolTip("Auto restores only an exactly resolvable saved route; none is saved yet.");
+    backend_selector_->setToolTip("Choose a backend in either port field to enumerate its ports. No route is opened automatically.");
     add_caption(*connection_bar, "MIDI Input", 6);
-    receive_selector_ = add_selector(*connection_bar, {"No input selected"});
+    receive_selector_ = new RouteSelector(connection_bar);
+    connection_bar->addWidget(receive_selector_);
+    receive_selector_->addItem("No input selected");
     receive_selector_->setObjectName("receiveRouteSelector");
     receive_selector_->setAccessibleName("MIDI input route");
     receive_selector_->setEnabled(false);
     add_caption(*connection_bar, "MIDI Output", 6);
-    transmit_selector_ = add_selector(*connection_bar, {"No output selected"});
+    transmit_selector_ = new RouteSelector(connection_bar);
+    connection_bar->addWidget(transmit_selector_);
+    transmit_selector_->addItem("No output selected");
     transmit_selector_->setObjectName("transmitRouteSelector");
     transmit_selector_->setAccessibleName("MIDI output route");
     transmit_selector_->setEnabled(false);
@@ -356,17 +426,22 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     connect(backend_selector_, &QComboBox::currentIndexChanged, this,
             [this](const int index) { begin_backend_selection(index); });
     connect(receive_selector_, &QComboBox::currentIndexChanged, this,
-            [this] { set_connection_busy(false); });
+            [this](int index) {
+                if (backend_selector_->currentIndex() == 0 && index > 0) backend_selector_->setCurrentIndex(index);
+                else set_connection_busy(false);
+            });
     connect(transmit_selector_, &QComboBox::currentIndexChanged, this,
-            [this] { set_connection_busy(false); });
+            [this](int index) {
+                if (backend_selector_->currentIndex() == 0 && index > 0) backend_selector_->setCurrentIndex(index);
+                else set_connection_busy(false);
+            });
     connect(connect_button_, &QPushButton::clicked, this, [this] { begin_connect_toggle(); });
     connection_poll_timer_ = new QTimer(this);
     connection_poll_timer_->setInterval(25);
     connect(connection_poll_timer_, &QTimer::timeout, this, [this] { poll_connection_result(); });
     connection_poll_timer_->start();
 
-    statusBar()->showMessage(
-        "Disconnected — Auto has no exactly resolvable saved route; choose a backend and routes.");
+    begin_backend_selection(0);
 }
 
 MainWindow::~MainWindow() {
@@ -390,6 +465,7 @@ void MainWindow::select_workspace(const int index) {
 void MainWindow::begin_backend_selection(const int index) {
     if (pending_connection_) return;
     connection_error_latched_ = false;
+    backend_ready_ = false;
     connected_ = false;
     receive_routes_.clear();
     transmit_routes_.clear();
@@ -402,11 +478,16 @@ void MainWindow::begin_backend_selection(const int index) {
         transmit_selector_->addItem("No output selected");
     }
     if (index == 0) {
-        receive_selector_->setEnabled(false);
-        transmit_selector_->setEnabled(false);
+        const QSignalBlocker block_receive(receive_selector_);
+        const QSignalBlocker block_transmit(transmit_selector_);
+        for (auto* selector : {receive_selector_, transmit_selector_}) {
+            selector->setItemText(0, "Choose MIDI backend…");
+            selector->addItems({"Windows MIDI Services", "WinMM"});
+            selector->setEnabled(true);
+        }
         connect_button_->setEnabled(false);
         statusBar()->showMessage(
-            "Auto requires an exactly resolvable saved backend and routes; deliberate selection is required.");
+            "Choose Windows MIDI Services or WinMM in either port field, then select your ports.");
         return;
     }
     const auto backend = index == 1 ? midi::MidiBackend::windows_midi_services :
@@ -465,7 +546,7 @@ void MainWindow::poll_connection_result() {
         }
     }
     if (!pending_connection_) {
-        if (!refresh_pending_ && backend_selector_->currentIndex() > 0 &&
+        if (!refresh_pending_ && backend_ready_ &&
             ++idle_poll_ticks_ >= 10) {
             idle_poll_ticks_ = 0;
             refresh_pending_ = connection_worker_.snapshot();
@@ -478,12 +559,22 @@ void MainWindow::poll_connection_result() {
     pending_connection_.reset();
     if (!result) {
         connected_ = false;
+        // Only a failed backend selection leaves no usable route list. After a failed
+        // connect or disconnect the enumerated routes stay selectable so the user can retry.
+        if (action == PendingConnectionAction::backend) backend_ready_ = false;
         set_connection_busy(false);
         connection_error_latched_ = true;
         statusBar()->showMessage("MIDI operation failed: " + QString::fromStdString(result.error().message));
         return;
     }
+    backend_ready_ = true;
     apply_connection_snapshot(result.value(), action == PendingConnectionAction::backend, true);
+    if (action == PendingConnectionAction::backend) {
+        statusBar()->showMessage(result.value().endpoints.empty() ?
+            "Backend available, but no MIDI routes found. Check device availability or choose WinMM." :
+            QStringLiteral("%1: %2 input / %3 output routes — select your ports, then Connect.")
+                .arg(backend_selector_->currentText()).arg(receive_routes_.size()).arg(transmit_routes_.size()));
+    }
     set_connection_busy(false);
 }
 
@@ -503,10 +594,14 @@ void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapsh
             for (const auto& endpoint : snapshot.endpoints) {
                 if (endpoint.identity.direction == midi::MidiDirection::input) {
                     receive_routes_.push_back(endpoint.identity);
-                    receive_selector_->addItem(endpoint_label(endpoint));
+                    receive_selector_->addItem(endpoint_name(endpoint));
+                    receive_selector_->setItemData(receive_selector_->count() - 1,
+                                                  endpoint_label(endpoint), Qt::ToolTipRole);
                 } else {
                     transmit_routes_.push_back(endpoint.identity);
-                    transmit_selector_->addItem(endpoint_label(endpoint));
+                    transmit_selector_->addItem(endpoint_name(endpoint));
+                    transmit_selector_->setItemData(transmit_selector_->count() - 1,
+                                                   endpoint_label(endpoint), Qt::ToolTipRole);
                 }
             }
         }
@@ -531,7 +626,9 @@ void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapsh
         connection_error_latched_ = true;
         break;
     case app::ConnectionPresentationState::ready:
-        statusBar()->showMessage("Backend ready — select exact RX/TX routes.");
+        statusBar()->showMessage(snapshot.endpoints.empty() ?
+            "Backend available, but no MIDI routes found. Check device availability or choose WinMM." :
+            "Backend ready — select exact RX/TX routes.");
         break;
     case app::ConnectionPresentationState::disconnected:
         statusBar()->showMessage("Disconnected.");
@@ -541,9 +638,10 @@ void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapsh
 
 void MainWindow::set_connection_busy(const bool busy) {
     backend_selector_->setEnabled(!busy);
-    const bool backend_ready = !busy && backend_selector_->currentIndex() > 0;
-    receive_selector_->setEnabled(backend_ready && !connected_);
-    transmit_selector_->setEnabled(backend_ready && !connected_);
+    const bool backend_ready = !busy && backend_ready_;
+    const bool choosing_backend = !busy && backend_selector_->currentIndex() == 0;
+    receive_selector_->setEnabled((backend_ready || choosing_backend) && !connected_);
+    transmit_selector_->setEnabled((backend_ready || choosing_backend) && !connected_);
     const bool route_selected = receive_selector_->currentIndex() > 0 ||
                                 transmit_selector_->currentIndex() > 0;
     connect_button_->setEnabled(!busy && (connected_ || (backend_ready && route_selected)));

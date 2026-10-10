@@ -79,6 +79,7 @@ private:
     std::vector<midi::MidiRouteIdentity> receive_routes_;
     std::vector<midi::MidiRouteIdentity> transmit_routes_;
     bool connected_{};
+    bool backend_ready_{};
     int idle_poll_ticks_{};
 };
 
