@@ -39,6 +39,40 @@ MidiError wms_error(const MidiErrorCode code, std::string message,
             static_cast<std::int64_t>(error->code())};
 }
 
+bool file_exists(const std::wstring& path) {
+    const auto attributes = GetFileAttributesW(path.c_str());
+    return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+}
+
+// The Windows MIDI Services Tools install the API beside their own programs instead of
+// registering it. When no API sits beside this application, add that installed copy to the
+// directories C++/WinRT's app-local activation fallback searches
+// (LOAD_LIBRARY_SEARCH_DEFAULT_DIRS, application directory first), so users with the Tools
+// installed need no redistributed API files.
+void add_installed_tools_api_directory() {
+    static std::once_flag once;
+    std::call_once(once, [] {
+        std::wstring executable(32768, L'\0');
+        const auto length = GetModuleFileNameW(nullptr, executable.data(),
+                                                static_cast<DWORD>(executable.size()));
+        if (length == 0 || length >= executable.size()) return;
+        executable.resize(length);
+        const auto separator = executable.find_last_of(L"\\/");
+        if (separator != std::wstring::npos &&
+            file_exists(executable.substr(0, separator + 1) + L"Windows.Devices.Midi2.dll")) {
+            return;
+        }
+        std::wstring tools(MAX_PATH, L'\0');
+        const auto expanded = ExpandEnvironmentStringsW(
+            L"%ProgramFiles%\\Windows MIDI Services\\Tools", tools.data(),
+            static_cast<DWORD>(tools.size()));
+        if (expanded == 0 || expanded > tools.size()) return;
+        tools.resize(expanded - 1);
+        if (!file_exists(tools + L"\\Windows.Devices.Midi2.dll")) return;
+        AddDllDirectory(tools.c_str());
+    });
+}
+
 MidiError resolution_error(const RouteResolutionStatus status) {
     if (status == RouteResolutionStatus::missing) {
         return {MidiErrorCode::endpoint_missing, "WMS route is missing", {}, std::nullopt};
@@ -196,16 +230,18 @@ struct WmsTransport::Impl {
                 throw std::runtime_error("WMS worker did not enter the required MTA apartment");
             }
             worker_mta_apartment_observed.store(true, std::memory_order_release);
-            // Preview 9 uses Windows' WinRT activation (including the app-local API
-            // fallback). The separate Microsoft.Windows.Devices.Midi2 RC4
+            // The preview API uses Windows' WinRT activation with C++/WinRT's app-local
+            // fallback. The separate Microsoft.Windows.Devices.Midi2 RC4
             // registration/bootstrapper is no longer part of this API.
+            add_installed_tools_api_directory();
             winrt::hresult_error activation_error;
             const auto api = winrt::try_get_activation_factory<
                 native::MidiApi, native::IMidiApiStatics>(activation_error);
             if (!api) {
                 startup_error = wms_error(MidiErrorCode::backend_unavailable,
-                    "Windows MIDI Services Preview 9 API could not be activated; "
-                    "keep Windows.Devices.Midi2.dll beside the application or choose WinMM",
+                    "Windows MIDI Services API could not be activated; install the "
+                    "Windows MIDI Services Tools, keep Windows.Devices.Midi2.dll beside "
+                    "the application, or choose WinMM",
                     &activation_error);
             } else if (!api.EnsureServiceAvailable()) {
                 const auto mode = api.GetCurrentlySelectedApiMode();

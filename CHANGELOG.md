@@ -4,6 +4,15 @@ All notable TAUREON V4 changes will be documented here.
 
 ## [Unreleased]
 
+### Windows MIDI Services
+
+- The WMS backend now builds against the In-box Preview 10 API
+  (`Windows.Devices.Midi2` `0.99.88-preview.10`); the API surface it uses is
+  unchanged from Preview 9.
+- When no API sits beside the executable, WMS uses the API installed with the
+  Windows MIDI Services Tools, so release ZIPs work without redistributing
+  Microsoft's preview files. The activation error now names both options.
+
 ## [0.1.0-alpha.2] - 2026-10-10
 
 Second experimental Windows x64 preview (GitHub pre-release `v0.1.0-alpha.2`).

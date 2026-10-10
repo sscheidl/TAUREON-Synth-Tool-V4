@@ -1,4 +1,4 @@
-set(TAUREON_WMS_DEPENDENCY_ROOT "${PROJECT_SOURCE_DIR}/build/dependencies/wms-preview9" CACHE PATH
+set(TAUREON_WMS_DEPENDENCY_ROOT "${PROJECT_SOURCE_DIR}/build/dependencies/wms-preview10" CACHE PATH
     "Project-local pinned WMS SDK and C++/WinRT packages")
 set(TAUREON_WINDOWS_SDK_CONTRACT_VERSION "10.0.26100.0" CACHE STRING
     "Windows SDK contract version used for C++/WinRT projection")

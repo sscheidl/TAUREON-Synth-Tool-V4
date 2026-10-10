@@ -6,9 +6,9 @@ resources and plugin subdirectories together. Windows 11 x64 is the primary
 target. No installer or automatic device configuration is provided.
 
 WinMM uses native Windows MIDI support. The Windows MIDI Services (WMS) backend
-targets the Windows MIDI Services Developer Preview 9 API (Windows.Devices.Midi2).
-This ZIP does not contain Microsoft's preview API files, so WMS works only where
-Windows provides that API or you place permitted API files beside the EXE.
+needs Microsoft's preview API (Windows.Devices.Midi2), which this ZIP does not
+contain. It uses the API installed with the Windows MIDI Services Tools
+(https://github.com/microsoft/MIDI/releases) or one provided by Windows.
 Otherwise the Auto backend falls back to WinMM. Run
 "TAUREON-Synth-Tool-V4.exe --list-midi wms" (or winmm) in this folder to list
 routes or the initialization error without opening a MIDI port.

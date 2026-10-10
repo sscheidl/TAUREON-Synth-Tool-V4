@@ -58,9 +58,10 @@ target_link_libraries(my_app PRIVATE TaureonMidiEngine::WmsTransport)
 `WinMM` is built by default on Windows and can be disabled with
 `TAUREON_BUILD_WINMM_TRANSPORT=OFF`. `WMS` is built only when the pinned SDK and
 C++/WinRT dependencies have been acquired and `TAUREON_ENABLE_WMS_TRANSPORT` is
-enabled. It now targets the [Preview 9 API](../reference/WMS_PREVIEW9_DEPENDENCIES.md).
-The Windows MIDI service must be available; a consumer also needs either the
-Windows-provided API or the permitted app-local API files beside its executable.
+enabled. It now targets the [In-box Preview 10 API](../reference/WMS_DEPENDENCIES.md).
+The Windows MIDI service must be available; at runtime the transport uses a
+Windows-provided API, permitted app-local API files beside the executable, or the
+API installed with the Windows MIDI Services Tools.
 The static engine package does not install or redistribute those API files.
 
 Installed headers are under `include/taureon/`, for example
@@ -81,7 +82,7 @@ prove the installed dependency closure without claiming a runtime or hardware
 acceptance test:
 
 ```powershell
-# AcquireWmsDependencies.ps1 verifies the pinned Preview 9 package and WINMD hashes.
+# AcquireWmsDependencies.ps1 verifies the pinned Preview 10 package and WINMD hashes.
 .\tools\AcquireWmsDependencies.ps1
 cmake -S . -B build/engine-wms -G "Visual Studio 17 2022" -A x64 `
   -DTAUREON_BUILD_PRODUCT_APP=OFF -DBUILD_TESTING=ON `
