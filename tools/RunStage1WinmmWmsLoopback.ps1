@@ -10,7 +10,12 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$midiConsole = 'C:\Program Files\Windows MIDI Services\Tools\Console\midi.exe'
+# The In-box Preview 10 installer places midi.exe in Tools; RC4 used Tools\Console.
+$midiConsole = @(
+    'C:\Program Files\Windows MIDI Services\Tools\midi.exe',
+    'C:\Program Files\Windows MIDI Services\Tools\Console\midi.exe'
+) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+if (-not $midiConsole) { $midiConsole = 'C:\Program Files\Windows MIDI Services\Tools\midi.exe' }
 $spike = Join-Path $projectRoot "build\vs2022-x64\spikes\winmm_direct\$Configuration\taureon_winmm_spike.exe"
 $correlation = Join-Path $projectRoot "build\vs2022-x64\spikes\wms_direct\$Configuration\taureon_wms_winmm_correlation.exe"
 

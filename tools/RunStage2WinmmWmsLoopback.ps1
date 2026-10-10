@@ -10,7 +10,12 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$midiConsole = 'C:\Program Files\Windows MIDI Services\Tools\Console\midi.exe'
+# The In-box Preview 10 installer places midi.exe in Tools; RC4 used Tools\Console.
+$midiConsole = @(
+    'C:\Program Files\Windows MIDI Services\Tools\midi.exe',
+    'C:\Program Files\Windows MIDI Services\Tools\Console\midi.exe'
+) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+if (-not $midiConsole) { $midiConsole = 'C:\Program Files\Windows MIDI Services\Tools\midi.exe' }
 if (-not (Test-Path -LiteralPath $midiConsole -PathType Leaf)) {
     Write-Host 'SKIP: installed Windows MIDI Services console is unavailable.'
     exit 77
