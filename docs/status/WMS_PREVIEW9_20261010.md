@@ -22,7 +22,7 @@ the native API DLL and PRI beside the application on the owner's PC. Public
 workflow artifacts exclude those files and check their absence before upload.
 Dependency pins, hashes,
 deployment and distribution limits are in
-[WMS_PREVIEW9_DEPENDENCIES.md](../reference/WMS_PREVIEW9_DEPENDENCIES.md).
+[WMS_DEPENDENCIES.md](../reference/WMS_DEPENDENCIES.md) (now updated to Preview 10).
 
 ## Local software and read-only evidence
 

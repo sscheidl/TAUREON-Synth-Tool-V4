@@ -10,7 +10,7 @@ TAUREON Synth Tool V4 is a native Windows desktop application for working with h
 
 The [Windows x64 alpha releases](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases) are experimental previews for interested users and contributors. Download the ZIP, extract the complete folder, and run `TAUREON-Synth-Tool-V4.exe`. Keep the DLLs, `resources`, and plugin folders next to the executable. No installer is provided.
 
-Windows 11 x64 is the primary target. The WinMM backend uses Windows' native MIDI support. The Windows MIDI Services (WMS) backend of `0.1.0-alpha.2` targets the Developer Preview 9 API (`Windows.Devices.Midi2`); the ZIP does not contain Microsoft's preview API files, so WMS works only where Windows provides that API or you place permitted API files beside the executable. Otherwise Auto falls back to WinMM. The release does not change drivers or Windows MIDI configuration. Select the exact receive and transmit routes yourself before connecting.
+Windows 11 x64 is the primary target. The WinMM backend uses Windows' native MIDI support. The Windows MIDI Services (WMS) backend needs Microsoft's preview API (`Windows.Devices.Midi2`), which the ZIP does not contain. Builds after `0.1.0-alpha.2` use the API installed with the [Windows MIDI Services Tools](https://github.com/microsoft/MIDI/releases) automatically. For `0.1.0-alpha.2`, copy `Windows.Devices.Midi2.dll` and `Windows.Devices.Midi2.pri` from `%ProgramFiles%\Windows MIDI Services\Tools` into the TAUREON folder. Without the API, Auto falls back to WinMM. The release does not change drivers or Windows MIDI configuration. Select the exact receive and transmit routes yourself before connecting.
 
 For read-only backend diagnosis, run `TAUREON-Synth-Tool-V4.exe --list-midi wms`
 or `--list-midi winmm` from a terminal in the portable folder (local builds use
@@ -18,9 +18,9 @@ or `--list-midi winmm` from a terminal in the portable folder (local builds use
 opening a MIDI endpoint or sending data.
 
 Local development/test builds use the
-[Preview 9 WMS API](docs/reference/WMS_PREVIEW9_DEPENDENCIES.md), with its DLL and
-resource file beside the executable. Public CI downloads omit those Preview 9
-files; WMS needs a permitted API obtained separately or supplied by Windows.
+[In-box Preview 10 WMS API](docs/reference/WMS_DEPENDENCIES.md), with its DLL and
+resource file beside the executable. Public CI downloads and release ZIPs omit those
+files and use the installed Tools API or one supplied by Windows.
 Developers acquire the pinned inputs with
 `tools/AcquireWmsDependencies.ps1`. The first alpha (`0.1.0-alpha.1`) used the older
 RC4 runtime.
