@@ -9,7 +9,7 @@
 #include <QEventLoop>
 #include <QGuiApplication>
 #include <QImage>
-#include <QListWidget>
+#include <QTabBar>
 #include <QScreen>
 #include <QStackedWidget>
 
@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
               << "; frame logical " << window.frameGeometry().width() << 'x'
               << window.frameGeometry().height() << ".\n";
 
-    auto* navigation = window.findChild<QListWidget*>("workspaceNavigation");
+    auto* navigation = window.findChild<QTabBar*>("workspaceNavigation");
     auto* workspace_stack = window.findChild<QStackedWidget*>("workspaceStack");
     if (!navigation || !workspace_stack || navigation->count() != static_cast<int>(kPreviews.size())) {
         std::cerr << "The actual MainWindow workspace shell is incomplete.\n";
@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     }
 
     for (const auto& preview : kPreviews) {
-        navigation->setCurrentRow(preview.workspace_index);
+        navigation->setCurrentIndex(preview.workspace_index);
         process_pending_events();
         if (workspace_stack->currentIndex() != preview.workspace_index) {
             std::cerr << "Workspace activation did not reach index " << preview.workspace_index << ".\n";

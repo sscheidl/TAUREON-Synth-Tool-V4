@@ -12,7 +12,6 @@
 #include <QScrollBar>
 #include <QSignalBlocker>
 #include <QSizePolicy>
-#include <QSplitter>
 #include <QStringList>
 #include <QTabWidget>
 #include <QTableView>
@@ -238,13 +237,8 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
     inspector_tabs->addTab(raw_bytes_, "Raw bytes");
     inspector_tabs->addTab(transfer_log_, "Transfer log");
     inspector_tabs->setMinimumHeight(0);
-    auto* work_splitter = new QSplitter(Qt::Vertical, this);
-    work_splitter->setObjectName("sysExWorkSplitter");
-    work_splitter->addWidget(frame_table_);
-    work_splitter->addWidget(inspector_tabs);
-    work_splitter->setStretchFactor(0, 2);
-    work_splitter->setStretchFactor(1, 1);
-    root->addWidget(work_splitter, 1);
+    inspector_tabs->addTab(frame_table_, "Frames / diagnostics");
+    root->addWidget(inspector_tabs, 1);
     status_label_ = new QLabel("Idle — no automatic send is performed", this);
     status_label_->setObjectName("sysExStatus");
     status_label_->setWordWrap(true);
@@ -271,13 +265,8 @@ SysExTransferPanel::SysExTransferPanel(app::ConnectionWorker& worker, QWidget* p
         confirmation.setIcon(QMessageBox::Warning);
         confirmation.setWindowTitle("Confirm Raw Send");
         confirmation.setTextFormat(Qt::PlainText);
-        confirmation.setText(QStringLiteral(
-            "Send %1 complete SysEx frame(s), %2 bytes, to the exact TX route below?\n\n%3\n\n"
-            "This is a raw transfer, not a validated device restore. No automatic backup or rollback is available.")
-            .arg(snapshot_.complete_frames)
-            .arg(snapshot_.byte_count)
-            .arg(route_text(confirmed_route)));
-        auto* confirm_send = confirmation.addButton("Send raw data", QMessageBox::AcceptRole);
+        confirmation.setText("SYSEX send ok?");
+        auto* confirm_send = confirmation.addButton("Send", QMessageBox::AcceptRole);
         confirmation.addButton(QMessageBox::Cancel);
         confirmation.setDefaultButton(QMessageBox::Cancel);
         confirmation.exec();

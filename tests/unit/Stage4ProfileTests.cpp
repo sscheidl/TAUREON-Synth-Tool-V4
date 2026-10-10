@@ -57,11 +57,20 @@ sysex::SysExFrame unknown_frame() {
 void schema_and_registry_validation() {
     auto registry = load_registry();
     const auto profiles = registry.profiles();
-    TAUREON_REQUIRE(profiles.size() == 2);
+    TAUREON_REQUIRE(profiles.size() == 3);
     TAUREON_REQUIRE(profiles[0].profile_id == "generic");
     TAUREON_REQUIRE(profiles[1].profile_id == "novation.summit");
+    TAUREON_REQUIRE(profiles[2].profile_id == "waldorf.protein");
     TAUREON_REQUIRE(profiles[0].generic);
     TAUREON_REQUIRE(!profiles[1].generic);
+    const auto* protein = registry.find("waldorf.protein");
+    TAUREON_REQUIRE(protein != nullptr);
+    TAUREON_REQUIRE(!protein->support.detect);
+    TAUREON_REQUIRE(!protein->support.transfer);
+    TAUREON_REQUIRE(!protein->support.validated_restore);
+    TAUREON_REQUIRE(protein->recognition.sysex_fingerprints.empty());
+    TAUREON_REQUIRE(protein->metadata.control_changes.size() == 1);
+    TAUREON_REQUIRE(protein->metadata.control_changes.front().number == 74);
 
     const auto summit_path = profile_directory / "novation-summit.profile.json";
     const auto valid_json = read_text(summit_path);

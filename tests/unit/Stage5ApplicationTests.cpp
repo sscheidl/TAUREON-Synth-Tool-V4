@@ -249,6 +249,10 @@ void queue_and_model_tests() {
     TAUREON_REQUIRE(cell(0, gui::MidiMonitorModel::Value) == "127");
     TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Channel) == "2");
     TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Event) == "CC 74");
+    details.set_cc_names({{74, "MPE Y (when enabled)"}});
+    TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Event) == "CC 74 – MPE Y (when enabled)");
+    details.set_cc_names({});
+    TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Event) == "CC 74");
     TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Value) == "64");
     TAUREON_REQUIRE(cell(2, gui::MidiMonitorModel::Value) == "8192");
     TAUREON_REQUIRE(cell(3, gui::MidiMonitorModel::Type) == "Note On");
@@ -292,6 +296,157 @@ void queue_and_model_tests() {
     TAUREON_REQUIRE(filter.rowCount() == 1);
     filter.set_type_filter("127");
     TAUREON_REQUIRE(filter.rowCount() == 2);
+
+    gui::MidiMonitorModel categories(16);
+    categories.append_batch({
+        {1, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x90, 60, 100}}, std::nullopt}},
+        {2, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xB1, 74, 64}}, std::nullopt}},
+        {3, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xF0, 0x7D, 0xF7}}, std::nullopt}},
+        {4, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xF8}}, std::nullopt}},
+        {5, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xFE}}, std::nullopt}},
+        {6, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xC0, 5}}, std::nullopt}},
+        {7, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xE0, 0, 64}}, std::nullopt}},
+        {8, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xD0, 42}}, std::nullopt}},
+        {9, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xFA}}, std::nullopt}},
+        {10, midi::MidiDirection::output,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x20903C7F}}, std::nullopt}},
+        {11, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x30000000, 0}}, std::nullopt}},
+        {12, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x10F80000}}, std::nullopt}},
+        {13, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40903C00, 0x7FFF0000}}, std::nullopt}},
+    });
+    const auto category_at = [&categories](int row) {
+        return static_cast<gui::MonitorEventCategory>(
+            categories.index(row, gui::MidiMonitorModel::Type)
+                .data(gui::MidiMonitorModel::CategoryRole).toInt());
+    };
+    TAUREON_REQUIRE(category_at(0) == gui::MonitorEventCategory::notes);
+    TAUREON_REQUIRE(category_at(1) == gui::MonitorEventCategory::controllers);
+    TAUREON_REQUIRE(category_at(2) == gui::MonitorEventCategory::sysex);
+    TAUREON_REQUIRE(category_at(3) == gui::MonitorEventCategory::clock);
+    TAUREON_REQUIRE(category_at(4) == gui::MonitorEventCategory::active_sensing);
+    TAUREON_REQUIRE(category_at(5) == gui::MonitorEventCategory::program_change);
+    TAUREON_REQUIRE(category_at(6) == gui::MonitorEventCategory::pitch_bend);
+    TAUREON_REQUIRE(category_at(7) == gui::MonitorEventCategory::aftertouch);
+    TAUREON_REQUIRE(category_at(8) == gui::MonitorEventCategory::other);
+    TAUREON_REQUIRE(category_at(10) == gui::MonitorEventCategory::sysex);
+    TAUREON_REQUIRE(category_at(11) == gui::MonitorEventCategory::clock);
+    TAUREON_REQUIRE(category_at(12) == gui::MonitorEventCategory::notes);
+    TAUREON_REQUIRE(categories.index(10, gui::MidiMonitorModel::Type).data().toString() == "SysEx7");
+    TAUREON_REQUIRE(categories.index(11, gui::MidiMonitorModel::Type).data().toString() == "Clock");
+
+    gui::MidiMonitorModel ump_data(4);
+    ump_data.append_batch({
+        {14, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x50000000}}, std::nullopt}},
+        {15, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x50800000}}, std::nullopt}},
+        {16, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40603C00, 0x80000000}}, std::nullopt}},
+        {17, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40200000, 0x80000000}}, std::nullopt}},
+    });
+    TAUREON_REQUIRE(ump_data.index(0, gui::MidiMonitorModel::Type)
+                        .data(gui::MidiMonitorModel::CategoryRole).toInt() ==
+                    static_cast<int>(gui::MonitorEventCategory::sysex));
+    TAUREON_REQUIRE(ump_data.index(0, gui::MidiMonitorModel::Type).data().toString() == "SysEx8");
+    TAUREON_REQUIRE(ump_data.index(1, gui::MidiMonitorModel::Type)
+                        .data(gui::MidiMonitorModel::CategoryRole).toInt() ==
+                    static_cast<int>(gui::MonitorEventCategory::other));
+    TAUREON_REQUIRE(ump_data.index(2, gui::MidiMonitorModel::Type)
+                        .data(gui::MidiMonitorModel::CategoryRole).toInt() ==
+                    static_cast<int>(gui::MonitorEventCategory::pitch_bend));
+    TAUREON_REQUIRE(ump_data.index(2, gui::MidiMonitorModel::Type).data().toString() ==
+                    "MIDI 2.0 Per-Note Pitch Bend");
+    TAUREON_REQUIRE(ump_data.index(3, gui::MidiMonitorModel::Type)
+                        .data(gui::MidiMonitorModel::CategoryRole).toInt() ==
+                    static_cast<int>(gui::MonitorEventCategory::controllers));
+
+    gui::MidiMonitorFilterModel category_filter;
+    category_filter.setSourceModel(&categories);
+    category_filter.set_category_enabled(gui::MonitorEventCategory::clock, false);
+    category_filter.set_category_enabled(gui::MonitorEventCategory::sysex, false);
+    TAUREON_REQUIRE(category_filter.rowCount() == 9);
+    TAUREON_REQUIRE(categories.rowCount() == 13);
+    category_filter.set_backend("wms");
+    TAUREON_REQUIRE(category_filter.rowCount() == 2);
+    category_filter.set_channel(1);
+    TAUREON_REQUIRE(category_filter.rowCount() == 2);
+    category_filter.set_direction("TX");
+    TAUREON_REQUIRE(category_filter.rowCount() == 1);
+    category_filter.set_type_filter("Note 60");
+    TAUREON_REQUIRE(category_filter.rowCount() == 1);
+    category_filter.set_direction({});
+    category_filter.set_type_filter({});
+    category_filter.set_channel(0);
+    category_filter.set_category_enabled(gui::MonitorEventCategory::clock, true);
+    category_filter.set_category_enabled(gui::MonitorEventCategory::sysex, true);
+    TAUREON_REQUIRE(category_filter.rowCount() == 4);
+    TAUREON_REQUIRE(category_filter.category_enabled(gui::MonitorEventCategory::clock));
+
+    // WinMM long-message callbacks may split one SysEx into several buffers.
+    gui::MidiMonitorModel split_sysex(8);
+    split_sysex.append_batch({
+        {1, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xF0, 0x7D}}, {}}},
+        {2, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xF8}}, {}}},
+        {3, midi::MidiDirection::output,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x01, 0x02}}, {}}},
+        {4, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x01, 0x02}}, {}}},
+        {5, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x03, 0xF7}}, {}}},
+        {6, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x01, 0x02}}, {}}},
+    });
+    const auto split_category = [&split_sysex](int row) {
+        return static_cast<gui::MonitorEventCategory>(split_sysex.index(row, gui::MidiMonitorModel::Type)
+            .data(gui::MidiMonitorModel::CategoryRole).toInt());
+    };
+    TAUREON_REQUIRE(split_category(0) == gui::MonitorEventCategory::sysex);
+    TAUREON_REQUIRE(split_category(1) == gui::MonitorEventCategory::clock);
+    TAUREON_REQUIRE(split_category(2) == gui::MonitorEventCategory::other);
+    TAUREON_REQUIRE(split_category(3) == gui::MonitorEventCategory::sysex);
+    TAUREON_REQUIRE(split_category(4) == gui::MonitorEventCategory::sysex);
+    TAUREON_REQUIRE(split_category(5) == gui::MonitorEventCategory::other);
+    TAUREON_REQUIRE(split_sysex.index(3, gui::MidiMonitorModel::Type).data().toString() ==
+                    "SysEx continuation");
+    gui::MidiMonitorFilterModel split_filter;
+    split_filter.setSourceModel(&split_sysex);
+    split_filter.set_category_enabled(gui::MonitorEventCategory::sysex, false);
+    TAUREON_REQUIRE(split_filter.rowCount() == 3);
+
+    // All MIDI 2.0 channel-voice statuses carry the channel in the first word.
+    gui::MidiMonitorModel midi2_channels(4);
+    midi2_channels.append_batch({
+        {1, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40C00000, 0x05000000}}, {}}},
+        {2, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40200000, 0x05000000}}, {}}},
+        {3, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40600000, 0x05000000}}, {}}},
+        {4, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40C10000, 0x05000000}}, {}}},
+    });
+    gui::MidiMonitorFilterModel midi2_channel_filter;
+    midi2_channel_filter.setSourceModel(&midi2_channels);
+    midi2_channel_filter.set_channel(1);
+    TAUREON_REQUIRE(midi2_channel_filter.rowCount() == 3);
+    midi2_channel_filter.set_channel(2);
+    TAUREON_REQUIRE(midi2_channel_filter.rowCount() == 1);
+    TAUREON_REQUIRE(midi2_channels.index(0, gui::MidiMonitorModel::Channel).data().toInt() == 1);
 }
 
 } // namespace

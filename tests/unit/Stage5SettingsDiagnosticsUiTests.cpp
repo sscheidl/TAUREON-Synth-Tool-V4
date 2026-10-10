@@ -93,6 +93,14 @@ int main(int argc, char* argv[]) {
         QApplication::sendEvent(generic_pacing, &pacing_wheel);
         TAUREON_REQUIRE(backend_preference->currentIndex() == backend_before_wheel);
         TAUREON_REQUIRE(generic_pacing->value() == pacing_before_wheel);
+        settings.show();
+        QApplication::processEvents(QEventLoop::AllEvents);
+        backend_preference->setFocus();
+        QApplication::sendEvent(backend_preference, &backend_wheel);
+        generic_pacing->setFocus();
+        QApplication::sendEvent(generic_pacing, &pacing_wheel);
+        TAUREON_REQUIRE(backend_preference->currentIndex() == backend_before_wheel);
+        TAUREON_REQUIRE(generic_pacing->value() == pacing_before_wheel);
 
         TAUREON_REQUIRE(diagnostics.findChild<QPushButton*>("diagnosticsExportBundle") != nullptr);
         TAUREON_REQUIRE(settings.findChild<QPushButton*>("settingsSave") != nullptr);
