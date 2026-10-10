@@ -1,10 +1,10 @@
-set(TAUREON_WMS_DEPENDENCY_ROOT "${PROJECT_SOURCE_DIR}/build/dependencies/wms-rc4" CACHE PATH
+set(TAUREON_WMS_DEPENDENCY_ROOT "${PROJECT_SOURCE_DIR}/build/dependencies/wms-preview9" CACHE PATH
     "Project-local pinned WMS SDK and C++/WinRT packages")
 set(TAUREON_WINDOWS_SDK_CONTRACT_VERSION "10.0.26100.0" CACHE STRING
     "Windows SDK contract version used for C++/WinRT projection")
 
 set(wms_dependencies_available OFF)
-if(EXISTS "${TAUREON_WMS_DEPENDENCY_ROOT}/package/ref/native/Microsoft.Windows.Devices.Midi2.winmd"
+if(EXISTS "${TAUREON_WMS_DEPENDENCY_ROOT}/package/ref/native/Windows.Devices.Midi2.winmd"
    AND EXISTS "${TAUREON_WMS_DEPENDENCY_ROOT}/cppwinrt-package/bin/cppwinrt.exe")
     set(wms_dependencies_available ON)
 endif()

@@ -17,6 +17,14 @@ or `--list-midi winmm` from a terminal in the portable folder (local builds use
 `taureon_app.exe`). These commands list routes or the initialization error without
 opening a MIDI endpoint or sending data.
 
+Local development/test builds use the
+[Preview 9 WMS API](docs/reference/WMS_PREVIEW9_DEPENDENCIES.md), with its DLL and
+resource file beside the executable. Public CI downloads omit those Preview 9
+files; WMS needs a permitted API obtained separately or supplied by Windows.
+Developers acquire the pinned inputs with
+`tools/AcquireWmsDependencies.ps1`. The first public alpha still uses the older RC4
+runtime; this change does not update that published download.
+
 The alpha is **not yet validated for real product-path MIDI/SysEx transfer or device restore**. Stage 5 remains open pending native 150%/200% display checks and physical-device testing in the application. Back up important synth data and use receive/inspection features first. The Summit profile currently supports bounded identification and inspection, not semantic preset editing or validated restore.
 
 Developers are welcome to [contribute](CONTRIBUTING.md). The generic MIDI engine has an [experimental internal CMake package](docs/engine/REUSE.md); it is not a stable public SDK.

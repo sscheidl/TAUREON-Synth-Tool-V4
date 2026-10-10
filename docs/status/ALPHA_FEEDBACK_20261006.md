@@ -4,6 +4,11 @@ The Product Owner prioritised bugs 1–4. Bug 5 (SysEx Transfer button flicker) 
 observed with the internal September test package and is already fixed. Requests
 6–9 remain deferred; the Manager-navigation change is prepared separately.
 
+**2026-10-10 update:** the Preview-9 production client now enumerates 21 RX / 24 TX
+WMS routes successfully. This supersedes the bug-2 initialization blocker below;
+the old RC4 findings remain as historical evidence. See
+[Preview 9 compatibility](WMS_PREVIEW9_20261010.md) for the cause and current checks.
+
 ## Current fix scope
 
 1. **Auto blocks port selection:** with no concrete backend, either port field now

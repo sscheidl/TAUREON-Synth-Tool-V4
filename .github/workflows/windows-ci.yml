@@ -154,7 +154,7 @@ jobs:
       - name: Acquire pinned Windows MIDI Services build dependencies
         if: github.event_name == 'push'
         shell: pwsh
-        run: .\tools\AcquireStage1Dependencies.ps1
+        run: .\tools\AcquireWmsDependencies.ps1
 
       - name: Configure internal hardware-test build
         if: github.event_name == 'push'
@@ -185,6 +185,8 @@ jobs:
 
           New-Item -ItemType Directory -Force -Path $bundleDirectory | Out-Null
           Copy-Item -LiteralPath $sourceExecutable -Destination $bundleExecutable
+          Copy-Item -LiteralPath (Join-Path $PWD 'docs/licenses/Windows-MIDI-Services-MIT.txt') `
+            -Destination $bundleDirectory
           Copy-Item -LiteralPath (Join-Path (Split-Path $sourceExecutable) "resources") `
             -Destination (Join-Path $bundleDirectory "resources") -Recurse
           $profiles = Get-ChildItem -LiteralPath (Join-Path $bundleDirectory "resources\device_profiles") -Filter *.profile.json -File
@@ -216,14 +218,26 @@ jobs:
           not a release. Real MIDI/SysEx behavior is not yet accepted until the
           Product Owner records the physical-hardware results.
 
-          Windows MIDI Services requires the matching Windows MIDI Services
-          runtime already installed on the test PC. The WinMM backend remains
-          available independently.
+          WMS API target: Windows.Devices.Midi2 0.99.83-devpreview.9.
+          Requires Windows 11 25H2 or newer with Windows MIDI Services available.
+          This public workflow artifact excludes Microsoft's Preview 9 API files.
+          WMS needs a Windows-provided API or permitted app-local API files that
+          you obtain separately for development/testing under Microsoft's terms.
+          See docs/reference/WMS_PREVIEW9_DEPENDENCIES.md in the source repository.
+          The WinMM backend remains available independently.
           "@
           $notice.Trim() | Set-Content -LiteralPath (Join-Path $bundleDirectory "INTERNAL-TEST-BUILD.txt") -Encoding utf8
 
           Push-Location $bundleDirectory
           try {
+            # Public-repository artifacts are public distribution. Do not ship
+            # the Preview 9 runtime until its customer-preview terms are met.
+            if (Test-Path -LiteralPath (Join-Path $bundleDirectory 'Windows.Devices.Midi2.dll')) {
+              throw 'Preview 9 API must not be included in this public artifact'
+            }
+            if (Test-Path -LiteralPath (Join-Path $bundleDirectory 'Windows.Devices.Midi2.pri')) {
+              throw 'Preview 9 resources must not be included in this public artifact'
+            }
             & $bundleExecutable --smoke-test
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
