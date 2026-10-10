@@ -140,6 +140,18 @@ QString message_type(const midi::NativeMidiMessage& message) {
     if (words.empty()) return "Malformed UMP";
     const auto word = words.front();
     const auto ump_type = word >> 28u;
+    if (ump_type == 0x4u) {
+        switch ((word >> 20u) & 0xfu) {
+        case 0x0u: return "MIDI 2.0 Registered Per-Note Controller";
+        case 0x1u: return "MIDI 2.0 Assignable Per-Note Controller";
+        case 0x2u: return "MIDI 2.0 Registered Controller";
+        case 0x3u: return "MIDI 2.0 Assignable Controller";
+        case 0x4u: return "MIDI 2.0 Relative Registered Controller";
+        case 0x5u: return "MIDI 2.0 Relative Assignable Controller";
+        case 0x6u: return "MIDI 2.0 Per-Note Pitch Bend";
+        default: break;
+        }
+    }
     if (ump_type == 0x3u) return "SysEx7";
     if (ump_type == 0x5u && ((word >> 20u) & 0xfu) <= 0x3u) return "SysEx8";
     if (ump_type == 0x1u) {
@@ -161,6 +173,26 @@ MonitorEventCategory channel_category(const std::uint8_t status) {
     case 0xb0u: return MonitorEventCategory::controllers;
     case 0xc0u: return MonitorEventCategory::program_change;
     case 0xe0u: return MonitorEventCategory::pitch_bend;
+    default: return MonitorEventCategory::other;
+    }
+}
+
+MonitorEventCategory midi2_category(const std::uint8_t status) {
+    switch (status) {
+    case 0x0u:
+    case 0x1u:
+    case 0x2u:
+    case 0x3u:
+    case 0x4u:
+    case 0x5u:
+    case 0xbu: return MonitorEventCategory::controllers;
+    case 0x6u:
+    case 0xeu: return MonitorEventCategory::pitch_bend;
+    case 0x8u:
+    case 0x9u: return MonitorEventCategory::notes;
+    case 0xau:
+    case 0xdu: return MonitorEventCategory::aftertouch;
+    case 0xcu: return MonitorEventCategory::program_change;
     default: return MonitorEventCategory::other;
     }
 }
@@ -190,7 +222,8 @@ MonitorEventCategory event_category(const midi::NativeMidiMessage& message) {
         return MonitorEventCategory::sysex;
     }
     if (message_type == 0x1u) return system_category(static_cast<std::uint8_t>(word >> 16u));
-    if (message_type == 0x2u || message_type == 0x4u) {
+    if (message_type == 0x4u) return midi2_category(static_cast<std::uint8_t>((word >> 20u) & 0xfu));
+    if (message_type == 0x2u) {
         return channel_category(static_cast<std::uint8_t>(word >> 16u));
     }
     return MonitorEventCategory::other;
@@ -225,7 +258,7 @@ QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const 
     switch (index.column()) {
     case Time: return message.timestamp ? QString::number(message.timestamp->native_value) : QStringLiteral("—");
     case Direction: return event.direction == midi::MidiDirection::input ? "RX" : "TX";
-    case Route: return QString::fromLatin1(midi::to_string(message.backend));
+    case Backend: return QString::fromLatin1(midi::to_string(message.backend));
     case Channel:
         if (parsed_voice) return static_cast<int>(*parsed_voice->channel + 1);
         return midi2_voice ? QVariant{midi2_voice->channel} : QVariant{QStringLiteral("—")};
@@ -246,7 +279,7 @@ QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const 
 QVariant MidiMonitorModel::headerData(const int section, const Qt::Orientation orientation,
                                       const int role) const {
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole || section < 0 || section >= ColumnCount) return {};
-    static const QStringList headers{"Time", "Direction", "Route", "Channel", "Type", "Event", "Value", "Raw"};
+    static const QStringList headers{"Time", "Direction", "Backend", "Channel", "Type", "Event", "Value", "Raw"};
     return headers.at(section);
 }
 

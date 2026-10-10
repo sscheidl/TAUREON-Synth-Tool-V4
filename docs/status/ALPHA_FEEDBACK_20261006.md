@@ -43,12 +43,15 @@ WMS Group Terminal Block direction is defined from the device's viewpoint in
 
 The Monitor now has an event-type menu for Notes, Control Change, Program Change,
 Pitch Bend, Aftertouch, SysEx, Clock, Active Sensing and Other/System. The menu
-supports selecting several types and resetting to all. Direction, channel, route
+supports selecting several types and resetting to all. Direction, channel, backend
 and the existing free-text filter can be combined. Classification uses MIDI 1.0
 status bytes or UMP message types and is a view-only proxy filter: source history,
 raw bytes, capture and transfer are unchanged. Channel filtering excludes system
 messages, which have no channel. MIDI 2.0 SysEx8 is included; UMP Mixed Data Set
-is Other/System.
+is Other/System. MIDI 2.0 per-note pitch bend and controller statuses are assigned
+to their respective event filters. The backend selector intentionally groups
+events by WinMM/WMS/external because the current monitor event does not retain
+endpoint identity; endpoint-level route filtering remains separate future work.
 
 Local MSVC/Qt build and 24 registered tests passed, including MIDI 1.0/UMP type
 classification, compound filtering, source-history preservation and GUI action

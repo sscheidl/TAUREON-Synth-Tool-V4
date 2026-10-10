@@ -342,12 +342,16 @@ void queue_and_model_tests() {
     TAUREON_REQUIRE(categories.index(10, gui::MidiMonitorModel::Type).data().toString() == "SysEx7");
     TAUREON_REQUIRE(categories.index(11, gui::MidiMonitorModel::Type).data().toString() == "Clock");
 
-    gui::MidiMonitorModel ump_data(2);
+    gui::MidiMonitorModel ump_data(4);
     ump_data.append_batch({
         {14, midi::MidiDirection::input,
          {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x50000000}}, std::nullopt}},
         {15, midi::MidiDirection::input,
          {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x50800000}}, std::nullopt}},
+        {16, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40603C00, 0x80000000}}, std::nullopt}},
+        {17, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40200000, 0x80000000}}, std::nullopt}},
     });
     TAUREON_REQUIRE(ump_data.index(0, gui::MidiMonitorModel::Type)
                         .data(gui::MidiMonitorModel::CategoryRole).toInt() ==
@@ -356,6 +360,14 @@ void queue_and_model_tests() {
     TAUREON_REQUIRE(ump_data.index(1, gui::MidiMonitorModel::Type)
                         .data(gui::MidiMonitorModel::CategoryRole).toInt() ==
                     static_cast<int>(gui::MonitorEventCategory::other));
+    TAUREON_REQUIRE(ump_data.index(2, gui::MidiMonitorModel::Type)
+                        .data(gui::MidiMonitorModel::CategoryRole).toInt() ==
+                    static_cast<int>(gui::MonitorEventCategory::pitch_bend));
+    TAUREON_REQUIRE(ump_data.index(2, gui::MidiMonitorModel::Type).data().toString() ==
+                    "MIDI 2.0 Per-Note Pitch Bend");
+    TAUREON_REQUIRE(ump_data.index(3, gui::MidiMonitorModel::Type)
+                        .data(gui::MidiMonitorModel::CategoryRole).toInt() ==
+                    static_cast<int>(gui::MonitorEventCategory::controllers));
 
     gui::MidiMonitorFilterModel category_filter;
     category_filter.setSourceModel(&categories);
@@ -363,7 +375,7 @@ void queue_and_model_tests() {
     category_filter.set_category_enabled(gui::MonitorEventCategory::sysex, false);
     TAUREON_REQUIRE(category_filter.rowCount() == 9);
     TAUREON_REQUIRE(categories.rowCount() == 13);
-    category_filter.set_route("wms");
+    category_filter.set_backend("wms");
     TAUREON_REQUIRE(category_filter.rowCount() == 2);
     category_filter.set_channel(1);
     TAUREON_REQUIRE(category_filter.rowCount() == 2);

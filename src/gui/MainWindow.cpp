@@ -248,15 +248,15 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
     channel->setAccessibleName("Monitor channel filter");
     channel->addItem("All channels", 0);
     for (int value = 1; value <= 16; ++value) channel->addItem(QStringLiteral("Channel %1").arg(value), value);
-    auto* route = new QComboBox(page);
-    route->setAccessibleName("Monitor route filter");
-    route->addItem("All routes", QString{});
-    route->addItem("Windows MIDI Services", "wms");
-    route->addItem("WinMM", "winmm");
-    route->addItem("External", "external");
+    auto* backend_filter = new QComboBox(page);
+    backend_filter->setAccessibleName("Monitor backend filter");
+    backend_filter->addItem("All backends", QString{});
+    backend_filter->addItem("Windows MIDI Services", "wms");
+    backend_filter->addItem("WinMM", "winmm");
+    backend_filter->addItem("External", "external");
     filter_controls->addWidget(event_types);
     filter_controls->addWidget(channel);
-    filter_controls->addWidget(route);
+    filter_controls->addWidget(backend_filter);
     filter_controls->addStretch();
     layout->addLayout(filter_controls);
     auto* table = new QTableView(page);
@@ -334,8 +334,8 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
                      });
     QObject::connect(channel, &QComboBox::currentIndexChanged, page,
                      [proxy, channel] { proxy->set_channel(channel->currentData().toInt()); });
-    QObject::connect(route, &QComboBox::currentIndexChanged, page,
-                     [proxy, route] { proxy->set_route(route->currentData().toString()); });
+    QObject::connect(backend_filter, &QComboBox::currentIndexChanged, page,
+                     [proxy, backend_filter] { proxy->set_backend(backend_filter->currentData().toString()); });
     QObject::connect(type_filter, &QLineEdit::textChanged, page,
                      [proxy](const QString& value) { proxy->set_type_filter(value); });
     QObject::connect(pause, &QPushButton::toggled, page, [&bridge, pause](const bool paused) {

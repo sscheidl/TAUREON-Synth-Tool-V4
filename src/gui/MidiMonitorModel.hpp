@@ -18,7 +18,7 @@ enum class MonitorEventCategory : std::uint8_t {
 
 class MidiMonitorModel final : public QAbstractTableModel {
 public:
-    enum Column { Time, Direction, Route, Channel, Type, Event, Value, Raw, ColumnCount };
+    enum Column { Time, Direction, Backend, Channel, Type, Event, Value, Raw, ColumnCount };
     enum Role { CategoryRole = Qt::UserRole + 1 };
 
     explicit MidiMonitorModel(std::size_t history_limit, QObject* parent = nullptr);
