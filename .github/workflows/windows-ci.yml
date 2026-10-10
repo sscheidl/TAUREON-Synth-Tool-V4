@@ -270,7 +270,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
-      actions: read
       contents: write
     env:
       GH_TOKEN: ${{ github.token }}
@@ -294,13 +293,18 @@ jobs:
           test -f "docs/release/${GITHUB_REF_NAME}.md" ||
             { echo "Missing docs/release/${GITHUB_REF_NAME}.md"; exit 1; }
 
+      - name: Download portable folder built for this commit
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: TAUREON-V4-hardware-test-win64-${{ github.sha }}
+          path: dist/TAUREON-Synth-Tool-V4-${{ github.ref_name }}-win64
+
       - name: Package release ZIP
         shell: bash
         run: |
           set -euo pipefail
           name="TAUREON-Synth-Tool-V4-${GITHUB_REF_NAME}-win64"
           folder="dist/${name}"
-          gh run download "$GITHUB_RUN_ID" -n "TAUREON-V4-hardware-test-win64-${GITHUB_SHA}" -D "$folder"
           test -f "${folder}/TAUREON-Synth-Tool-V4.exe"
           # Public release: Microsoft's preview API files must not be redistributed.
           test ! -e "${folder}/Windows.Devices.Midi2.dll"
