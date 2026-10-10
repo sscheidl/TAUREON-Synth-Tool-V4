@@ -2,11 +2,23 @@
 
 #include <taureon/core/sysex/SysEx7.hpp>
 
+#include <cwctype>
 #include <exception>
+#include <initializer_list>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
 #include <variant>
+
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 namespace taureon::app {
 namespace {
@@ -14,6 +26,48 @@ namespace {
 midi::MidiError worker_error(std::string detail) {
     return {midi::MidiErrorCode::open_failure, std::move(detail), "connection-worker",
             std::nullopt};
+}
+
+std::string wms_api_location() {
+#if defined(_WIN32)
+    const HMODULE api = GetModuleHandleW(L"Windows.Devices.Midi2.dll");
+    if (api == nullptr) return "not loaded";
+    std::wstring path(32768, L'\0');
+    const auto length = GetModuleFileNameW(api, path.data(), static_cast<DWORD>(path.size()));
+    if (length == 0 || length >= path.size()) return "loaded, location unknown";
+    path.resize(length);
+    const auto directory = [](std::wstring value) {
+        const auto separator = value.find_last_of(L"\\/");
+        value.resize(separator == std::wstring::npos ? 0 : separator);
+        for (auto& character : value) character = static_cast<wchar_t>(towlower(character));
+        return value;
+    };
+    const auto api_directory = directory(path);
+    std::wstring executable(32768, L'\0');
+    const auto executable_length = GetModuleFileNameW(
+        nullptr, executable.data(), static_cast<DWORD>(executable.size()));
+    if (executable_length > 0 && executable_length < executable.size()) {
+        executable.resize(executable_length);
+        if (api_directory == directory(executable)) return "beside the application";
+    }
+    std::wstring tools(MAX_PATH, L'\0');
+    const auto expanded = ExpandEnvironmentStringsW(
+        L"%ProgramFiles%\\Windows MIDI Services\\Tools\\x", tools.data(),
+        static_cast<DWORD>(tools.size()));
+    if (expanded > 0 && expanded <= tools.size()) {
+        tools.resize(expanded - 1);
+        if (api_directory == directory(tools)) return "Windows MIDI Services Tools";
+    }
+    std::wstring system(MAX_PATH, L'\0');
+    const auto system_length = GetSystemDirectoryW(system.data(), static_cast<UINT>(system.size()));
+    if (system_length > 0 && system_length < system.size()) {
+        system.resize(system_length);
+        if (api_directory == directory(system + L"\\x")) return "Windows";
+    }
+    return "other location";
+#else
+    return "not applicable";
+#endif
 }
 
 } // namespace
@@ -539,6 +593,49 @@ std::future<midi::Result<SysExTransferSnapshot>> ConnectionWorker::sysex_snapsho
         promise->set_value(midi::Result<SysExTransferSnapshot>::success(
             state.sysex_snapshot(dropped_stream_events_.load(std::memory_order_relaxed),
                                  last_synthetic_loss_sequence())));
+    });
+    return future;
+}
+
+std::future<midi::Result<BackendProbeReport>> ConnectionWorker::probe_backends() {
+    auto promise = std::make_shared<std::promise<midi::Result<BackendProbeReport>>>();
+    auto future = promise->get_future();
+    enqueue([promise, this](State& state) {
+        drain_stream_events(state);
+        state.synchronize_transfer();
+        if (state.transfer || state.sysex.receiving()) {
+            promise->set_value(midi::Result<BackendProbeReport>::failure(worker_error(
+                "MIDI engine check is unavailable while SysEx is being sent or received")));
+            return;
+        }
+        BackendProbeReport report;
+        for (const auto backend : {midi::MidiBackend::windows_midi_services, midi::MidiBackend::winmm}) {
+            BackendProbe probe;
+            probe.backend = backend;
+            try {
+                // A separate transport only enumerates; the active connection is untouched.
+                const auto transport = factory_(backend);
+                if (!transport) throw std::runtime_error("transport factory returned no transport");
+                const auto endpoints = transport->enumerate();
+                if (endpoints) {
+                    probe.available = true;
+                    for (const auto& endpoint : endpoints.value()) {
+                        if (endpoint.identity.direction == midi::MidiDirection::input) {
+                            ++probe.receive_routes;
+                        } else {
+                            ++probe.transmit_routes;
+                        }
+                    }
+                } else {
+                    probe.detail = endpoints.error().message;
+                }
+            } catch (const std::exception& error) {
+                probe.detail = error.what();
+            }
+            report.backends.push_back(std::move(probe));
+        }
+        report.wms_api_location = wms_api_location();
+        promise->set_value(midi::Result<BackendProbeReport>::success(std::move(report)));
     });
     return future;
 }

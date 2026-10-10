@@ -8,6 +8,8 @@
 #include <condition_variable>
 #include <future>
 #include <mutex>
+#include <stdexcept>
+#include <string>
 #include <thread>
 
 using namespace taureon;
@@ -121,11 +123,50 @@ void bounded_application_stream_queue() {
                     std::optional<std::uint64_t>{injected - 1});
 }
 
+void backend_probe_reports_each_backend() {
+    app::ConnectionWorker worker([](const midi::MidiBackend backend)
+                                     -> std::unique_ptr<midi::IMidiTransport> {
+        if (backend == midi::MidiBackend::winmm) {
+            throw std::runtime_error("WinMM probe test unavailable");
+        }
+        return std::make_unique<midi::FakeMidiTransport>(backend, std::vector{
+            endpoint(backend, midi::MidiDirection::input, "probe-rx-1"),
+            endpoint(backend, midi::MidiDirection::input, "probe-rx-2"),
+            endpoint(backend, midi::MidiDirection::output, "probe-tx")});
+    });
+    const auto report = worker.probe_backends().get();
+    TAUREON_REQUIRE(report);
+    TAUREON_REQUIRE(report.value().backends.size() == 2);
+    const auto& wms = report.value().backends[0];
+    TAUREON_REQUIRE(wms.backend == midi::MidiBackend::windows_midi_services);
+    TAUREON_REQUIRE(wms.available && wms.receive_routes == 2 && wms.transmit_routes == 1);
+    const auto& winmm = report.value().backends[1];
+    TAUREON_REQUIRE(winmm.backend == midi::MidiBackend::winmm);
+    TAUREON_REQUIRE(!winmm.available && winmm.detail == "WinMM probe test unavailable");
+    TAUREON_REQUIRE(!report.value().wms_api_location.empty());
+
+    // The check is refused while a SysEx capture runs, so it cannot delay that stream.
+    const auto selected = worker.select_backend(midi::MidiBackend::windows_midi_services).get();
+    TAUREON_REQUIRE(selected);
+    TAUREON_REQUIRE(worker.connect(selected.value().endpoints[0].identity, std::nullopt).get());
+    TAUREON_REQUIRE(worker.begin_sysex_receive().get());
+    const auto refused = worker.probe_backends().get();
+    TAUREON_REQUIRE(!refused);
+    TAUREON_REQUIRE(refused.error().message.find("SysEx") != std::string::npos);
+    TAUREON_REQUIRE(worker.finish_sysex_receive().get());
+    const auto connected_probe = worker.probe_backends().get();
+    TAUREON_REQUIRE(connected_probe);
+    const auto still_connected = worker.snapshot().get();
+    TAUREON_REQUIRE(still_connected);
+    TAUREON_REQUIRE(still_connected.value().state == app::ConnectionPresentationState::connected);
+}
+
 } // namespace
 
 int main() {
     return test::run([] {
         bounded_application_stream_queue();
+        backend_probe_reports_each_backend();
         bool empty_factory_rejected = false;
         try {
             app::ConnectionWorker invalid_worker({});
