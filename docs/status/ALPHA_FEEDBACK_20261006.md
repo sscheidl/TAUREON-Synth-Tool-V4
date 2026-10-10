@@ -47,7 +47,8 @@ candidate.
 
 The Monitor now has a permanently visible checkbox panel for RX/TX and Notes,
 Control Change, Program Change, Pitch Bend, Aftertouch, SysEx, Clock, Active
-Sensing and Other/System. Several types can be selected at once or reset to all.
+Sensing and Other/System. Several types can be selected at once. "All event types"
+resets to all; "No event types" leaves Notes visible and hides the other types.
 The channel and existing free-text filter can be combined with these checkboxes.
 The redundant monitor-backend dropdown has been removed; backend selection is
 performed once in the connection bar. The workspace navigation is above the

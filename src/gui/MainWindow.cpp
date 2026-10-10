@@ -251,8 +251,17 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
         });
     }
     auto* show_all = new QPushButton("All event types", filter_panel);
+    show_all->setObjectName("monitorShowAllEventTypes");
     QObject::connect(show_all, &QPushButton::clicked, page, [category_checks] {
         for (auto* check : *category_checks) check->setChecked(true);
+    });
+    auto* notes_only = new QPushButton("No event types", filter_panel);
+    notes_only->setObjectName("monitorNotesOnlyEventTypes");
+    notes_only->setToolTip("Show Notes only; hide all other event types.");
+    QObject::connect(notes_only, &QPushButton::clicked, page, [category_checks] {
+        for (std::size_t index = 0; index < category_checks->size(); ++index) {
+            category_checks->at(index)->setChecked(index == 0);
+        }
     });
     auto* channel = new QComboBox(page);
     channel->setAccessibleName("Monitor channel filter");
@@ -260,6 +269,7 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
     for (int value = 1; value <= 16; ++value) channel->addItem(QStringLiteral("Channel %1").arg(value), value);
     filter_layout->addWidget(channel, 4, 0);
     filter_layout->addWidget(show_all, 4, 1);
+    filter_layout->addWidget(notes_only, 4, 2);
     filter_layout->setColumnStretch(3, 1);
     layout->addWidget(filter_panel);
     auto* table = new QTableView(page);

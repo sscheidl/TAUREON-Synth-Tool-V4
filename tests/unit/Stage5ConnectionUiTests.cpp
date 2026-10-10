@@ -193,8 +193,11 @@ int main(int argc, char* argv[]) {
         auto* clock = window.findChild<QCheckBox*>("monitorEventType_6");
         auto* receive_events = window.findChild<QCheckBox*>("monitorReceiveEvents");
         auto* transmit_events = window.findChild<QCheckBox*>("monitorTransmitEvents");
+        auto* notes_only = window.findChild<QPushButton*>("monitorNotesOnlyEventTypes");
+        auto* show_all = window.findChild<QPushButton*>("monitorShowAllEventTypes");
         TAUREON_REQUIRE(filter_panel && filter_panel->isVisible());
         TAUREON_REQUIRE(notes && clock && notes->isChecked() && clock->isChecked());
+        TAUREON_REQUIRE(notes_only && show_all);
         TAUREON_REQUIRE(receive_events && transmit_events &&
                         receive_events->isChecked() && transmit_events->isChecked());
         for (auto* selector : filter_panel->findChildren<QComboBox*>()) {
@@ -214,6 +217,11 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(proxy->rowCount() == 0);
         receive_events->setChecked(true);
         TAUREON_REQUIRE(proxy->rowCount() == model->rowCount());
+        notes_only->click();
+        TAUREON_REQUIRE(notes->isChecked() && !clock->isChecked());
+        TAUREON_REQUIRE(proxy->rowCount() == model->rowCount() - 1);
+        show_all->click();
+        TAUREON_REQUIRE(clock->isChecked() && proxy->rowCount() == model->rowCount());
 
         // An explicit backend choice remains in the first selector only.
         backend->setCurrentIndex(1);
