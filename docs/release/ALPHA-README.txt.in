@@ -1,0 +1,22 @@
+TAUREON Synth Tool V4 @VERSION@ — Windows x64 portable preview
+
+Build revision: @REVISION@
+Start TAUREON-Synth-Tool-V4.exe from this extracted folder. Keep its DLLs,
+resources and plugin subdirectories together. Windows 11 x64 is the primary
+target. No installer or automatic device configuration is provided.
+
+WinMM uses native Windows MIDI support. The Windows MIDI Services (WMS) backend
+targets the Windows MIDI Services Developer Preview 9 API (Windows.Devices.Midi2).
+This ZIP does not contain Microsoft's preview API files, so WMS works only where
+Windows provides that API or you place permitted API files beside the EXE.
+Otherwise the Auto backend falls back to WinMM. Run
+"TAUREON-Synth-Tool-V4.exe --list-midi wms" (or winmm) in this folder to list
+routes or the initialization error without opening a MIDI port.
+
+Real product-path MIDI/SysEx transfer and device restore have not yet passed
+physical-hardware acceptance. Back up important synth data. Select exact RX/TX
+routes deliberately and begin with receive/inspection workflows. Native display
+scaling at 150% and 200% also remains to be checked.
+
+Project, issues and source: https://github.com/sscheidl/TAUREON-Synth-Tool-V4
+Licensing information: LICENSE.txt and THIRD-PARTY-NOTICES.txt

@@ -10,6 +10,13 @@ Second experimental Windows x64 preview (GitHub pre-release `v0.1.0-alpha.2`).
 Product-path MIDI/SysEx transfer and device restore are still not validated;
 Stage 5 remains open.
 
+### Release
+
+- Pushing a `v*` tag now makes Windows CI package the portable build of that
+  exact commit with release notes, license texts and SHA-256 sums, and publish
+  it as a GitHub pre-release; Microsoft's preview WMS API files are never
+  included.
+
 ### Connection and WMS
 
 - Auto now tries Windows MIDI Services first and falls back to WinMM when WMS is

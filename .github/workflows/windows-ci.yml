@@ -262,3 +262,74 @@ jobs:
           path: build/TAUREON-V4-hardware-test-win64
           if-no-files-found: error
           retention-days: 14
+
+  release:
+    # A pushed v* tag turns the portable folder built above into a GitHub pre-release.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [engine-consumer, software]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Check tag against the application version and release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          base="${version%%-*}"
+          suffix="${version#*-}"
+          grep -q "VERSION ${base} " CMakeLists.txt || { echo "CMake project version is not ${base}"; exit 1; }
+          if [ "$suffix" != "$version" ]; then
+            grep -qF "\${PROJECT_VERSION}-${suffix}\"" src/CMakeLists.txt ||
+              { echo "TAUREON_APP_VERSION suffix is not ${suffix}"; exit 1; }
+          fi
+          test -f "docs/release/${GITHUB_REF_NAME}.md" ||
+            { echo "Missing docs/release/${GITHUB_REF_NAME}.md"; exit 1; }
+
+      - name: Download portable folder built for this commit
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: TAUREON-V4-hardware-test-win64-${{ github.sha }}
+          path: dist/TAUREON-Synth-Tool-V4-${{ github.ref_name }}-win64
+
+      - name: Package release ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="TAUREON-Synth-Tool-V4-${GITHUB_REF_NAME}-win64"
+          folder="dist/${name}"
+          test -f "${folder}/TAUREON-Synth-Tool-V4.exe"
+          # Public release: Microsoft's preview API files must not be redistributed.
+          test ! -e "${folder}/Windows.Devices.Midi2.dll"
+          test ! -e "${folder}/Windows.Devices.Midi2.pri"
+          rm -f "${folder}/INTERNAL-TEST-BUILD.txt" "${folder}/SHA256SUMS.txt"
+          mkdir -p "${folder}/licenses"
+          mv "${folder}/Windows-MIDI-Services-MIT.txt" "${folder}/licenses/"
+          cp docs/licenses/Qt-GPL-3.0-only.txt docs/licenses/Qt-LGPL-3.0-only.txt \
+             docs/licenses/ICU-LICENSE.txt "${folder}/licenses/"
+          cp LICENSE "${folder}/LICENSE.txt"
+          cp docs/release/THIRD-PARTY-NOTICES.txt "${folder}/"
+          sed -e "s/@VERSION@/${GITHUB_REF_NAME#v}/" -e "s/@REVISION@/${GITHUB_SHA}/" \
+            docs/release/ALPHA-README.txt.in > "${folder}/ALPHA-README.txt"
+          (cd "$folder" && find . -type f ! -name SHA256SUMS.txt -printf '%P\n' | LC_ALL=C sort |
+            xargs -d '\n' sha256sum > SHA256SUMS.txt)
+          (cd dist && zip -qrX "${name}.zip" "$name" &&
+            sha256sum "${name}.zip" > "SHA256SUMS-${GITHUB_REF_NAME}.txt")
+
+      - name: Publish GitHub pre-release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/TAUREON-Synth-Tool-V4-${GITHUB_REF_NAME}-win64.zip" \
+            "dist/SHA256SUMS-${GITHUB_REF_NAME}.txt" \
+            --verify-tag --prerelease \
+            --title "TAUREON Synth Tool V4 ${GITHUB_REF_NAME#v}" \
+            --notes-file "docs/release/${GITHUB_REF_NAME}.md"

@@ -1,0 +1,22 @@
+TAUREON Synth Tool V4 is MIT licensed; see LICENSE.txt and the matching GitHub
+source revision listed in ALPHA-README.txt.
+
+This portable folder also contains Qt 6.10.3 shared libraries and plugins from
+the Qt open-source distribution. Qt is copyright The Qt Company Ltd. and
+contributors and is offered under the GNU LGPL version 3 or other applicable
+module terms. The LGPL and GPL version 3 texts are in licenses/. The Qt DLLs
+and plugin DLLs are separate files and may be replaced with compatible builds.
+Qt source and license information:
+https://download.qt.io/archive/qt/6.10/6.10.3/
+https://doc.qt.io/qt-6.10/licensing.html
+https://doc.qt.io/qt-6.10/licenses-used-in-qt.html
+
+icuuc.dll is ICU 64.2; see licenses/ICU-LICENSE.txt and
+https://github.com/unicode-org/icu/tree/release-64-2.
+
+Microsoft Visual C++ runtime and D3Dcompiler_47.dll are redistributed under
+Microsoft's applicable redistribution terms.
+https://learn.microsoft.com/en-us/cpp/windows/determining-which-dlls-to-redistribute
+
+Microsoft's Windows MIDI Services API files (Windows.Devices.Midi2.dll/.pri)
+are not included. Their MIT license text is in licenses/ for reference.
