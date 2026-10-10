@@ -12,6 +12,7 @@
 #include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QLabel>
 #include <QPlainTextEdit>
@@ -161,11 +162,20 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(details->toPlainText().contains("MIDI engines: not checked"));
         diagnostics.show();
         check_engines->click();
-        TAUREON_REQUIRE(process_until([&] {
+        // The panel polls its worker futures on a 250 ms timer; an iteration-bounded wait can
+        // end on a fast runner before that timer fires once.
+        const auto engines_shown = [&] {
             const auto text = details->toPlainText();
             return text.contains("WMS: available, 1 RX / 1 TX routes") &&
                    text.contains("WinMM: available, 1 RX / 1 TX routes");
-        }));
+        };
+        QElapsedTimer engines_wait;
+        engines_wait.start();
+        while (!engines_shown() && engines_wait.elapsed() < 5000) {
+            QApplication::processEvents(QEventLoop::AllEvents);
+            std::this_thread::yield();
+        }
+        TAUREON_REQUIRE(engines_shown());
         TAUREON_REQUIRE(check_engines->isEnabled());
         TAUREON_REQUIRE(diagnostics.findChild<QLabel*>("diagnosticsStatus")->text().contains(
             "no port was opened"));
