@@ -22,7 +22,6 @@
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
-#include <QSplitter>
 #include <QStatusBar>
 #include <QTableView>
 #include <QTabWidget>
@@ -125,6 +124,12 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(receive != nullptr);
         TAUREON_REQUIRE(transmit != nullptr);
         TAUREON_REQUIRE(connect != nullptr);
+        auto* panic = window.findChild<QPushButton*>("panicButton");
+        TAUREON_REQUIRE(panic != nullptr);
+        window.resize(1280, 720);
+        QApplication::processEvents(QEventLoop::AllEvents);
+        TAUREON_REQUIRE(connect->mapTo(&window, QPoint{}).x() + connect->width() <= window.width());
+        TAUREON_REQUIRE(panic->mapTo(&window, QPoint{}).x() + panic->width() <= window.width());
         int padded_midi_captions = 0;
         for (auto* caption : window.findChildren<QLabel*>("connectionCaption")) {
             if (caption->text() == "MIDI Input" || caption->text() == "MIDI Output") {
@@ -162,6 +167,21 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(proxy != nullptr);
         auto* model = dynamic_cast<gui::MidiMonitorModel*>(proxy->sourceModel());
         TAUREON_REQUIRE(model != nullptr);
+        auto* cc_profile = window.findChild<QComboBox*>("monitorCcProfile");
+        TAUREON_REQUIRE(cc_profile != nullptr);
+        const auto protein_index = cc_profile->findData(QStringLiteral("waldorf.protein"));
+        TAUREON_REQUIRE(protein_index >= 0);
+        model->append_batch({{0, midi::MidiDirection::input,
+            {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xB0, 74, 64}}, {}}}});
+        const auto cc_event = [&] {
+            return model->index(0, gui::MidiMonitorModel::Event).data().toString();
+        };
+        TAUREON_REQUIRE(cc_event() == "CC 74");
+        cc_profile->setCurrentIndex(protein_index);
+        TAUREON_REQUIRE(cc_event() == "CC 74 – MPE Y (when enabled)");
+        cc_profile->setCurrentIndex(0);
+        TAUREON_REQUIRE(cc_event() == "CC 74");
+        model->clear();
         const auto append_events = [model](int count) {
             std::vector<app::MonitorEvent> events;
             for (int index = 0; index < count; ++index) {
@@ -266,12 +286,13 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(raw_send != nullptr);
         TAUREON_REQUIRE(validated_restore != nullptr);
         TAUREON_REQUIRE(frame_table != nullptr);
-        auto* work_splitter = window.findChild<QSplitter*>("sysExWorkSplitter");
         auto* inspector_tabs = window.findChild<QTabWidget*>("sysExInspectorTabs");
-        TAUREON_REQUIRE(work_splitter != nullptr && inspector_tabs != nullptr);
-        TAUREON_REQUIRE(work_splitter->count() == 2 && inspector_tabs->count() == 2);
+        TAUREON_REQUIRE(inspector_tabs != nullptr);
+        TAUREON_REQUIRE(inspector_tabs->count() == 3);
         TAUREON_REQUIRE(inspector_tabs->tabText(0) == "Raw bytes");
         TAUREON_REQUIRE(inspector_tabs->tabText(1) == "Transfer log");
+        TAUREON_REQUIRE(inspector_tabs->tabText(2) == "Frames / diagnostics");
+        TAUREON_REQUIRE(inspector_tabs->widget(2) == frame_table);
         TAUREON_REQUIRE(window.findChild<QWidget*>("sysExTransferScrollArea") == nullptr);
         {
             gui::SysExTransferPanel compact_transfer(worker);
@@ -286,7 +307,8 @@ int main(int argc, char* argv[]) {
             TAUREON_REQUIRE(compact_transfer.width() == 700 && compact_transfer.height() == 430);
             TAUREON_REQUIRE(compact_status->isVisible() &&
                             compact_status->geometry().bottom() < compact_transfer.height());
-            TAUREON_REQUIRE(compact_table->height() > 40 && compact_inspector->height() > 40);
+            TAUREON_REQUIRE(compact_inspector->height() > 100);
+            TAUREON_REQUIRE(compact_inspector->widget(2) == compact_table);
         }
         TAUREON_REQUIRE(route_label != nullptr);
         TAUREON_REQUIRE(profile_label != nullptr);
@@ -521,21 +543,20 @@ int main(int argc, char* argv[]) {
             std::scoped_lock lock(transport_mutex);
             TAUREON_REQUIRE(transport_ptr->diagnostics().transmitted_messages == 0);
         }
-        bool confirmed_exact_route = false;
+        bool confirmed_send = false;
         QTimer::singleShot(0, &window, [&] {
             auto* dialog = qobject_cast<QMessageBox*>(QApplication::activeModalWidget());
             if (!dialog) return;
-            confirmed_exact_route = dialog->text().contains("fake-tx-id") &&
-                                    dialog->text().contains("1 complete SysEx frame");
+            confirmed_send = dialog->text() == "SYSEX send ok?";
             for (auto* button : dialog->buttons()) {
-                if (button->text() == "Send raw data") {
+                if (button->text() == "Send") {
                     button->click();
                     break;
                 }
             }
         });
         raw_send->click();
-        TAUREON_REQUIRE(confirmed_exact_route);
+        TAUREON_REQUIRE(confirmed_send);
         TAUREON_REQUIRE(process_until([&] {
             std::scoped_lock lock(transport_mutex);
             return transport_ptr->diagnostics().transmitted_messages == 1;

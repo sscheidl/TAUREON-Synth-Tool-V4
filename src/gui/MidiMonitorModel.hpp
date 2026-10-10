@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <map>
+#include <QString>
 #include <vector>
 
 namespace taureon::gui {
@@ -31,11 +33,13 @@ public:
     void append_batch(std::vector<app::MonitorEvent> events);
     void clear();
     void set_history_limit(std::size_t history_limit);
+    void set_cc_names(std::map<std::uint16_t, QString> names);
     [[nodiscard]] std::size_t history_limit() const noexcept { return history_limit_; }
 
 private:
     std::size_t history_limit_;
     std::deque<app::MonitorEvent> events_;
+    std::map<std::uint16_t, QString> cc_names_;
 };
 
 } // namespace taureon::gui

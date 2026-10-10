@@ -266,7 +266,20 @@ QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const 
         if (parsed_voice) return channel_voice_type(parsed_voice->kind);
         return midi2_voice ? midi2_voice->type : message_type(message);
     case Event:
-        if (parsed_voice) return channel_voice_event(*parsed_voice);
+        if (parsed_voice) {
+            if (parsed_voice->kind == midi::Midi1MessageKind::control_change && parsed_voice->data1) {
+                const auto number = *parsed_voice->data1;
+                if (const auto it = cc_names_.find(number); it != cc_names_.end())
+                    return QStringLiteral("CC %1 – %2").arg(number).arg(it->second);
+            }
+            return channel_voice_event(*parsed_voice);
+        }
+        if (midi2_voice && midi2_voice->type == "MIDI 2.0 Control Change") {
+            const auto first = std::get<midi::UmpNativeMessage>(message.data).words.front();
+            const auto number = static_cast<std::uint16_t>((first >> 8u) & 0xffu);
+            if (const auto it = cc_names_.find(number); it != cc_names_.end())
+                return QStringLiteral("CC %1 – %2").arg(number).arg(it->second);
+        }
         return midi2_voice ? midi2_voice->event : QStringLiteral("—");
     case Value:
         if (parsed_voice) return channel_voice_value(*parsed_voice);
@@ -274,6 +287,13 @@ QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const 
     case Raw: return midi1 ? hex_bytes(midi1->bytes) : hex_words(std::get<midi::UmpNativeMessage>(message.data).words);
     default: return {};
     }
+}
+
+void MidiMonitorModel::set_cc_names(std::map<std::uint16_t, QString> names) {
+    if (cc_names_ == names) return;
+    cc_names_ = std::move(names);
+    if (!events_.empty())
+        emit dataChanged(index(0, Event), index(rowCount() - 1, Event), {Qt::DisplayRole});
 }
 
 QVariant MidiMonitorModel::headerData(const int section, const Qt::Orientation orientation,

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "profile_id": "waldorf.protein",
+  "profile_version": "0.1.0",
+  "generic": false,
+  "manufacturer": "Waldorf",
+  "model": "Protein",
+  "variant": null,
+  "display_name": "Waldorf Protein (manual CC labels)",
+  "aliases": ["Protein"],
+  "support": {
+    "detect": false,
+    "read": false,
+    "inspect": false,
+    "extract": false,
+    "modify": false,
+    "serialize": false,
+    "transfer": false,
+    "validated_restore": false
+  },
+  "metadata": {
+    "channels": [],
+    "cc": [{"number": 74, "name": "MPE Y (when enabled)"}],
+    "rpn": [],
+    "nrpn": [],
+    "bank_organization": null
+  },
+  "defaults": {
+    "midi_channel": null,
+    "sysex_inter_message_delay_ms": null
+  },
+  "warnings": [
+    "Manual monitor labels only; no automatic Protein identification is claimed.",
+    "Protein allows user-defined CC mappings. CC 74 is the MPE Y axis only when MPE is enabled.",
+    "No editing, transfer, or validated restore capability is declared."
+  ],
+  "recognition": {
+    "native_identity": null,
+    "universal_identity": null,
+    "sysex_fingerprints": []
+  },
+  "provenance": {
+    "source": "Waldorf Protein Manual, MIDI Control Change Mapping and MPE Settings sections",
+    "owner": "Waldorf Music",
+    "license": "Descriptive facts only; no manual text or preset data redistributed",
+    "redistribution": "Metadata created for TAUREON; no Waldorf document or preset copied",
+    "acquisition": "Public manufacturer manual; https://waldorfmusic.com/faq-protein/"
+  },
+  "protocol_module_id": null
+}

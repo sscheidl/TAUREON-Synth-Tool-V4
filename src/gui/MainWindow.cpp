@@ -50,6 +50,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <memory>
+#include <map>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -96,7 +97,9 @@ public:
     explicit RouteSelector(QWidget* parent) : QComboBox(parent) {
         setSizeAdjustPolicy(AdjustToMinimumContentsLengthWithIcon);
         setMinimumContentsLength(18);
-        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        setMinimumWidth(190);
+        setMaximumWidth(360);
+        setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
         connect(this, &QComboBox::currentIndexChanged, this, [this](int index) {
             const auto detail = itemData(index, Qt::ToolTipRole).toString();
             setToolTip(detail.isEmpty() ? currentText() : detail);
@@ -181,7 +184,8 @@ QString monitor_delimited_line(const QAbstractItemModel& model, const int row, c
 }
 
 QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
-                           QPushButton*& pause_button) {
+                           QPushButton*& pause_button,
+                           std::shared_ptr<const profiles::ProfileRegistry> profile_registry) {
     auto* page = new QWidget;
     auto* layout = new QVBoxLayout(page);
     auto* controls = new QHBoxLayout;
@@ -243,8 +247,8 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
         check->setObjectName(QStringLiteral("monitorEventType_%1").arg(static_cast<int>(category)));
         check->setChecked(true);
         category_checks->push_back(check);
-        filter_layout->addWidget(check, 1 + static_cast<int>(index / 3),
-                                 static_cast<int>(index % 3));
+        filter_layout->addWidget(check, 1 + static_cast<int>(index / 5),
+                                 static_cast<int>(index % 5));
         QObject::connect(check, &QCheckBox::toggled, page,
                          [proxy, category](const bool checked) {
             proxy->set_category_enabled(category, checked);
@@ -267,10 +271,36 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
     channel->setAccessibleName("Monitor channel filter");
     channel->addItem("All channels", 0);
     for (int value = 1; value <= 16; ++value) channel->addItem(QStringLiteral("Channel %1").arg(value), value);
-    filter_layout->addWidget(channel, 4, 0);
-    filter_layout->addWidget(show_all, 4, 1);
-    filter_layout->addWidget(notes_only, 4, 2);
-    filter_layout->setColumnStretch(3, 1);
+    auto* cc_profile = new QComboBox(filter_panel);
+    cc_profile->setObjectName("monitorCcProfile");
+    cc_profile->setAccessibleName("Manual profile for MIDI monitor CC labels");
+    cc_profile->setToolTip("Manual display labels only. This does not identify a device or change MIDI routing.");
+    cc_profile->addItem("CC numbers only", QString{});
+    if (profile_registry) {
+        for (const auto& profile : profile_registry->profiles()) {
+            if (!profile.generic)
+                cc_profile->addItem(QString::fromStdString(profile.display_name),
+                                    QString::fromStdString(profile.profile_id));
+        }
+    }
+    QObject::connect(cc_profile, &QComboBox::currentIndexChanged, page,
+                     [cc_profile, profile_registry, &model] {
+        std::map<std::uint16_t, QString> names;
+        const auto id = cc_profile->currentData().toString().toStdString();
+        if (profile_registry && !id.empty()) {
+            if (const auto* profile = profile_registry->find(id)) {
+                for (const auto& cc : profile->metadata.control_changes)
+                    names.emplace(cc.number, QString::fromStdString(cc.name));
+            }
+        }
+        model.set_cc_names(std::move(names));
+    });
+    filter_layout->addWidget(show_all, 0, 3);
+    filter_layout->addWidget(notes_only, 0, 4);
+    filter_layout->addWidget(channel, 3, 0);
+    filter_layout->addWidget(new QLabel("CC labels", filter_panel), 3, 1);
+    filter_layout->addWidget(cc_profile, 3, 2, 1, 3);
+    for (int column = 0; column < 5; ++column) filter_layout->setColumnStretch(column, 1);
     layout->addWidget(filter_panel);
     auto* table = new QTableView(page);
     table->setObjectName("midiMonitorTable");
@@ -419,11 +449,25 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
 
     connect_button_ = new QPushButton("Connect", connection_bar);
     connect_button_->setObjectName("connectButton");
+    connect_button_->setMinimumWidth(100);
+    connect_button_->setStyleSheet(
+        "QPushButton { background: #176a9c; color: #ffffff; border: 1px solid #36a8dc; "
+        "border-radius: 4px; padding: 6px 12px; font-weight: 600; }"
+        "QPushButton:hover { background: #2389bf; }"
+        "QPushButton:pressed { background: #125578; }"
+        "QPushButton:disabled { background: #294759; color: #a9c4d2; border-color: #4c7185; }");
     connect_button_->setEnabled(false);
     connect_button_->setToolTip("Select an exact RX or TX route before connecting.");
     connection_bar->addWidget(connect_button_);
     auto* panic_button = new QPushButton("Panic", connection_bar);
     panic_button->setObjectName("panicButton");
+    panic_button->setMinimumWidth(80);
+    panic_button->setStyleSheet(
+        "QPushButton { background: #a43b42; color: #ffffff; border: 1px solid #e16b70; "
+        "border-radius: 4px; padding: 6px 12px; font-weight: 600; }"
+        "QPushButton:hover { background: #c04a50; }"
+        "QPushButton:pressed { background: #842f35; }"
+        "QPushButton:disabled { background: #573337; color: #c9a5a7; border-color: #895157; }");
     panic_button->setEnabled(false);
     panic_button->setToolTip("Panic is unavailable until an explicitly selected TX route is connected.");
     connection_bar->addWidget(panic_button);
@@ -447,7 +491,8 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     workspace_stack_->setObjectName("workspaceStack");
     monitor_model_ = new MidiMonitorModel(10'000, this);
     monitor_bridge_ = new MonitorEventBridge(monitor_queue, *monitor_model_, this);
-    workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_, monitor_pause_button_));
+    workspace_stack_->addWidget(make_monitor_page(*monitor_model_, *monitor_bridge_,
+                                                  monitor_pause_button_, profile_registry));
     sysex_transfer_panel_ = new SysExTransferPanel(connection_worker_);
     workspace_stack_->addWidget(sysex_transfer_panel_);
     sysex_manager_panel_ = new SysExManagerPanel(

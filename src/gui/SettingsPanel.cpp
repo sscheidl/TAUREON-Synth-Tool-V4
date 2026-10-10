@@ -26,7 +26,7 @@ QString route_text(const std::optional<midi::PersistedMidiRoute>& route) {
 }
 
 QComboBox* enum_box(QWidget* parent, std::initializer_list<std::pair<QString, QString>> values) {
-    auto* box = new FocusWheelComboBox(parent);
+    auto* box = new FocusWheelComboBox(parent, false);
     for (const auto& [label, value] : values) box->addItem(label, value);
     return box;
 }
@@ -99,7 +99,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     auto* general_form = new QFormLayout(general);
     theme_ = enum_box(general, {{"System compatible", "system"}, {"Light", "light"}, {"Dark", "dark"}});
     theme_->setObjectName("settingsTheme");
-    ui_scale_ = new FocusWheelSpinBox(general);
+    ui_scale_ = new FocusWheelSpinBox(general, false);
     ui_scale_->setRange(50, 300);
     ui_scale_->setSuffix("%");
     ui_scale_->setObjectName("settingsUiScale");
@@ -120,7 +120,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     reconnect_->setObjectName("settingsReconnectPolicy");
     monitor_paused_ = new QCheckBox("Start monitor presentation paused on next launch", midi);
     monitor_paused_->setObjectName("settingsMonitorPaused");
-    monitor_history_ = new FocusWheelSpinBox(midi);
+    monitor_history_ = new FocusWheelSpinBox(midi, false);
     monitor_history_->setRange(1, 1'000'000);
     monitor_history_->setObjectName("settingsMonitorHistory");
     receive_route_ = new QLabel(midi);
@@ -142,7 +142,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
 
     auto* sysex = new QGroupBox("SysEx safety defaults", this);
     auto* sysex_form = new QFormLayout(sysex);
-    pacing_ = new FocusWheelSpinBox(sysex);
+    pacing_ = new FocusWheelSpinBox(sysex, false);
     pacing_->setRange(0, 60'000);
     pacing_->setSuffix(" ms");
     pacing_->setObjectName("settingsSysExPacing");
@@ -165,7 +165,7 @@ SettingsPanel::SettingsPanel(std::filesystem::path path, std::shared_ptr<app::Bo
     log_level_->setObjectName("settingsLogLevel");
     log_destination_ = new QLineEdit(diagnostics);
     log_destination_->setObjectName("settingsLogDestination");
-    log_rotation_ = new FocusWheelSpinBox(diagnostics);
+    log_rotation_ = new FocusWheelSpinBox(diagnostics, false);
     log_rotation_->setRange(1, 1'000'000);
     log_rotation_->setObjectName("settingsLogRotation");
     include_routes_ = new QCheckBox("Include exact route identity metadata in diagnostic bundles", diagnostics);

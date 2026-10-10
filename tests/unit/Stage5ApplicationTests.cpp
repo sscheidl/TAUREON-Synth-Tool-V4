@@ -249,6 +249,10 @@ void queue_and_model_tests() {
     TAUREON_REQUIRE(cell(0, gui::MidiMonitorModel::Value) == "127");
     TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Channel) == "2");
     TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Event) == "CC 74");
+    details.set_cc_names({{74, "MPE Y (when enabled)"}});
+    TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Event) == "CC 74 – MPE Y (when enabled)");
+    details.set_cc_names({});
+    TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Event) == "CC 74");
     TAUREON_REQUIRE(cell(1, gui::MidiMonitorModel::Value) == "64");
     TAUREON_REQUIRE(cell(2, gui::MidiMonitorModel::Value) == "8192");
     TAUREON_REQUIRE(cell(3, gui::MidiMonitorModel::Type) == "Note On");
