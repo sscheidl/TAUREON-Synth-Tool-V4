@@ -18,7 +18,9 @@ The production transport now uses `Windows.Devices.Midi2`
 `0.99.83-devpreview.9`, the native NuGet asset published under Preview 9, and its
 `Enumeration` namespace. It initializes on the existing MTA worker using `MidiApi`
 WinRT activation and service availability. The internal portable build supplies
-the native API DLL and PRI beside the application. Dependency pins, hashes,
+the native API DLL and PRI beside the application on the owner's PC. Public
+workflow artifacts exclude those files and check their absence before upload.
+Dependency pins, hashes,
 deployment and distribution limits are in
 [WMS_PREVIEW9_DEPENDENCIES.md](../reference/WMS_PREVIEW9_DEPENDENCIES.md).
 
@@ -42,6 +44,10 @@ deployment and distribution limits are in
   WMS enumeration both pass with a PATH containing only Windows directories.
   The deployed API DLL hash is
   `F260B5D0540A59636D5E859B3342380EE9B7EF2334AEA07920A7EB7A49BD7613`.
+- Public-artifact layout with no Preview-9 DLL/PRI: shell smoke and WinMM
+  enumeration pass. WMS reports the expected missing-API diagnostic on this PC.
+  The workflow asserts the API files are absent before any upload; the
+  owner's complete local test folder is not uploaded publicly.
 
 No endpoint was opened or MIDI/SysEx sent. These results close the reproduced
 SDK-initialization/empty-port-list cause of alpha bug 2. Native GUI selection and

@@ -17,9 +17,11 @@ or `--list-midi winmm` from a terminal in the portable folder (local builds use
 `taureon_app.exe`). These commands list routes or the initialization error without
 opening a MIDI endpoint or sending data.
 
-The development branch's internal test builds use the
+Local development/test builds use the
 [Preview 9 WMS API](docs/reference/WMS_PREVIEW9_DEPENDENCIES.md), with its DLL and
-resource file beside the executable. Developers acquire the pinned inputs with
+resource file beside the executable. Public CI downloads omit those Preview 9
+files; WMS needs a permitted API obtained separately or supplied by Windows.
+Developers acquire the pinned inputs with
 `tools/AcquireWmsDependencies.ps1`. The first public alpha still uses the older RC4
 runtime; this change does not update that published download.
 

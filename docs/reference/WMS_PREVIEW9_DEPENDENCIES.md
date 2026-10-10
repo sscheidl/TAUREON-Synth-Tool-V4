@@ -33,7 +33,9 @@ unavailable service and Legacy API mode produce separate messages.
 
 The application and opt-in local integration executables receive
 `Windows.Devices.Midi2.dll` and `.pri` beside their EXE, matching the NuGet native
-targets. The portable internal test folder includes both files. No system
+targets. Locally assembled test folders may include both files for the owner's
+own PC. Public workflow artifacts deliberately omit these files and assert their
+absence before upload; users obtain a permitted API separately. No system
 registration or MIDI configuration is written. WinRT activation chooses the
 Windows-provided API where present and uses app-local files as its fallback.
 
@@ -44,9 +46,11 @@ queue/data-loss semantics and teardown order remain the existing contracts.
 
 ## Preview distribution boundary
 
-Microsoft permits these files for development and internal testing. The release
+Microsoft permits these files for development, internal testing and use on the
+customer's own PC. Public CI artifacts are distribution even when labelled
+"internal", so the workflow never uploads these API files. The release
 notes impose additional conditions on public customer previews, including an
 expiration no later than 2027-01-15; production distribution needs Microsoft's
 explicit permission. This change prepares an internal test build, not a public
-release. Publishing a future alpha with these files requires checking and meeting
+release. Publishing a future alpha or public artifact with these files requires checking and meeting
 the applicable upstream terms first. The existing public alpha is unchanged.
