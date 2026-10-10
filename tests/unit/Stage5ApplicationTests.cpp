@@ -394,6 +394,59 @@ void queue_and_model_tests() {
     category_filter.set_category_enabled(gui::MonitorEventCategory::sysex, true);
     TAUREON_REQUIRE(category_filter.rowCount() == 4);
     TAUREON_REQUIRE(category_filter.category_enabled(gui::MonitorEventCategory::clock));
+
+    // WinMM long-message callbacks may split one SysEx into several buffers.
+    gui::MidiMonitorModel split_sysex(8);
+    split_sysex.append_batch({
+        {1, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xF0, 0x7D}}, {}}},
+        {2, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0xF8}}, {}}},
+        {3, midi::MidiDirection::output,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x01, 0x02}}, {}}},
+        {4, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x01, 0x02}}, {}}},
+        {5, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x03, 0xF7}}, {}}},
+        {6, midi::MidiDirection::input,
+         {midi::MidiBackend::winmm, midi::Midi1NativeMessage{{0x01, 0x02}}, {}}},
+    });
+    const auto split_category = [&split_sysex](int row) {
+        return static_cast<gui::MonitorEventCategory>(split_sysex.index(row, gui::MidiMonitorModel::Type)
+            .data(gui::MidiMonitorModel::CategoryRole).toInt());
+    };
+    TAUREON_REQUIRE(split_category(0) == gui::MonitorEventCategory::sysex);
+    TAUREON_REQUIRE(split_category(1) == gui::MonitorEventCategory::clock);
+    TAUREON_REQUIRE(split_category(2) == gui::MonitorEventCategory::other);
+    TAUREON_REQUIRE(split_category(3) == gui::MonitorEventCategory::sysex);
+    TAUREON_REQUIRE(split_category(4) == gui::MonitorEventCategory::sysex);
+    TAUREON_REQUIRE(split_category(5) == gui::MonitorEventCategory::other);
+    TAUREON_REQUIRE(split_sysex.index(3, gui::MidiMonitorModel::Type).data().toString() ==
+                    "SysEx continuation");
+    gui::MidiMonitorFilterModel split_filter;
+    split_filter.setSourceModel(&split_sysex);
+    split_filter.set_category_enabled(gui::MonitorEventCategory::sysex, false);
+    TAUREON_REQUIRE(split_filter.rowCount() == 3);
+
+    // All MIDI 2.0 channel-voice statuses carry the channel in the first word.
+    gui::MidiMonitorModel midi2_channels(4);
+    midi2_channels.append_batch({
+        {1, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40C00000, 0x05000000}}, {}}},
+        {2, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40200000, 0x05000000}}, {}}},
+        {3, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40600000, 0x05000000}}, {}}},
+        {4, midi::MidiDirection::input,
+         {midi::MidiBackend::windows_midi_services, midi::UmpNativeMessage{{0x40C10000, 0x05000000}}, {}}},
+    });
+    gui::MidiMonitorFilterModel midi2_channel_filter;
+    midi2_channel_filter.setSourceModel(&midi2_channels);
+    midi2_channel_filter.set_channel(1);
+    TAUREON_REQUIRE(midi2_channel_filter.rowCount() == 3);
+    midi2_channel_filter.set_channel(2);
+    TAUREON_REQUIRE(midi2_channel_filter.rowCount() == 1);
+    TAUREON_REQUIRE(midi2_channels.index(0, gui::MidiMonitorModel::Channel).data().toInt() == 1);
 }
 
 } // namespace

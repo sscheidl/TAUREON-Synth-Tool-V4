@@ -65,7 +65,7 @@ bool MidiMonitorFilterModel::filterAcceptsRow(const int source_row,
                            .data(Qt::DisplayRole).toString();
     if (!backend_.isEmpty() && backend != backend_) return false;
     const auto channel = sourceModel()->index(source_row, MidiMonitorModel::Channel, source_parent)
-                             .data(Qt::DisplayRole).toInt();
+                             .data(MidiMonitorModel::ChannelRole).toInt();
     if (channel_ != 0 && channel != channel_) return false;
     const auto category = sourceModel()->index(source_row, MidiMonitorModel::Type, source_parent)
                               .data(MidiMonitorModel::CategoryRole).toInt();

@@ -128,6 +128,8 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(panic != nullptr);
         window.resize(1280, 720);
         QApplication::processEvents(QEventLoop::AllEvents);
+        TAUREON_REQUIRE(receive->width() > 190);
+        TAUREON_REQUIRE(transmit->width() > 190);
         TAUREON_REQUIRE(connect->mapTo(&window, QPoint{}).x() + connect->width() <= window.width());
         TAUREON_REQUIRE(panic->mapTo(&window, QPoint{}).x() + panic->width() <= window.width());
         int padded_midi_captions = 0;

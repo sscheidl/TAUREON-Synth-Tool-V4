@@ -248,7 +248,15 @@ QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const 
     if (!index.isValid() || index.row() >= rowCount()) return {};
     const auto& event = events_.at(static_cast<std::size_t>(index.row()));
     const auto& message = event.message;
-    if (role == CategoryRole) return static_cast<int>(event_category(message));
+    if (role == CategoryRole) return static_cast<int>(categories_.at(static_cast<std::size_t>(index.row())));
+    if (role == ChannelRole) {
+        if (const auto voice = channel_voice_message(message))
+            return static_cast<int>(*voice->channel + 1);
+        if (const auto* ump = std::get_if<midi::UmpNativeMessage>(&message.data);
+            ump && ump->words.size() == 2 && (ump->words.front() >> 28u) == 0x4u)
+            return static_cast<int>(((ump->words.front() >> 16u) & 0xfu) + 1u);
+        return {};
+    }
     if (role != Qt::DisplayRole) return {};
     const auto* midi1 = std::get_if<midi::Midi1NativeMessage>(&message.data);
     const auto parsed_voice = index.column() >= Channel && index.column() <= Value
@@ -259,10 +267,14 @@ QVariant MidiMonitorModel::data(const QModelIndex& index, const int role) const 
     case Time: return message.timestamp ? QString::number(message.timestamp->native_value) : QStringLiteral("—");
     case Direction: return event.direction == midi::MidiDirection::input ? "RX" : "TX";
     case Backend: return QString::fromLatin1(midi::to_string(message.backend));
-    case Channel:
-        if (parsed_voice) return static_cast<int>(*parsed_voice->channel + 1);
-        return midi2_voice ? QVariant{midi2_voice->channel} : QVariant{QStringLiteral("—")};
+    case Channel: {
+        const auto channel = data(index, ChannelRole);
+        return channel.isValid() ? channel : QVariant{QStringLiteral("—")};
+    }
     case Type:
+        if (midi1 && !midi1->bytes.empty() && midi1->bytes.front() < 0x80u &&
+            categories_.at(static_cast<std::size_t>(index.row())) == MonitorEventCategory::sysex)
+            return "SysEx continuation";
         if (parsed_voice) return channel_voice_type(parsed_voice->kind);
         return midi2_voice ? midi2_voice->type : message_type(message);
     case Event:
@@ -305,10 +317,16 @@ QVariant MidiMonitorModel::headerData(const int section, const Qt::Orientation o
 
 void MidiMonitorModel::append_batch(std::vector<app::MonitorEvent> events) {
     if (events.empty()) return;
+    std::vector<MonitorEventCategory> categories;
+    categories.reserve(events.size());
+    for (const auto& event : events) categories.push_back(classify_event(event));
     if (events.size() >= history_limit_) {
-        events.erase(events.begin(), events.end() - static_cast<std::ptrdiff_t>(history_limit_));
+        const auto excess = static_cast<std::ptrdiff_t>(events.size() - history_limit_);
+        events.erase(events.begin(), events.begin() + excess);
+        categories.erase(categories.begin(), categories.begin() + excess);
         beginResetModel();
         events_.assign(std::make_move_iterator(events.begin()), std::make_move_iterator(events.end()));
+        categories_.assign(categories.begin(), categories.end());
         endResetModel();
         return;
     }
@@ -316,12 +334,18 @@ void MidiMonitorModel::append_batch(std::vector<app::MonitorEvent> events) {
         events_.size() + events.size() - history_limit_ : 0;
     if (overflow > 0) {
         beginRemoveRows({}, 0, static_cast<int>(overflow - 1));
-        for (std::size_t index = 0; index < overflow; ++index) events_.pop_front();
+        for (std::size_t index = 0; index < overflow; ++index) {
+            events_.pop_front();
+            categories_.pop_front();
+        }
         endRemoveRows();
     }
     const auto first = static_cast<int>(events_.size());
     beginInsertRows({}, first, first + static_cast<int>(events.size()) - 1);
-    for (auto& event : events) events_.push_back(std::move(event));
+    for (std::size_t index = 0; index < events.size(); ++index) {
+        events_.push_back(std::move(events[index]));
+        categories_.push_back(categories[index]);
+    }
     endInsertRows();
 }
 
@@ -329,6 +353,7 @@ void MidiMonitorModel::clear() {
     if (events_.empty()) return;
     beginResetModel();
     events_.clear();
+    categories_.clear();
     endResetModel();
 }
 
@@ -338,8 +363,30 @@ void MidiMonitorModel::set_history_limit(const std::size_t history_limit) {
     if (events_.size() <= history_limit_) return;
     const auto excess = events_.size() - history_limit_;
     beginRemoveRows({}, 0, static_cast<int>(excess - 1));
-    for (std::size_t index = 0; index < excess; ++index) events_.pop_front();
+    for (std::size_t index = 0; index < excess; ++index) {
+        events_.pop_front();
+        categories_.pop_front();
+    }
     endRemoveRows();
+}
+
+MonitorEventCategory MidiMonitorModel::classify_event(const app::MonitorEvent& event) {
+    const auto* midi1 = std::get_if<midi::Midi1NativeMessage>(&event.message.data);
+    if (!midi1 || midi1->bytes.empty()) return event_category(event.message);
+    auto& open = sysex_open_.at(static_cast<std::size_t>(event.message.backend))
+                            .at(static_cast<std::size_t>(event.direction));
+    const auto first = midi1->bytes.front();
+    if (first == 0xf0u || (first < 0x80u && open)) {
+        open = std::find(midi1->bytes.begin(), midi1->bytes.end(), 0xf7u) == midi1->bytes.end();
+        return MonitorEventCategory::sysex;
+    }
+    if (first == 0xf7u) {
+        open = false;
+        return MonitorEventCategory::sysex;
+    }
+    // Realtime bytes can occur between chunks without ending the SysEx stream.
+    if (first >= 0x80u && first < 0xf8u) open = false;
+    return event_category(event.message);
 }
 
 } // namespace taureon::gui

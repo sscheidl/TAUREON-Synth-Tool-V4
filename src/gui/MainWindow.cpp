@@ -99,7 +99,7 @@ public:
         setMinimumContentsLength(18);
         setMinimumWidth(190);
         setMaximumWidth(360);
-        setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         connect(this, &QComboBox::currentIndexChanged, this, [this](int index) {
             const auto detail = itemData(index, Qt::ToolTipRole).toString();
             setToolTip(detail.isEmpty() ? currentText() : detail);

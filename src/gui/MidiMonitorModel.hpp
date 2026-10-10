@@ -3,6 +3,7 @@
 #include "app/MonitorEventQueue.hpp"
 
 #include <QAbstractTableModel>
+#include <array>
 
 #include <cstddef>
 #include <cstdint>
@@ -21,7 +22,7 @@ enum class MonitorEventCategory : std::uint8_t {
 class MidiMonitorModel final : public QAbstractTableModel {
 public:
     enum Column { Time, Direction, Backend, Channel, Type, Event, Value, Raw, ColumnCount };
-    enum Role { CategoryRole = Qt::UserRole + 1 };
+    enum Role { CategoryRole = Qt::UserRole + 1, ChannelRole };
 
     explicit MidiMonitorModel(std::size_t history_limit, QObject* parent = nullptr);
 
@@ -37,9 +38,12 @@ public:
     [[nodiscard]] std::size_t history_limit() const noexcept { return history_limit_; }
 
 private:
+    [[nodiscard]] MonitorEventCategory classify_event(const app::MonitorEvent& event);
     std::size_t history_limit_;
     std::deque<app::MonitorEvent> events_;
+    std::deque<MonitorEventCategory> categories_;
     std::map<std::uint16_t, QString> cc_names_;
+    std::array<std::array<bool, 2>, 3> sysex_open_{};
 };
 
 } // namespace taureon::gui
