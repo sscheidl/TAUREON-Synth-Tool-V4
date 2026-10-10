@@ -4,7 +4,7 @@
 **Date opened:** 2026-08-24
 **Implementation lead:** Codex
 **Baseline revision:** `070cf6be1c4f562d7a3b8455616204e45b3f6d85`
-**Status:** ACTIVE
+**Status:** HOLD/ACTIVE (see the 2026-10-06 reconciliation at the end of this report)
 
 ## Start-gate record
 
@@ -806,3 +806,37 @@ The independent review's technical conditions for B-3 closure are satisfied. B-3
 **PASS-READY / FORMAL PR-THREAD RESOLUTION PENDING** because the three GitHub review
 threads have not been resolved automatically. B-4 remains **PARTIAL**, B-5 remains
 **CLOSED**, Stage 5 remains **HOLD/ACTIVE**, and Stage 6 has not begun.
+
+## B-3 formal closure and status reconciliation — 2026-10-06
+
+The pending formal condition is fulfilled. All three PR-#12 review threads are
+resolved on GitHub; the Product Owner (`sscheidl`) resolved them on 2026-09-28,
+with the main-sync evidence retained in
+[`docs/evidence/pr12-main-sync-20260928`](../evidence/pr12-main-sync-20260928/README.md).
+The commits are distinct:
+
+- P1 code remediation: `693fd52f0e72b4f091e95d9b827d779bb03dc30e`
+  (`WmsTransport.cpp`, `IMidiTransport.hpp`, `Stage5ProductHostLocal.cpp`);
+- verified main-sync merge: `28275605b4479d43544b29ba02663697444ed283` (24/24 non-local
+  CTest, two 5-cycle product-host runs, one gated 100-cycle soak per backend);
+- final PR head: `5a0d79536f783c9abf054669e7bd874b9a3ed099`, which only sanitizes
+  retained evidence (`docs/evidence/SANITIZATION.md`).
+
+PR #12 was merged on 2026-09-28 as `a932287839a0a6f6038eec4e211b6af22dd6d343`.
+B-3 is therefore **CLOSED**.
+
+PR #16 (merged as `bab37a544f8bd7802a9b427b29fb3ec001149fd5`) set the product version
+to `0.1.0-alpha.1`, and the Product Owner published the GitHub pre-release
+`v0.1.0-alpha.1` from that commit on 2026-10-02. Windows CI evidence, both runs with
+`head_sha` `bab37a544f8bd7802a9b427b29fb3ec001149fd5` and both jobs `success`:
+
+| Run | Trigger | `software` log | `engine-consumer` log |
+|---|---|---|---|
+| `37047126183` | push `main` | 24/24 CTest passed, 0 failed | 9/9, 9/9, 2/2, 2/2 passed |
+| `37048217459` | push tag `v0.1.0-alpha.1` | 24/24 CTest passed, 0 failed | 9/9, 9/9, 2/2, 2/2 passed |
+ The release is an explicitly experimental preview; it is not a
+Stage-5 gate and does not add visual or hardware evidence.
+
+Remaining Stage-5 gate items are unchanged: B-4 stays **PARTIAL** until native Windows
+150% and 200% display-scaling inspection, and product-path physical MIDI/SysEx evidence
+is still outstanding. Stage 5 remains **HOLD/ACTIVE**, and Stage 6 has not begun.

@@ -28,6 +28,14 @@ The branch-tip check on 2026-09-27 found both files at `origin/main`,
 and `origin/claude/stage5-gate-cleanup`. They were absent from
 `origin/codex/midi-engine-reuse`.
 
+A repeated branch-tip check on 2026-10-06 found no `.syx` file at `origin/main` or at
+any `origin/codex/*` tip. It remains only at `origin/claude/reference-archive-v1`
+(`69dadd3`) and `origin/claude/stage5-gate-cleanup` (`2c6b2cf`), and in public Git
+history. The Product Owner deleted both branches on 2026-10-06 after local Git-bundle
+backups were made outside the repository's tracked tree. A follow-up check on the same
+day found no `.syx` file at any remote branch tip. The files remain in public Git
+history; per D-027 the Product Owner decided not to rewrite history.
+
 Rules:
 
 - Protocol facts and observed behavior are not reusable source code.
