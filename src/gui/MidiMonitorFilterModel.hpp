@@ -13,6 +13,7 @@ public:
     explicit MidiMonitorFilterModel(QObject* parent = nullptr);
 
     void set_direction(QString direction);
+    void set_direction_visibility(bool receive, bool transmit);
     void set_backend(QString backend);
     void set_channel(int channel);
     void set_type_filter(QString type_filter);
@@ -24,7 +25,8 @@ protected:
                                         const QModelIndex& source_parent) const override;
 
 private:
-    QString direction_;
+    bool receive_visible_{true};
+    bool transmit_visible_{true};
     QString backend_;
     int channel_{};
     QString type_filter_;

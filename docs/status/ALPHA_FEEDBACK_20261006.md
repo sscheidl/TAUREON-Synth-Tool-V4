@@ -2,7 +2,8 @@
 
 The Product Owner prioritised bugs 1–4. Bug 5 (SysEx Transfer button flicker) was
 observed with the internal September test package and is already fixed. Requests
-7–9 remain deferred; the Manager-navigation change is prepared separately.
+Request 7 remains deferred. Version visibility and hiding the Manager navigation
+are included in the current GUI batch.
 
 **2026-10-10 update:** the Preview-9 production client now enumerates 21 RX / 24 TX
 WMS routes successfully. This supersedes the bug-2 initialization blocker below;
@@ -11,10 +12,11 @@ the old RC4 findings remain as historical evidence. See
 
 ## Current fix scope
 
-1. **Auto blocks port selection:** with no concrete backend, either port field now
-   offers Windows MIDI Services or WinMM. Choosing one visibly changes the backend
-   and enumerates its routes. Port selection and Connect remain deliberate. Full
-   saved-route restoration remains request 7.
+1. **Auto blocks port selection:** Auto now enumerates Windows MIDI Services first
+   and falls back to WinMM if WMS fails or lists no routes. The selected backend is
+   visible in the Auto label. Only the Backend field selects the API; MIDI Input
+   and Output list the available ports for that API. Port selection and Connect
+   remain deliberate. Full saved-route restoration remains request 7.
 2. **WMS lists no routes:** report backend-not-built, transport registration, SDK
    initialization, minimum version and service-availability failures separately;
    retain the failure rather than replacing it with a disconnected status. Report
@@ -32,26 +34,30 @@ the old RC4 findings remain as historical evidence. See
 WMS Group Terminal Block direction is defined from the device's viewpoint in
 [Microsoft's SDK reference](https://microsoft.github.io/MIDI/sdk-reference/Enumeration/MidiGroupTerminalBlockDirectionEnum/).
 
-## Deferred requests
+## Later request
 
 7. Automatic restoration of an exactly saved backend and routes; further WMS test
    activation/compatibility work if the current runtime requires it.
-8. Visible application version and build identity in the title/About UI.
-9. Hide SysEx Manager navigation; retain its code as a removal candidate.
+
+The window title now shows the alpha version and a short build revision. The
+SysEx Manager tab is hidden; its implementation remains marked as a removal
+candidate.
 
 ## MIDI Monitor filter follow-up (request 6)
 
-The Monitor now has an event-type menu for Notes, Control Change, Program Change,
-Pitch Bend, Aftertouch, SysEx, Clock, Active Sensing and Other/System. The menu
-supports selecting several types and resetting to all. Direction, channel, backend
-and the existing free-text filter can be combined. Classification uses MIDI 1.0
+The Monitor now has a permanently visible checkbox panel for RX/TX and Notes,
+Control Change, Program Change, Pitch Bend, Aftertouch, SysEx, Clock, Active
+Sensing and Other/System. Several types can be selected at once or reset to all.
+The channel and existing free-text filter can be combined with these checkboxes.
+The redundant monitor-backend dropdown has been removed; backend selection is
+performed once in the connection bar. The workspace navigation is above the
+content, and the monitor table fills the available width. Classification uses MIDI 1.0
 status bytes or UMP message types and is a view-only proxy filter: source history,
 raw bytes, capture and transfer are unchanged. Channel filtering excludes system
 messages, which have no channel. MIDI 2.0 SysEx8 is included; UMP Mixed Data Set
 is Other/System. MIDI 2.0 per-note pitch bend and controller statuses are assigned
-to their respective event filters. The backend selector intentionally groups
-events by WinMM/WMS/external because the current monitor event does not retain
-endpoint identity; endpoint-level route filtering remains separate future work.
+to their respective event filters. Endpoint-level route filtering remains
+separate future work.
 
 Local MSVC/Qt build and 24 registered tests passed, including MIDI 1.0/UMP type
 classification, compound filtering, source-history preservation and GUI action

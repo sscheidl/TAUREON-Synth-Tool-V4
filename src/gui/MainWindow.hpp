@@ -5,6 +5,7 @@
 #include "profiles/ProfileRegistry.hpp"
 
 #include <QMainWindow>
+#include <QString>
 
 #include <future>
 #include <memory>
@@ -14,7 +15,7 @@
 
 class QLabel;
 class QComboBox;
-class QListWidget;
+class QTabBar;
 class QPushButton;
 class QStackedWidget;
 class QTimer;
@@ -43,6 +44,7 @@ public:
 private:
     void select_workspace(int index);
     void begin_backend_selection(int index);
+    void begin_auto_winmm_fallback(QString wms_issue);
     void begin_connect_toggle();
     void poll_connection_result();
     void apply_connection_snapshot(const app::ConnectionSnapshot& snapshot, bool repopulate,
@@ -51,9 +53,8 @@ private:
 
     enum class PendingConnectionAction { backend, connect, disconnect };
 
-    QListWidget* navigation_{};
+    QTabBar* navigation_{};
     QStackedWidget* workspace_stack_{};
-    QLabel* workspace_heading_{};
     DiagnosticsPanel* diagnostics_panel_{};
     MidiMonitorModel* monitor_model_{};
     MonitorEventBridge* monitor_bridge_{};
@@ -80,6 +81,8 @@ private:
     std::vector<midi::MidiRouteIdentity> transmit_routes_;
     bool connected_{};
     bool backend_ready_{};
+    midi::MidiBackend pending_backend_{midi::MidiBackend::windows_midi_services};
+    QString auto_wms_issue_;
     int idle_poll_ticks_{};
 };
 

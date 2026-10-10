@@ -17,19 +17,17 @@
 #include <QSortFilterProxyModel>
 #include <QElapsedTimer>
 #include <QEventLoop>
+#include <QGroupBox>
 #include <QLabel>
-#include <QListWidget>
 #include <QMessageBox>
-#include <QMenu>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QSplitter>
 #include <QStatusBar>
-#include <QStyle>
 #include <QTableView>
 #include <QTabWidget>
+#include <QTabBar>
 #include <QTimer>
-#include <QToolButton>
 
 #include <algorithm>
 #include <filesystem>
@@ -52,6 +50,18 @@ midi::MidiEndpointDescriptor endpoint(const midi::MidiDirection direction, std::
             {direction == midi::MidiDirection::input, direction == midi::MidiDirection::output,
              true, false},
             std::nullopt, std::string{"Test function block"}};
+}
+
+midi::MidiEndpointDescriptor winmm_endpoint(const midi::MidiDirection direction) {
+    midi::MidiRouteIdentity identity;
+    identity.backend = midi::MidiBackend::winmm;
+    identity.direction = direction;
+    identity.native = midi::WinmmRouteIdentity{
+        direction == midi::MidiDirection::input ? "Fallback RX" : "Fallback TX", 1, 2, 3};
+    return {identity, direction == midi::MidiDirection::input ? "Fallback RX" : "Fallback TX",
+            midi::MidiProtocol::midi1,
+            {direction == midi::MidiDirection::input, direction == midi::MidiDirection::output,
+             true, false}, std::nullopt, std::nullopt};
 }
 
 template <typename Predicate>
@@ -111,6 +121,7 @@ int main(int argc, char* argv[]) {
         auto* transmit = window.findChild<QComboBox*>("transmitRouteSelector");
         auto* connect = window.findChild<QPushButton*>("connectButton");
         TAUREON_REQUIRE(backend != nullptr);
+        TAUREON_REQUIRE(window.windowTitle().contains("0.1.0-alpha.1"));
         TAUREON_REQUIRE(receive != nullptr);
         TAUREON_REQUIRE(transmit != nullptr);
         TAUREON_REQUIRE(connect != nullptr);
@@ -124,14 +135,15 @@ int main(int argc, char* argv[]) {
         }
         TAUREON_REQUIRE(padded_midi_captions == 2);
 
-        TAUREON_REQUIRE(receive->isEnabled() && transmit->isEnabled());
+        TAUREON_REQUIRE(backend->currentIndex() == 0);
         TAUREON_REQUIRE(!connect->isEnabled());
-        // Fresh Auto must offer an actionable backend choice in either port field.
-        receive->setCurrentIndex(1);
-        TAUREON_REQUIRE(backend->currentIndex() == 1);
+        // Auto enumerates WMS first; the port fields never contain backend choices.
         TAUREON_REQUIRE(process_until([&] {
-            return receive->count() == 2 && transmit->count() == 2 && receive->isEnabled();
+            return receive->count() == 2 && transmit->count() == 2 && receive->isEnabled() &&
+                   backend->currentText() == "Auto (WMS)";
         }));
+        TAUREON_REQUIRE(backend->currentIndex() == 0);
+        TAUREON_REQUIRE(!receive->itemText(1).contains("Windows MIDI Services"));
         TAUREON_REQUIRE(receive->itemData(1, Qt::ToolTipRole).toString().contains("fake-rx-id"));
         TAUREON_REQUIRE(receive->itemText(1).contains("group 4"));
         TAUREON_REQUIRE(transmit->itemData(1, Qt::ToolTipRole).toString().contains("fake-tx-id"));
@@ -176,23 +188,18 @@ int main(int argc, char* argv[]) {
         TAUREON_REQUIRE(process_until([&] {
             return model->rowCount() == 50 && scroll->value() == scroll->maximum();
         }));
-        QToolButton* event_types = nullptr;
-        for (auto* button : window.findChildren<QToolButton*>()) {
-            if (button->accessibleName() == "Monitor event type filter") event_types = button;
-        }
-        TAUREON_REQUIRE(event_types && event_types->menu());
-        const auto widest_label = std::max(event_types->fontMetrics().horizontalAdvance("Event types: All"),
-                                           event_types->fontMetrics().horizontalAdvance("Event types: 0/9"));
-        TAUREON_REQUIRE(event_types->minimumWidth() >= widest_label +
-                        event_types->style()->pixelMetric(QStyle::PM_MenuButtonIndicator,
-                                                           nullptr, event_types) + 12);
-        QAction* notes = nullptr;
-        QAction* clock = nullptr;
-        for (auto* action : event_types->menu()->actions()) {
-            if (action->text() == "Notes") notes = action;
-            if (action->text() == "Clock") clock = action;
-        }
+        auto* filter_panel = window.findChild<QGroupBox*>("monitorFilterPanel");
+        auto* notes = window.findChild<QCheckBox*>("monitorEventType_0");
+        auto* clock = window.findChild<QCheckBox*>("monitorEventType_6");
+        auto* receive_events = window.findChild<QCheckBox*>("monitorReceiveEvents");
+        auto* transmit_events = window.findChild<QCheckBox*>("monitorTransmitEvents");
+        TAUREON_REQUIRE(filter_panel && filter_panel->isVisible());
         TAUREON_REQUIRE(notes && clock && notes->isChecked() && clock->isChecked());
+        TAUREON_REQUIRE(receive_events && transmit_events &&
+                        receive_events->isChecked() && transmit_events->isChecked());
+        for (auto* selector : filter_panel->findChildren<QComboBox*>()) {
+            TAUREON_REQUIRE(selector->accessibleName() != "Monitor backend filter");
+        }
         notes->setChecked(false);
         TAUREON_REQUIRE(proxy->rowCount() == 0 && model->rowCount() == 50);
         model->append_batch({{101, midi::MidiDirection::input,
@@ -203,14 +210,20 @@ int main(int argc, char* argv[]) {
         notes->setChecked(true);
         clock->setChecked(true);
         TAUREON_REQUIRE(proxy->rowCount() == model->rowCount());
+        receive_events->setChecked(false);
+        TAUREON_REQUIRE(proxy->rowCount() == 0);
+        receive_events->setChecked(true);
+        TAUREON_REQUIRE(proxy->rowCount() == model->rowCount());
 
-        // Auto backend choice is equally usable through the output field.
-        backend->setCurrentIndex(0);
-        transmit->setCurrentIndex(1);
+        // An explicit backend choice remains in the first selector only.
+        backend->setCurrentIndex(1);
         TAUREON_REQUIRE(process_until([&] {
             return backend->currentIndex() == 1 && receive->count() == 2 && receive->isEnabled();
         }));
+        transmit->setCurrentIndex(1);
+        TAUREON_REQUIRE(backend->currentIndex() == 1);
 
+        transmit->setCurrentIndex(0);
         receive->setCurrentIndex(1);
         TAUREON_REQUIRE(connect->isEnabled());
         connect->click();
@@ -292,15 +305,16 @@ int main(int argc, char* argv[]) {
         manager_panel->add_file(manager_fixture);
         auto* manager_open = window.findChild<QPushButton*>("sysExManagerOpenTransfer");
         auto* manager_status = window.findChild<QLabel*>("sysExManagerStatus");
-        auto* navigation = window.findChild<QListWidget*>("workspaceNavigation");
+        auto* navigation = window.findChild<QTabBar*>("workspaceNavigation");
         auto* source_label = window.findChild<QLabel*>("sysExSource");
         TAUREON_REQUIRE(manager_open != nullptr && manager_open->isEnabled());
         TAUREON_REQUIRE(manager_status != nullptr);
         TAUREON_REQUIRE(navigation != nullptr);
+        TAUREON_REQUIRE(!navigation->isTabVisible(2));
         TAUREON_REQUIRE(source_label != nullptr);
         manager_open->click();
         TAUREON_REQUIRE(process_until([&] {
-            return frame_table->model()->rowCount() == 1 && navigation->currentRow() == 1;
+            return frame_table->model()->rowCount() == 1 && navigation->currentIndex() == 1;
         }));
         auto* raw_bytes = window.findChild<QPlainTextEdit*>("sysExRawBytes");
         TAUREON_REQUIRE(raw_bytes != nullptr);
@@ -327,10 +341,10 @@ int main(int argc, char* argv[]) {
                    frame_table->model()->rowCount() == 0;
         }));
         TAUREON_REQUIRE(source_label->text() == "Live capture");
-        navigation->setCurrentRow(2);
+        navigation->setCurrentIndex(2);
         manager_open->click();
         TAUREON_REQUIRE(process_until([&] {
-            return manager_status->text().contains("rejected") && navigation->currentRow() == 2;
+            return manager_status->text().contains("rejected") && navigation->currentIndex() == 2;
         }));
         TAUREON_REQUIRE(frame_table->model()->rowCount() == 0);
         TAUREON_REQUIRE(source_label->text() == "Live capture");
@@ -339,7 +353,7 @@ int main(int argc, char* argv[]) {
             std::scoped_lock lock(transport_mutex);
             TAUREON_REQUIRE(transport_ptr->diagnostics().transmitted_messages == 0);
         }
-        navigation->setCurrentRow(1);
+        navigation->setCurrentIndex(1);
         const sysex::SysExFrame received_frame{sysex::SysExFrameStatus::complete,
                                                {0xF0, 0x7D, 0x22, 0xF7}, {},
                                                std::optional<std::uint8_t>{3}, false};
@@ -363,6 +377,50 @@ int main(int argc, char* argv[]) {
         connect->click();
         TAUREON_REQUIRE(process_until([&] { return connect->text() == "Connect"; }));
 
+        // Auto falls back before port selection if WMS cannot initialize.
+        app::ConnectionWorker fallback_worker([](midi::MidiBackend selected_backend)
+            -> std::unique_ptr<midi::IMidiTransport> {
+            if (selected_backend == midi::MidiBackend::windows_midi_services) {
+                throw std::runtime_error("WMS preview unavailable");
+            }
+            return std::make_unique<midi::FakeMidiTransport>(selected_backend,
+                std::vector{winmm_endpoint(midi::MidiDirection::input),
+                            winmm_endpoint(midi::MidiDirection::output)});
+        });
+        app::MonitorEventQueue fallback_queue(32);
+        gui::MainWindow fallback_window(fallback_queue, fallback_worker);
+        auto* fallback_backend = fallback_window.findChild<QComboBox*>("backendSelector");
+        auto* fallback_input = fallback_window.findChild<QComboBox*>("receiveRouteSelector");
+        auto* fallback_output = fallback_window.findChild<QComboBox*>("transmitRouteSelector");
+        auto* fallback_connect = fallback_window.findChild<QPushButton*>("connectButton");
+        TAUREON_REQUIRE(process_until([&] {
+            return fallback_backend->currentText() == "Auto (WinMM)" &&
+                   fallback_input->count() == 2 && fallback_output->count() == 2 &&
+                   fallback_input->isEnabled();
+        }));
+        TAUREON_REQUIRE(fallback_backend->currentIndex() == 0);
+        TAUREON_REQUIRE(fallback_backend->toolTip().contains("WMS preview unavailable"));
+        TAUREON_REQUIRE(!fallback_connect->isEnabled());
+        fallback_input->setCurrentIndex(1);
+        TAUREON_REQUIRE(fallback_backend->currentIndex() == 0 && fallback_connect->isEnabled());
+
+        // An available WMS backend with no routes also uses the WinMM fallback.
+        app::ConnectionWorker empty_auto_worker([](midi::MidiBackend selected_backend) {
+            return std::make_unique<midi::FakeMidiTransport>(selected_backend,
+                selected_backend == midi::MidiBackend::winmm ?
+                    std::vector{winmm_endpoint(midi::MidiDirection::input)} :
+                    std::vector<midi::MidiEndpointDescriptor>{});
+        });
+        app::MonitorEventQueue empty_auto_queue(32);
+        gui::MainWindow empty_auto_window(empty_auto_queue, empty_auto_worker);
+        auto* empty_auto_backend = empty_auto_window.findChild<QComboBox*>("backendSelector");
+        auto* empty_auto_input = empty_auto_window.findChild<QComboBox*>("receiveRouteSelector");
+        TAUREON_REQUIRE(process_until([&] {
+            return empty_auto_backend->currentText() == "Auto (WinMM)" &&
+                   empty_auto_input->count() == 2 && empty_auto_input->isEnabled();
+        }));
+        TAUREON_REQUIRE(empty_auto_backend->toolTip().contains("no routes found"));
+
         // A failed backend must remain visibly failed, with no empty selectable port list or
         // background snapshot overwriting the initialization error.
         app::ConnectionWorker unavailable_worker([](midi::MidiBackend)
@@ -373,9 +431,14 @@ int main(int argc, char* argv[]) {
         gui::MainWindow unavailable_window(unavailable_queue, unavailable_worker);
         auto* unavailable_backend = unavailable_window.findChild<QComboBox*>("backendSelector");
         auto* unavailable_input = unavailable_window.findChild<QComboBox*>("receiveRouteSelector");
+        TAUREON_REQUIRE(process_until([&] {
+            return unavailable_window.statusBar()->currentMessage().contains("Auto failed:") &&
+                   unavailable_window.statusBar()->currentMessage().contains("WinMM");
+        }));
         unavailable_backend->setCurrentIndex(1);
         TAUREON_REQUIRE(process_until([&] {
-            return unavailable_window.statusBar()->currentMessage().contains("WMS SDK runtime test unavailable");
+            return unavailable_window.statusBar()->currentMessage().contains("MIDI operation failed:") &&
+                   unavailable_window.statusBar()->currentMessage().contains("WMS SDK runtime test unavailable");
         }));
         TAUREON_REQUIRE(!unavailable_input->isEnabled());
         status_check.restart();

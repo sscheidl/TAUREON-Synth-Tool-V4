@@ -18,13 +18,14 @@
 #include <QCheckBox>
 #include <QFileDialog>
 #include <QFrame>
+#include <QGridLayout>
+#include <QGroupBox>
+#include <QHeaderView>
 #include <QHBoxLayout>
 #include <QItemSelectionModel>
 #include <QKeySequence>
 #include <QLabel>
 #include <QLineEdit>
-#include <QListWidget>
-#include <QMenu>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSaveFile>
@@ -35,11 +36,10 @@
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QStandardPaths>
-#include <QStyle>
 #include <QStringList>
 #include <QToolBar>
-#include <QToolButton>
 #include <QTableView>
+#include <QTabBar>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -58,6 +58,13 @@
 
 namespace taureon::gui {
 namespace {
+
+#ifndef TAUREON_APP_VERSION
+#define TAUREON_APP_VERSION "0.1.0-alpha.1"
+#endif
+#ifndef TAUREON_BUILD_REVISION
+#define TAUREON_BUILD_REVISION "local"
+#endif
 
 constexpr auto kWorkspaceNames = std::array{
     "MIDI Monitor",
@@ -178,9 +185,6 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
     auto* page = new QWidget;
     auto* layout = new QVBoxLayout(page);
     auto* controls = new QHBoxLayout;
-    auto* direction = new QComboBox(page);
-    direction->addItems({"All directions", "RX", "TX"});
-    direction->setAccessibleName("Monitor direction filter");
     auto* type_filter = new QLineEdit(page);
     type_filter->setPlaceholderText("Filter type, event or value");
     type_filter->setAccessibleName("Monitor type, event or value filter");
@@ -195,7 +199,6 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
     follow->setToolTip("Follow new events. Scrolling up pauses following; check this to resume.");
     auto* accounting = new QLabel("Presentation running", page);
     accounting->setObjectName("monitorPresentationAccounting");
-    controls->addWidget(direction);
     controls->addWidget(type_filter, 1);
     controls->addWidget(pause);
     controls->addWidget(clear);
@@ -205,12 +208,23 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
 
     auto* proxy = new MidiMonitorFilterModel(page);
     proxy->setSourceModel(&model);
-    auto* filter_controls = new QHBoxLayout;
-    auto* event_types = new QToolButton(page);
-    event_types->setAccessibleName("Monitor event type filter");
-    event_types->setPopupMode(QToolButton::InstantPopup);
-    auto* event_menu = new QMenu(event_types);
-    event_types->setMenu(event_menu);
+    auto* filter_panel = new QGroupBox("MIDI Filter", page);
+    filter_panel->setObjectName("monitorFilterPanel");
+    auto* filter_layout = new QGridLayout(filter_panel);
+    auto* receive_events = new QCheckBox("RX", filter_panel);
+    auto* transmit_events = new QCheckBox("TX", filter_panel);
+    receive_events->setObjectName("monitorReceiveEvents");
+    transmit_events->setObjectName("monitorTransmitEvents");
+    receive_events->setChecked(true);
+    transmit_events->setChecked(true);
+    filter_layout->addWidget(new QLabel("Direction", filter_panel), 0, 0);
+    filter_layout->addWidget(receive_events, 0, 1);
+    filter_layout->addWidget(transmit_events, 0, 2);
+    const auto update_direction = [proxy, receive_events, transmit_events] {
+        proxy->set_direction_visibility(receive_events->isChecked(), transmit_events->isChecked());
+    };
+    QObject::connect(receive_events, &QCheckBox::toggled, page, update_direction);
+    QObject::connect(transmit_events, &QCheckBox::toggled, page, update_direction);
     const auto categories = std::array{
         std::pair{MonitorEventCategory::notes, "Notes"},
         std::pair{MonitorEventCategory::controllers, "Control Change"},
@@ -222,57 +236,51 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
         std::pair{MonitorEventCategory::active_sensing, "Active Sensing"},
         std::pair{MonitorEventCategory::other, "Other / System"},
     };
-    auto* show_all = event_menu->addAction("Show all event types");
-    event_menu->addSeparator();
-    auto category_actions = std::make_shared<std::vector<QAction*>>();
-    for (const auto& [category, name] : categories) {
-        auto* action = event_menu->addAction(name);
-        action->setCheckable(true);
-        action->setChecked(true);
-        category_actions->push_back(action);
-        QObject::connect(action, &QAction::toggled, page,
-                         [proxy, category, event_types, category_actions](const bool checked) {
+    auto category_checks = std::make_shared<std::vector<QCheckBox*>>();
+    for (std::size_t index = 0; index < categories.size(); ++index) {
+        const auto& [category, name] = categories[index];
+        auto* check = new QCheckBox(name, filter_panel);
+        check->setObjectName(QStringLiteral("monitorEventType_%1").arg(static_cast<int>(category)));
+        check->setChecked(true);
+        category_checks->push_back(check);
+        filter_layout->addWidget(check, 1 + static_cast<int>(index / 3),
+                                 static_cast<int>(index % 3));
+        QObject::connect(check, &QCheckBox::toggled, page,
+                         [proxy, category](const bool checked) {
             proxy->set_category_enabled(category, checked);
-            const auto selected = std::count_if(category_actions->begin(), category_actions->end(),
-                                                [](const QAction* item) { return item->isChecked(); });
-            event_types->setText(selected == static_cast<int>(category_actions->size())
-                                     ? "Event types: All"
-                                     : QStringLiteral("Event types: %1/%2")
-                                           .arg(selected).arg(category_actions->size()));
         });
     }
-    event_types->setText("Event types: All");
-    const auto label_width = std::max(event_types->fontMetrics().horizontalAdvance("Event types: All"),
-                                      event_types->fontMetrics().horizontalAdvance("Event types: 0/9"));
-    const auto arrow_width = event_types->style()->pixelMetric(QStyle::PM_MenuButtonIndicator,
-                                                               nullptr, event_types);
-    const auto margin = event_types->style()->pixelMetric(QStyle::PM_ButtonMargin,
-                                                          nullptr, event_types);
-    event_types->setMinimumWidth(label_width + arrow_width + 2 * margin + 12);
-    QObject::connect(show_all, &QAction::triggered, page, [category_actions] {
-        for (auto* action : *category_actions) action->setChecked(true);
+    auto* show_all = new QPushButton("All event types", filter_panel);
+    QObject::connect(show_all, &QPushButton::clicked, page, [category_checks] {
+        for (auto* check : *category_checks) check->setChecked(true);
     });
     auto* channel = new QComboBox(page);
     channel->setAccessibleName("Monitor channel filter");
     channel->addItem("All channels", 0);
     for (int value = 1; value <= 16; ++value) channel->addItem(QStringLiteral("Channel %1").arg(value), value);
-    auto* backend_filter = new QComboBox(page);
-    backend_filter->setAccessibleName("Monitor backend filter");
-    backend_filter->addItem("All backends", QString{});
-    backend_filter->addItem("Windows MIDI Services", "wms");
-    backend_filter->addItem("WinMM", "winmm");
-    backend_filter->addItem("External", "external");
-    filter_controls->addWidget(event_types);
-    filter_controls->addWidget(channel);
-    filter_controls->addWidget(backend_filter);
-    filter_controls->addStretch();
-    layout->addLayout(filter_controls);
+    filter_layout->addWidget(channel, 4, 0);
+    filter_layout->addWidget(show_all, 4, 1);
+    filter_layout->setColumnStretch(3, 1);
+    layout->addWidget(filter_panel);
     auto* table = new QTableView(page);
     table->setObjectName("midiMonitorTable");
     table->setModel(proxy);
     table->setAlternatingRowColors(true);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSortingEnabled(false);
+    auto* header = table->horizontalHeader();
+    for (const auto [column, width] : std::array{
+             std::pair{MidiMonitorModel::Time, 100},
+             std::pair{MidiMonitorModel::Direction, 85},
+             std::pair{MidiMonitorModel::Backend, 105},
+             std::pair{MidiMonitorModel::Channel, 80},
+             std::pair{MidiMonitorModel::Type, 145},
+             std::pair{MidiMonitorModel::Value, 105}}) {
+        header->setSectionResizeMode(column, QHeaderView::Fixed);
+        header->resizeSection(column, width);
+    }
+    header->setSectionResizeMode(MidiMonitorModel::Event, QHeaderView::Stretch);
+    header->setSectionResizeMode(MidiMonitorModel::Raw, QHeaderView::Stretch);
     table->setContextMenuPolicy(Qt::ActionsContextMenu);
     table->setToolTip("Right-click to copy selected rows or export all visible rows.");
     auto* copy_action = new QAction("Copy selected rows", table);
@@ -336,14 +344,8 @@ QWidget* make_monitor_page(MidiMonitorModel& model, MonitorEventBridge& bridge,
         follow->setChecked(position >= vertical_scroll->maximum());
     });
 
-    QObject::connect(direction, &QComboBox::currentTextChanged, page,
-                     [proxy](const QString& value) {
-                         proxy->set_direction(value == "All directions" ? QString{} : value);
-                     });
     QObject::connect(channel, &QComboBox::currentIndexChanged, page,
                      [proxy, channel] { proxy->set_channel(channel->currentData().toInt()); });
-    QObject::connect(backend_filter, &QComboBox::currentIndexChanged, page,
-                     [proxy, backend_filter] { proxy->set_backend(backend_filter->currentData().toString()); });
     QObject::connect(type_filter, &QLineEdit::textChanged, page,
                      [proxy](const QString& value) { proxy->set_type_filter(value); });
     QObject::connect(pause, &QPushButton::toggled, page, [&bridge, pause](const bool paused) {
@@ -375,7 +377,9 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
                        std::vector<profiles::ProfileLoadIssue> profile_issues)
     : connection_worker_(connection_worker) {
     setObjectName("taureonMainWindow");
-    setWindowTitle("TAUREON Synth Tool V4");
+    const QString revision = QStringLiteral(TAUREON_BUILD_REVISION);
+    setWindowTitle(QStringLiteral("TAUREON Synth Tool V4 · %1 · %2")
+                       .arg(QStringLiteral(TAUREON_APP_VERSION), revision.left(8)));
     resize(1280, 800);
 
     auto* connection_bar = addToolBar("Connection");
@@ -387,7 +391,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
                                      {"Auto", "Windows MIDI Services", "WinMM"});
     backend_selector_->setObjectName("backendSelector");
     backend_selector_->setAccessibleName("MIDI backend");
-    backend_selector_->setToolTip("Choose a backend in either port field to enumerate its ports. No route is opened automatically.");
+    backend_selector_->setToolTip("Auto tries Windows MIDI Services first, then WinMM if unavailable or empty. No route is opened automatically.");
     add_caption(*connection_bar, "MIDI Input", 6);
     receive_selector_ = new RouteSelector(connection_bar);
     connection_bar->addWidget(receive_selector_);
@@ -415,18 +419,20 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     connection_bar->addWidget(panic_button);
 
     auto* central = new QWidget(this);
-    auto* layout = new QHBoxLayout(central);
+    auto* layout = new QVBoxLayout(central);
     layout->setContentsMargins(8, 8, 8, 8);
 
-    navigation_ = new QListWidget(central);
+    navigation_ = new QTabBar(central);
     navigation_->setObjectName("workspaceNavigation");
-    for (const auto& name : kWorkspaceNames) navigation_->addItem(name);
-    navigation_->setMinimumWidth(220);
+    navigation_->setDocumentMode(true);
+    navigation_->setExpanding(false);
+    navigation_->setUsesScrollButtons(true);
+    for (const auto& name : kWorkspaceNames) navigation_->addTab(name);
+    // Removal candidate: retain the manager implementation for now, but keep it out of the UI.
+    navigation_->setTabVisible(2, false);
 
     auto* content = new QFrame(central);
     auto* content_layout = new QVBoxLayout(content);
-    workspace_heading_ = new QLabel(content);
-    workspace_heading_->setObjectName("workspaceHeading");
     workspace_stack_ = new QStackedWidget(content);
     workspace_stack_->setObjectName("workspaceStack");
     monitor_model_ = new MidiMonitorModel(10'000, this);
@@ -441,7 +447,7 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
             return sysex_transfer_panel_->request_load_document(
                 std::move(item.document), std::move(item.source_name),
                 [this, completion = std::move(completion)](const bool loaded) mutable {
-                    if (loaded) navigation_->setCurrentRow(1);
+                    if (loaded) navigation_->setCurrentIndex(1);
                     if (completion) completion(loaded);
                 });
         });
@@ -483,30 +489,23 @@ MainWindow::MainWindow(app::MonitorEventQueue& monitor_queue,
     settings_scroll->setWidgetResizable(true);
     settings_scroll->setWidget(settings_panel_);
     workspace_stack_->addWidget(settings_scroll);
-    content_layout->addWidget(workspace_heading_);
     content_layout->addWidget(workspace_stack_);
 
     layout->addWidget(navigation_);
     layout->addWidget(content, 1);
     setCentralWidget(central);
 
-    connect(navigation_, &QListWidget::currentRowChanged, this, [this](const int index) {
+    connect(navigation_, &QTabBar::currentChanged, this, [this](const int index) {
         select_workspace(index);
     });
-    navigation_->setCurrentRow(0);
+    navigation_->setCurrentIndex(0);
 
     connect(backend_selector_, &QComboBox::currentIndexChanged, this,
             [this](const int index) { begin_backend_selection(index); });
     connect(receive_selector_, &QComboBox::currentIndexChanged, this,
-            [this](int index) {
-                if (backend_selector_->currentIndex() == 0 && index > 0) backend_selector_->setCurrentIndex(index);
-                else set_connection_busy(false);
-            });
+            [this] { set_connection_busy(false); });
     connect(transmit_selector_, &QComboBox::currentIndexChanged, this,
-            [this](int index) {
-                if (backend_selector_->currentIndex() == 0 && index > 0) backend_selector_->setCurrentIndex(index);
-                else set_connection_busy(false);
-            });
+            [this] { set_connection_busy(false); });
     connect(connect_button_, &QPushButton::clicked, this, [this] { begin_connect_toggle(); });
     connection_poll_timer_ = new QTimer(this);
     connection_poll_timer_->setInterval(25);
@@ -523,7 +522,7 @@ MainWindow::~MainWindow() {
 }
 
 bool MainWindow::has_expected_shell() const noexcept {
-    return navigation_ != nullptr && workspace_stack_ != nullptr && workspace_heading_ != nullptr &&
+    return navigation_ != nullptr && workspace_stack_ != nullptr &&
            navigation_->count() == static_cast<int>(kWorkspaceNames.size()) &&
            workspace_stack_->count() == static_cast<int>(kWorkspaceNames.size());
 }
@@ -531,11 +530,15 @@ bool MainWindow::has_expected_shell() const noexcept {
 void MainWindow::select_workspace(const int index) {
     if (index < 0 || index >= workspace_stack_->count()) return;
     workspace_stack_->setCurrentIndex(index);
-    workspace_heading_->setText(kWorkspaceNames.at(static_cast<std::size_t>(index)));
 }
 
 void MainWindow::begin_backend_selection(const int index) {
     if (pending_connection_) return;
+    backend_selector_->setItemText(0, "Auto");
+    backend_selector_->setToolTip(index == 0 ?
+        "Auto tries Windows MIDI Services first, then WinMM if unavailable or empty. No route is opened automatically." :
+        "The selected backend lists its available ports. No route is opened automatically.");
+    auto_wms_issue_.clear();
     connection_error_latched_ = false;
     backend_ready_ = false;
     connected_ = false;
@@ -549,25 +552,23 @@ void MainWindow::begin_backend_selection(const int index) {
         receive_selector_->addItem("No input selected");
         transmit_selector_->addItem("No output selected");
     }
-    if (index == 0) {
-        const QSignalBlocker block_receive(receive_selector_);
-        const QSignalBlocker block_transmit(transmit_selector_);
-        for (auto* selector : {receive_selector_, transmit_selector_}) {
-            selector->setItemText(0, "Choose MIDI backend…");
-            selector->addItems({"Windows MIDI Services", "WinMM"});
-            selector->setEnabled(true);
-        }
-        connect_button_->setEnabled(false);
-        statusBar()->showMessage(
-            "Choose Windows MIDI Services or WinMM in either port field, then select your ports.");
-        return;
-    }
-    const auto backend = index == 1 ? midi::MidiBackend::windows_midi_services :
-                                      midi::MidiBackend::winmm;
-    pending_connection_ = connection_worker_.select_backend(backend);
+    pending_backend_ = index == 2 ? midi::MidiBackend::winmm :
+                                    midi::MidiBackend::windows_midi_services;
+    pending_connection_ = connection_worker_.select_backend(pending_backend_);
     pending_action_ = PendingConnectionAction::backend;
     set_connection_busy(true);
-    statusBar()->showMessage("Enumerating the selected backend on the application worker…");
+    statusBar()->showMessage(index == 0 ?
+        "Auto: checking Windows MIDI Services; WinMM is the fallback…" :
+        "Enumerating the selected backend on the application worker…");
+}
+
+void MainWindow::begin_auto_winmm_fallback(QString wms_issue) {
+    auto_wms_issue_ = std::move(wms_issue);
+    pending_backend_ = midi::MidiBackend::winmm;
+    pending_connection_ = connection_worker_.select_backend(pending_backend_);
+    pending_action_ = PendingConnectionAction::backend;
+    set_connection_busy(true);
+    statusBar()->showMessage("Auto: Windows MIDI Services unavailable or empty; checking WinMM…");
 }
 
 void MainWindow::begin_connect_toggle() {
@@ -630,20 +631,41 @@ void MainWindow::poll_connection_result() {
     const auto action = pending_action_;
     pending_connection_.reset();
     if (!result) {
+        if (action == PendingConnectionAction::backend && backend_selector_->currentIndex() == 0 &&
+            pending_backend_ == midi::MidiBackend::windows_midi_services) {
+            begin_auto_winmm_fallback(QString::fromStdString(result.error().message));
+            return;
+        }
         connected_ = false;
         // Only a failed backend selection leaves no usable route list. After a failed
         // connect or disconnect the enumerated routes stay selectable so the user can retry.
         if (action == PendingConnectionAction::backend) backend_ready_ = false;
         set_connection_busy(false);
         connection_error_latched_ = true;
-        statusBar()->showMessage("MIDI operation failed: " + QString::fromStdString(result.error().message));
+        statusBar()->showMessage(action != PendingConnectionAction::backend || auto_wms_issue_.isEmpty() ?
+            "MIDI operation failed: " + QString::fromStdString(result.error().message) :
+            "Auto failed: WMS (" + auto_wms_issue_ + "); WinMM (" +
+                QString::fromStdString(result.error().message) + ")");
+        return;
+    }
+    if (action == PendingConnectionAction::backend && backend_selector_->currentIndex() == 0 &&
+        pending_backend_ == midi::MidiBackend::windows_midi_services &&
+        result.value().endpoints.empty()) {
+        begin_auto_winmm_fallback("no routes found");
         return;
     }
     backend_ready_ = true;
     apply_connection_snapshot(result.value(), action == PendingConnectionAction::backend, true);
     if (action == PendingConnectionAction::backend) {
+        if (backend_selector_->currentIndex() == 0) {
+            const bool fallback = pending_backend_ == midi::MidiBackend::winmm;
+            backend_selector_->setItemText(0, fallback ? "Auto (WinMM)" : "Auto (WMS)");
+            backend_selector_->setToolTip(fallback ?
+                "Auto selected WinMM because WMS reported: " + auto_wms_issue_ :
+                "Auto selected Windows MIDI Services. No route is opened automatically.");
+        }
         statusBar()->showMessage(result.value().endpoints.empty() ?
-            "Backend available, but no MIDI routes found. Check device availability or choose WinMM." :
+            "Backend available, but no MIDI routes found. Check device availability or choose another backend." :
             QStringLiteral("%1: %2 input / %3 output routes — select your ports, then Connect.")
                 .arg(backend_selector_->currentText()).arg(receive_routes_.size()).arg(transmit_routes_.size()));
     }
@@ -711,9 +733,8 @@ void MainWindow::apply_connection_snapshot(const app::ConnectionSnapshot& snapsh
 void MainWindow::set_connection_busy(const bool busy) {
     backend_selector_->setEnabled(!busy);
     const bool backend_ready = !busy && backend_ready_;
-    const bool choosing_backend = !busy && backend_selector_->currentIndex() == 0;
-    receive_selector_->setEnabled((backend_ready || choosing_backend) && !connected_);
-    transmit_selector_->setEnabled((backend_ready || choosing_backend) && !connected_);
+    receive_selector_->setEnabled(backend_ready && !connected_);
+    transmit_selector_->setEnabled(backend_ready && !connected_);
     const bool route_selected = receive_selector_->currentIndex() > 0 ||
                                 transmit_selector_->currentIndex() > 0;
     connect_button_->setEnabled(!busy && (connected_ || (backend_ready && route_selected)));

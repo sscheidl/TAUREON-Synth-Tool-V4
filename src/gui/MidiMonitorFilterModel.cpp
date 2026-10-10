@@ -12,8 +12,14 @@ MidiMonitorFilterModel::MidiMonitorFilterModel(QObject* parent) : QSortFilterPro
 }
 
 void MidiMonitorFilterModel::set_direction(QString direction) {
+    set_direction_visibility(direction.isEmpty() || direction == "RX",
+                             direction.isEmpty() || direction == "TX");
+}
+
+void MidiMonitorFilterModel::set_direction_visibility(const bool receive, const bool transmit) {
     beginFilterChange();
-    direction_ = std::move(direction);
+    receive_visible_ = receive;
+    transmit_visible_ = transmit;
     endFilterChange(QSortFilterProxyModel::Direction::Rows);
 }
 
@@ -53,7 +59,8 @@ bool MidiMonitorFilterModel::filterAcceptsRow(const int source_row,
     if (!sourceModel()) return false;
     const auto direction = sourceModel()->index(source_row, MidiMonitorModel::Direction, source_parent)
                                .data(Qt::DisplayRole).toString();
-    if (!direction_.isEmpty() && direction != direction_) return false;
+    if ((direction == "RX" && !receive_visible_) ||
+        (direction == "TX" && !transmit_visible_)) return false;
     const auto backend = sourceModel()->index(source_row, MidiMonitorModel::Backend, source_parent)
                            .data(Qt::DisplayRole).toString();
     if (!backend_.isEmpty() && backend != backend_) return false;
