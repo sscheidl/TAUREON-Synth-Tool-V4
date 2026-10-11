@@ -29,7 +29,8 @@ struct BackendProbe {
     bool available{};
     std::size_t receive_routes{};
     std::size_t transmit_routes{};
-    std::string detail;
+    // Keep native error text out of reports that may be exported or shared.
+    std::optional<midi::MidiErrorCode> error_code;
 };
 
 struct BackendProbeReport {

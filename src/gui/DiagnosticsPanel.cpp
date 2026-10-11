@@ -73,13 +73,10 @@ std::string format_engines(const app::BackendProbeReport& report) {
             result += ": available, " + std::to_string(probe.receive_routes) + " RX / " +
                       std::to_string(probe.transmit_routes) + " TX routes";
         } else {
-            // Native error texts can end in CR/LF; the bundle is one key=value per line.
-            auto detail = probe.detail;
-            for (auto& character : detail) {
-                if (character == '\r' || character == '\n') character = ' ';
-            }
-            while (!detail.empty() && detail.back() == ' ') detail.pop_back();
-            result += ": unavailable (" + detail + ")";
+            result += probe.error_code
+                          ? ": unavailable (error code " +
+                                std::to_string(static_cast<int>(*probe.error_code)) + ")"
+                          : ": unavailable (transport exception)";
         }
         if (probe.backend == midi::MidiBackend::windows_midi_services) {
             result += ", API " + report.wms_api_location;

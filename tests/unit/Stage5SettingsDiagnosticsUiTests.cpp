@@ -21,10 +21,12 @@
 #include <QTimer>
 #include <QWheelEvent>
 
+#include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <thread>
 
@@ -58,7 +60,11 @@ int main(int argc, char* argv[]) {
     QApplication application(argc, argv);
     return test::run([&] {
         midi::FakeMidiTransport* transport{};
+        std::atomic_bool fail_winmm_probe{false};
         app::ConnectionWorker worker([&](midi::MidiBackend backend) {
+            if (backend == midi::MidiBackend::winmm && fail_winmm_probe.load()) {
+                throw std::runtime_error("C:\\Users\\private\\Protein-serial-123");
+            }
             auto result = std::make_unique<midi::FakeMidiTransport>(
                 backend, std::vector{endpoint(midi::MidiDirection::input), endpoint(midi::MidiDirection::output)});
             transport = result.get();
@@ -190,6 +196,28 @@ int main(int argc, char* argv[]) {
                                        std::istreambuf_iterator<char>{}};
         engines_file.close();
         TAUREON_REQUIRE(engines_text.find("WinMM: available, 1 RX / 1 TX routes") != std::string::npos);
+        std::filesystem::remove(engines_bundle, error);
+
+        fail_winmm_probe = true;
+        diagnostics.show();
+        check_engines->click();
+        QElapsedTimer failure_wait;
+        failure_wait.start();
+        while (!details->toPlainText().contains("WinMM: unavailable (transport exception)") &&
+               failure_wait.elapsed() < 5000) {
+            QApplication::processEvents(QEventLoop::AllEvents);
+            std::this_thread::yield();
+        }
+        TAUREON_REQUIRE(details->toPlainText().contains("WinMM: unavailable (transport exception)"));
+        diagnostics.hide();
+        TAUREON_REQUIRE(diagnostics.export_bundle(engines_bundle));
+        std::ifstream failed_engines_file(engines_bundle);
+        const std::string failed_engines_text{std::istreambuf_iterator<char>{failed_engines_file},
+                                              std::istreambuf_iterator<char>{}};
+        failed_engines_file.close();
+        TAUREON_REQUIRE(failed_engines_text.find("WinMM: unavailable (transport exception)") != std::string::npos);
+        TAUREON_REQUIRE(failed_engines_text.find("Protein-serial-123") == std::string::npos);
+        TAUREON_REQUIRE(failed_engines_text.find("C:\\Users\\private") == std::string::npos);
         std::filesystem::remove(engines_bundle, error);
     });
 }
