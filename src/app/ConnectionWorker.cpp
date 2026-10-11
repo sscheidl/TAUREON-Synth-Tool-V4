@@ -627,10 +627,10 @@ std::future<midi::Result<BackendProbeReport>> ConnectionWorker::probe_backends()
                         }
                     }
                 } else {
-                    probe.detail = endpoints.error().message;
+                    probe.error_code = endpoints.error().code;
                 }
-            } catch (const std::exception& error) {
-                probe.detail = error.what();
+            } catch (const std::exception&) {
+                // Exception text can contain a path or device identity.
             }
             report.backends.push_back(std::move(probe));
         }

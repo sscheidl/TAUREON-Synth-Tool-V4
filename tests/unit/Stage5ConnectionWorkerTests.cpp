@@ -127,7 +127,7 @@ void backend_probe_reports_each_backend() {
     app::ConnectionWorker worker([](const midi::MidiBackend backend)
                                      -> std::unique_ptr<midi::IMidiTransport> {
         if (backend == midi::MidiBackend::winmm) {
-            throw std::runtime_error("WinMM probe test unavailable");
+            throw std::runtime_error("C:\\Users\\private\\Protein-serial-123");
         }
         return std::make_unique<midi::FakeMidiTransport>(backend, std::vector{
             endpoint(backend, midi::MidiDirection::input, "probe-rx-1"),
@@ -142,7 +142,7 @@ void backend_probe_reports_each_backend() {
     TAUREON_REQUIRE(wms.available && wms.receive_routes == 2 && wms.transmit_routes == 1);
     const auto& winmm = report.value().backends[1];
     TAUREON_REQUIRE(winmm.backend == midi::MidiBackend::winmm);
-    TAUREON_REQUIRE(!winmm.available && winmm.detail == "WinMM probe test unavailable");
+    TAUREON_REQUIRE(!winmm.available && !winmm.error_code);
     TAUREON_REQUIRE(!report.value().wms_api_location.empty());
 
     // The check is refused while a SysEx capture runs, so it cannot delay that stream.
