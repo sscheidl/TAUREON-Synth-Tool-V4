@@ -1,30 +1,38 @@
-# Production WMS dependencies — In-box Preview 10
+# Production WMS dependencies — In-box Preview 11
 
 The production transport builds against `Windows.Devices.Midi2`
-`0.99.88-preview.10`, from Microsoft's
-[In-box Preview 10 release](https://github.com/microsoft/MIDI/releases/tag/inbox-preview-10).
-The matching Tools package is `0.99.88-preview.10`; the Transports package is
-`1.0.35-preview.8`. Between Preview 9 (`0.99.83-devpreview.9`) and Preview 10 the
-API surface this transport uses (`MidiApi`, `MidiSession`, `MidiEndpointConnection`,
-`Enumeration.MidiEndpointDeviceInformation`, group terminal blocks, `MidiClock`) is
-unchanged; Microsoft's IDL changes in that range are additive. The older Stage-1 RC4
-spike and its acquisition script remain historical evidence.
+`0.99.92-preview.11`, from Microsoft's
+[In-box Preview 11 release](https://github.com/microsoft/MIDI/releases/tag/inbox-preview-11).
+The matching Tools package is `0.99.92-preview.11`; the Transports package is
+`1.0.41-preview.9`. Preview 11 locks the API metadata and interface contracts.
+Its new `MidiApi.IsSystemProvided()` method is on `IMidiApiStatics2`; the existing
+`IMidiApiStatics` interface used by this transport remains unchanged. Its
+`MidiResourceListEntry` default handling also changed, but TAUREON does not use
+that MIDI-CI helper. The transport's existing `MidiApi`, `MidiSession`,
+`MidiEndpointConnection`, enumeration, group terminal block and `MidiClock`
+calls require no migration from Preview 10. The older Stage-1 RC4 spike and its
+acquisition script remain historical evidence.
 
 ## Reproducible acquisition
 
 Run `tools/AcquireWmsDependencies.ps1`. It writes only under the project's ignored
-`build/dependencies/wms-preview10` directory and verifies these SHA-256 hashes:
+`build/dependencies/wms-preview11` directory and verifies these SHA-256 hashes:
 
 | Input | SHA-256 |
 | --- | --- |
-| `Windows.Devices.Midi2.0.99.88-preview.10.nupkg` | `6DAF121A3F76A4A1E0D46521C5072AC576477448C9332048383BB58960A4CE69` |
-| `ref/native/Windows.Devices.Midi2.winmd` | `497D9E7C2FB219388F748C585D7AAD537D3A6A576DE854BD16BFE1BC73F8D9A9` |
+| `Windows.Devices.Midi2.0.99.92-preview.11.nupkg` | `13AFC6E6DA2ADAC309AB8C174352F46F1C0EBE2D79E65475BD6274DEFB73DF74` |
+| `ref/native/Windows.Devices.Midi2.winmd` | `49AB3BBE0954BF4F4D0D1AB933564974495762A11B9B02602F493C6C755C47BC` |
 | `Microsoft.Windows.CppWinRT.2.0.240405.15.nupkg` | `E889007B5D9235931E7340DDF737D2C346EEBDD23C619F1F4F2426A2AAE47180` |
 
 The NuGet hash was computed from the asset downloaded from Microsoft's release page.
 C++/WinRT remains the previously verified version, generating the projection with
 Windows SDK contracts `10.0.26100.0`. Set `TAUREON_ENABLE_WMS_TRANSPORT=ON` to require
 this build.
+
+Reconfiguration migrates the former project-local `wms-preview10` default in
+the CMake cache to `wms-preview11`. Explicit custom dependency roots are retained.
+Every WMS-enabled configure checks the selected WINMD against the Preview-11
+hash above and rejects stale/modified metadata before generating the projection.
 
 ## Initialization and API lookup
 
@@ -33,7 +41,8 @@ The worker initializes its MTA apartment, activates `MidiApi` through WinRT and 
 preserve the HRESULT; unavailable service and Legacy API mode produce separate
 messages.
 
-WinRT activation first uses a Windows-registered API. If none is registered,
+WinRT activation first uses a Windows-registered/system-provided API, even when
+an app-local copy exists. If none is registered,
 C++/WinRT loads `Windows.Devices.Midi2.dll` with `LOAD_LIBRARY_SEARCH_DEFAULT_DIRS`:
 the application directory first, then directories added with `AddDllDirectory`. The
 Windows MIDI Services Tools install the API in
@@ -53,10 +62,11 @@ queue/data-loss semantics and teardown order remain the existing contracts.
 
 ## Preview distribution boundary
 
-Microsoft permits these files for development, internal testing and use on the
-customer's own PC. Public CI artifacts and release ZIPs are distribution, so the
-workflow never includes these API files and fails if they are present. Microsoft's
-release notes impose additional conditions on public customer previews, including an
-expiration no later than 2027-01-15; production distribution needs Microsoft's
-explicit permission. Shipping the API files publicly requires checking and meeting
-the applicable upstream terms first.
+Preview 11 carries the same developer go-live agreement as Preview 10, with
+conditions including preview disclosure, update handling and no API distribution
+below Windows 11 25H2. Refer to the upstream release for the complete terms;
+older preview expiration/permission wording is not the current agreement.
+TAUREON's public CI artifacts and release ZIPs continue to exclude the API DLL
+and PRI and fail packaging if those files are present. This dependency update
+does not authorize their public redistribution or install/update any system
+Tools, transports, drivers or services.

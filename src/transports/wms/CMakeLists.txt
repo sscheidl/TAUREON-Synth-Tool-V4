@@ -1,4 +1,13 @@
-set(TAUREON_WMS_DEPENDENCY_ROOT "${PROJECT_SOURCE_DIR}/build/dependencies/wms-preview10" CACHE PATH
+set(wms_default_dependency_root "${PROJECT_SOURCE_DIR}/build/dependencies/wms-preview11")
+# CMake retains CACHE values when a build tree is reconfigured. Migrate only our
+# former default; explicit custom roots are preserved and their WINMD is checked.
+file(TO_CMAKE_PATH "${TAUREON_WMS_DEPENDENCY_ROOT}" wms_cached_dependency_root)
+if(wms_cached_dependency_root STREQUAL "${PROJECT_SOURCE_DIR}/build/dependencies/wms-preview10")
+    set(TAUREON_WMS_DEPENDENCY_ROOT "${wms_default_dependency_root}" CACHE PATH
+        "Project-local pinned WMS SDK and C++/WinRT packages" FORCE)
+    message(STATUS "Migrated cached WMS default dependency root to Preview 11")
+endif()
+set(TAUREON_WMS_DEPENDENCY_ROOT "${wms_default_dependency_root}" CACHE PATH
     "Project-local pinned WMS SDK and C++/WinRT packages")
 set(TAUREON_WINDOWS_SDK_CONTRACT_VERSION "10.0.26100.0" CACHE STRING
     "Windows SDK contract version used for C++/WinRT projection")

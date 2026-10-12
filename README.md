@@ -18,7 +18,7 @@ or `--list-midi winmm` from a terminal in the portable folder (local builds use
 opening a MIDI endpoint or sending data.
 
 Local development/test builds use the
-[In-box Preview 10 WMS API](docs/reference/WMS_DEPENDENCIES.md), with its DLL and
+[In-box Preview 11 WMS API](docs/reference/WMS_DEPENDENCIES.md), with its DLL and
 resource file beside the executable. Public CI downloads and release ZIPs omit those
 files and use the installed Tools API or one supplied by Windows.
 Developers acquire the pinned inputs with

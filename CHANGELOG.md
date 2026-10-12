@@ -16,9 +16,13 @@ All notable TAUREON V4 changes will be documented here.
 
 ### Windows MIDI Services
 
-- The WMS backend now builds against the In-box Preview 10 API
-  (`Windows.Devices.Midi2` `0.99.88-preview.10`); the API surface it uses is
-  unchanged from Preview 9.
+- The WMS dependency now targets In-box Preview 11 (`0.99.92-preview.11`),
+  whose API interfaces are locked. The package and WINMD SHA-256 pins and default
+  dependency directory are updated; installed-Tools/app-local fallback remains
+  in use and public artifacts continue to exclude the API DLL/PRI.
+- Existing CMake caches migrate the former Preview-10 default to Preview 11.
+  WMS-enabled configuration rejects stale or modified WINMD metadata in any
+  selected dependency root, including explicit custom paths.
 - When no API sits beside the executable, WMS uses the API installed with the
   Windows MIDI Services Tools, so release ZIPs work without redistributing
   Microsoft's preview files. The activation error now names both options.

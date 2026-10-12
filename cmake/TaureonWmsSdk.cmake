@@ -17,6 +17,16 @@ function(taureon_configure_wms_projection target)
         endif()
     endforeach()
 
+    file(SHA256 "${wms_winmd}" wms_winmd_sha256)
+    if(NOT wms_winmd_sha256 STREQUAL
+            "49ab3bbe0954bf4f4d0d1ab933564974495762a11b9b02602f493c6c755c47bc")
+        message(FATAL_ERROR
+            "WMS WINMD does not match pinned Preview 11 (0.99.92-preview.11). "
+            "Run tools/AcquireWmsDependencies.ps1 and select its Preview-11 "
+            "directory with TAUREON_WMS_DEPENDENCY_ROOT. "
+            "Actual SHA-256: ${wms_winmd_sha256}")
+    endif()
+
     add_custom_command(
         OUTPUT "${projection_stamp}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${generated_root}"

@@ -6,6 +6,11 @@
 **Baseline revision:** `070cf6be1c4f562d7a3b8455616204e45b3f6d85`
 **Status:** HOLD/ACTIVE (see the 2026-10-06 reconciliation at the end of this report)
 
+**2026-10-12 WMS dependency follow-up:** In-box Preview 11 acquisition hashes,
+WMS-enabled compilation, 24/24 software tests and read-only API fallback results
+are recorded in [WMS_PREVIEW11_20261012.md](../status/WMS_PREVIEW11_20261012.md).
+This adds software/enumeration evidence only; Stage 5 remains HOLD/ACTIVE.
+
 ## Start-gate record
 
 Stage 4 is PASS/CLOSED at implementation revision `986115d`; the closure documentation handoff is pushed to
