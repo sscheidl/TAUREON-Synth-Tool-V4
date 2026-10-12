@@ -6,6 +6,9 @@ All notable TAUREON V4 changes will be documented here.
 
 ### Diagnostics
 
+- Exported engine-check results retain structured availability, route counts and
+  API source category, while omitting native probe error text that may expose
+  machine-specific paths or endpoint identifiers (PR #25).
 - The Diagnostics tab has a "Check MIDI engines" button. It lists WMS and WinMM
   routes through fresh transports without opening a port, shows each engine as
   available with route counts or with its error, and reports where the WMS API

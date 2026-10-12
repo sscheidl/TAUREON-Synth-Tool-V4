@@ -1,24 +1,37 @@
 # TAUREON V4 – Project State
 
-**Last updated:** 2026-10-10 (status reconciliation by Claude Code at Product Owner request)
+**Last updated:** 2026-10-12 (status reconciliation by Codex at Product Owner request)
 **Maintained by:** ChatGPT Classic / Project Manager
 
-**Current `main` (2026-10-06):** `bab37a544f8bd7802a9b427b29fb3ec001149fd5`, the merge
-of PR #16. Windows CI runs `37047126183` (`main` push) and `37048217459` (tag
-`v0.1.0-alpha.1`) both have this `head_sha`; in each, `software` passed 24/24 CTest
-and `engine-consumer` passed all its CTest runs (details in `STAGE_5_REPORT.md`). No issue
-is open.
+**Verified `main` baseline (2026-10-12, before this documentation update):**
+`69a8a6ce1a9684514818d3066a1b86f282285fb9`, the 2026-10-11 merge of
+[PR #25](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/25). Its exact PR
+HEAD `fa0eb68059f9e28557eea54ecb094c6528db6313` has the same tracked tree.
+Windows CI [run 38137459793](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/38137459793)
+was inspected including job steps and logs: whitespace and full software build
+passed, software CTest passed 24/24, and engine/consumer CTest passed 9/9, 9/9,
+2/2 and 2/2. The merge deliberately used `[skip ci]`; no separate run on the merge
+SHA is claimed. Hardware-build steps and the release job were skipped in this PR
+run. No PR or issue was open at the start of this reconciliation.
 
-**Open stacked pull requests (2026-10-10), merge in this order:** PR #18 (alpha
-port-selection/Monitor fixes and the failed-connect recovery fix) → PR #19 (production
-WMS client moved from RC4 `Microsoft.Windows.Devices.Midi2` to `Windows.Devices.Midi2`
-`0.99.83-devpreview.9`; Preview-9 API files excluded from public CI artifacts) → PR #20
-(Monitor filters, SysEx UI, Auto WMS→WinMM fallback, manual Protein CC labels). All
-three heads have green Windows CI and no open review thread. Their evidence is software
-and read-only enumeration only; native GUI and physical MIDI/SysEx behavior remain with
-the Product Owner. The Product Owner plans to install In-box Preview 10
-(`0.99.88-preview.10`) next; that update is expected to need only a new dependency pin
-and re-verification, not an API migration.
+**Merged alpha follow-ups:** PR #17 reconciled earlier status; PRs #18–#20 fixed
+port selection/retry and Monitor following, migrated WMS to Preview 9, added
+Monitor filters, Auto fallback, manual Protein CC labels and SysEx UI refinements.
+PR #20 also hides SysEx Manager navigation while retaining its implementation.
+PR #21 prepared alpha.2; PR #22 added tagged pre-release publishing. PR #23 now
+pins the WMS client to In-box Preview 10 (`Windows.Devices.Midi2`
+`0.99.88-preview.10`) and falls back to the installed Tools API. PR #24 adds the
+read-only Diagnostics engine check; PR #25 sanitizes its exported results.
+These changes do not establish physical MIDI/SysEx acceptance.
+
+**Latest published alpha:**
+[`v0.1.0-alpha.2`](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases/tag/v0.1.0-alpha.2),
+published 2026-10-10 from `530d7b97d4461cb70590bd216283b56b9fefcab5`, with a
+Windows x64 ZIP and SHA-256 sums. The tag's Windows CI
+[run 38085408474](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/38085408474)
+logs show 24/24 software tests, 9/9, 9/9, 2/2 and 2/2 engine/consumer tests,
+and release publication. This release predates PRs #23–#25: Preview-10/Tools
+fallback and the new Diagnostics check/export correction are unreleased.
 
 **First public alpha (2026-10-02):** PR #16 set the application version to
 `0.1.0-alpha.1`. The Product Owner published the GitHub pre-release
@@ -67,7 +80,7 @@ Target: Generic profile plus exactly one Novation Summit data profile
 
 Stage 5 – Qt 6 Product GUI
 Status: HOLD/ACTIVE — Block A merged; B-3 closed (PR #12 threads resolved and merged 2026-09-28); B-5 closed
-Gate: HOLD — native 150%/200% visual inspection (B-4) and product-path hardware evidence remain
+Gate: HOLD — formal B-4 disposition and product-path hardware evidence remain
 Implementation lead: Codex
 ```
 
@@ -120,7 +133,11 @@ Block-B disposition on the Product Owner's Windows machine:
   zero late callbacks. Both Windows-CI runs on the same SHA are green.
 - B-4 **PARTIAL:** all seven 1920x1080 workspaces pass native Windows 125% inspection.
   Effective 150% and 200% Qt simulations also fit and remain usable, but native Windows
-  150% and 200% inspection is still required.
+  inspection must be distinguished from those simulations. The later
+  [alpha feedback](ALPHA_FEEDBACK_20261006.md#display-scaling-disposition) records
+  the Product Owner's completed native 150% impression test and deferral of native
+  200% for the alpha. This is not a recorded full Stage-5 B-4 closure; no native
+  200% pass or Stage-5 gate is claimed.
 - B-5 **CLOSED:** the measured minimum changed from 1170x903 to 758x419 logical pixels;
   captures at DPR 1.25, 1.5, and 2.0 are now exactly 1920x1080.
 
@@ -232,9 +249,10 @@ on 2026-09-28 after immutable-SHA CI, the retained 100-cycle soak on
 `7af5dcc0df6878b9bf9cb7263770126a7f5ecc8f`, and the main-sync re-verification; PR #12
 is merged. There is no currently reproduced runtime failure.
 
-The Stage-5 gate is held only by Product-Owner evidence that automated or hosted runs
-cannot supply: native Windows 150%/200% visual inspection and product-path physical
-MIDI/SysEx evidence.
+The Stage-5 gate still requires Product-Owner acceptance that automated or hosted
+runs cannot supply: a formal B-4 disposition and product-path physical MIDI/SysEx
+evidence. Native 150% impression testing is recorded; native 200% was deferred
+for the alpha, not passed. The alpha disposition does not close Stage 5.
 
 No known Stage-4 implementation P0/P1 exists. Stage 4 is PASS/CLOSED at revision `986115d` after the mandatory
 Claude Code architecture review, with FU-3 carried forward as a non-blocking Stage-5 GUI/evidence refinement.
@@ -247,9 +265,11 @@ Stage-2 partial-open P1 remains closed by its transport-level regression. Stage-
 ordered-loss, exact conversion, grouped decode-failure, `.syx` I/O-diagnostic, large-data, clean-CI, and local
 WMS/WinMM evidence are recorded in [`STAGE_3_REPORT.md`](../stages/STAGE_3_REPORT.md).
 
-Pinned RC4 limitations remain visible but are not transport assumptions: the newer API-mode query is absent
-from the pinned metadata, and the isolated WinMM/WMS correlation helpers fail-fast and are not used for
-identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
+Historical RC4 limitations remain in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
+The current client uses Preview 10 as specified in
+[`WMS_DEPENDENCIES.md`](../reference/WMS_DEPENDENCIES.md); historical SDK observations
+must not be presented as its current runtime status. Route identity remains
+backend-specific, without WinMM/WMS correlation.
 
 ## Mandatory later-stage inputs
 
@@ -269,8 +289,9 @@ identity. Details are in [`STAGE_1_REPORT.md`](../stages/STAGE_1_REPORT.md).
   promotion; the matching order itself remains unchanged.
 - **Stage 5:** B-3 is closed: targeted review accepted the code remediation for all three
   PR-#12 P1 findings, its immutable-SHA CI and retained 100-cycle-soak conditions pass,
-  and the threads were formally resolved on 2026-09-28. Native 150%/200% visual
-  inspection and product-path physical-device evidence remain.
+  and the threads were formally resolved on 2026-09-28. Formal B-4 disposition
+  and product-path physical-device evidence remain; the alpha's native 150%
+  impression and deferred 200% scope are recorded separately.
 
 ## Stage 0 evidence correction (2026-08-24)
 
@@ -282,13 +303,13 @@ evidence and the review record changed. Details in [`STAGE_0_REPORT.md`](../stag
 
 ## Exact next action
 
-Keep Stage 5 at **HOLD/ACTIVE**. The Product Owner performs native Windows 1920x1080
-visual inspection of all seven workspaces at 150% and 200% display scaling (B-4). Any
-later product-path physical MIDI/SysEx work still requires its own safe, explicit scope.
-Feedback on alpha `v0.1.0-alpha.1` is handled through issues and focused pull requests
-and does not by itself change the Stage-5 gate. Merge the stacked PRs #18 → #19 → #20,
-then re-pin WMS to In-box Preview 10 and repeat read-only enumeration before any WMS
-product-path evidence. Do not begin Stage 6.
+Keep Stage 5 at **HOLD/ACTIVE**. Reconcile formal B-4 acceptance with the Product
+Owner's recorded native 150% impression and alpha-only 200% deferral; do not
+represent the deferral as a pass. Handle alpha.2 feedback through issues and
+focused pull requests. Preview-10 support and PRs #18–#25 are already merged;
+there is no remaining stacked-PR merge or SDK re-pin task. Any product-path
+physical MIDI/SysEx work still requires its own safe, explicit scope. A later
+release is needed to distribute PRs #23–#25. Do not begin Stage 6.
 
 ## Hardware validation
 

@@ -25,7 +25,11 @@ Developers acquire the pinned inputs with
 `tools/AcquireWmsDependencies.ps1`. The first alpha (`0.1.0-alpha.1`) used the older
 RC4 runtime.
 
-The alpha is **not yet validated for real product-path MIDI/SysEx transfer or device restore**. Stage 5 remains open pending native 150%/200% display checks and physical-device testing in the application. Back up important synth data and use receive/inspection features first. The Summit profile currently supports bounded identification and inspection, not semantic preset editing or validated restore.
+The published alpha.2 was built from `530d7b9` and uses Preview 9. Current source
+also includes Preview-10/installed-Tools fallback and the Diagnostics engine check
+with sanitized export results; these later changes are not in the published ZIP.
+
+The alpha is **not yet validated for real product-path MIDI/SysEx transfer or device restore**. Stage 5 remains open pending formal visual acceptance and physical-device testing in the application. The Product Owner's native 150% impression test is recorded; native 200% was deferred for the alpha and is not claimed as passed. See the [current project state](docs/status/PROJECT_STATE.md) for the gate and [alpha feedback](docs/status/ALPHA_FEEDBACK_20261006.md#display-scaling-disposition) for that scope. Back up important synth data and use receive/inspection features first. The Summit profile currently supports bounded identification and inspection, not semantic preset editing or validated restore.
 
 Developers are welcome to [contribute](CONTRIBUTING.md). The generic MIDI engine has an [experimental internal CMake package](docs/engine/REUSE.md); it is not a stable public SDK.
 
