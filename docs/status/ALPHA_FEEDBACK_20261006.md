@@ -1,14 +1,23 @@
 # Alpha feedback — 2026-10-06
 
 The Product Owner prioritised bugs 1–4. Bug 5 (SysEx Transfer button flicker) was
-observed with the internal September test package and is already fixed. Requests
-Request 7 remains deferred. Version visibility and hiding the Manager navigation
+observed with the internal September test package and is already fixed.
+Saved-route restoration under request 7 remains deferred. Version visibility and hiding the Manager navigation
 are included in the current GUI batch.
 
 **2026-10-10 update:** the Preview-9 production client now enumerates 21 RX / 24 TX
 WMS routes successfully. This supersedes the bug-2 initialization blocker below;
 the old RC4 findings remain as historical evidence. See
 [Preview 9 compatibility](WMS_PREVIEW9_20261010.md) for the cause and current checks.
+
+**2026-10-12 reconciliation:** PRs #18–#25 are merged. Preview-9 enumeration fixed
+the former RC4 initialization blocker; PR #23 subsequently moved the client pin
+to Preview 10 and added installed-Tools API fallback. PRs #24–#25 added the
+read-only Diagnostics engine check and sanitized its exported results. Alpha.2
+was published from `530d7b9` before those three PRs and does not include them.
+The validation snapshot below is historical; it does not mean bug 2 is still
+blocked. Full automatic saved-route restoration remains deferred. Native GUI
+and physical product-path acceptance are not inferred from enumeration or CI.
 
 ## Current fix scope
 
@@ -74,7 +83,7 @@ software evidence only. A native 4K/200% test can be added when a concrete probl
 is reported. This record supersedes a mandatory native 200% check for this alpha,
 without claiming a completed Stage-5 or hardware gate.
 
-## Validation
+## Historical validation snapshot (before Preview-9 correction)
 
 - MSVC 19.44 / Qt 6.10.3 Debug build with the pinned WMS SDK enabled: passed.
 - Registered software tests: 24/24 passed. After adding the failed/empty-backend

@@ -4,7 +4,7 @@
 **Date opened:** 2026-08-24
 **Implementation lead:** Codex
 **Baseline revision:** `070cf6be1c4f562d7a3b8455616204e45b3f6d85`
-**Status:** HOLD/ACTIVE (see the 2026-10-06 reconciliation at the end of this report)
+**Status:** HOLD/ACTIVE (see the 2026-10-12 reconciliation at the end of this report)
 
 ## Start-gate record
 
@@ -840,3 +840,40 @@ Stage-5 gate and does not add visual or hardware evidence.
 Remaining Stage-5 gate items are unchanged: B-4 stays **PARTIAL** until native Windows
 150% and 200% display-scaling inspection, and product-path physical MIDI/SysEx evidence
 is still outstanding. Stage 5 remains **HOLD/ACTIVE**, and Stage 6 has not begun.
+
+## Alpha.2 and current source reconciliation — 2026-10-12
+
+This section supersedes the current-state statements in the 2026-10-06 section;
+earlier measurements remain historical evidence. Verified GitHub `main` before
+this documentation update is `69a8a6ce1a9684514818d3066a1b86f282285fb9`, the
+2026-10-11 merge of PR #25. PRs #17–#25 are merged. No PR or issue was open at
+the start of this reconciliation.
+
+PRs #18–#20 corrected port selection/retry, Monitor following and filtering,
+Auto fallback, manual Protein CC labels and SysEx presentation, migrated WMS
+to Preview 9, and hid the SysEx Manager navigation while retaining its code.
+PRs #21–#22 prepared alpha.2 and automated tagged pre-release publication.
+PR #23 pins Preview 10 and adds installed-Tools API fallback. PR #24 adds the
+read-only Diagnostics engine check; PR #25 keeps native probe error text out
+of diagnostic exports.
+
+Exact-run evidence inspected through GitHub job steps and logs:
+
+| Revision | Windows CI run | Software | Engine / separate consumer | Scope |
+|---|---|---|---|---|
+| `530d7b97d4461cb70590bd216283b56b9fefcab5` | [38085408474](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/38085408474) | 24/24 passed | 9/9, 9/9, 2/2, 2/2 passed | Alpha.2 tag; packaging and pre-release publication succeeded |
+| `fa0eb68059f9e28557eea54ecb094c6528db6313` | [38137459793](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/38137459793) | 24/24 passed; whitespace and full build passed | 9/9, 9/9, 2/2, 2/2 passed | Exact PR-#25 HEAD; hardware-build steps and release job skipped |
+
+Current `main` and PR-#25 HEAD have identical tracked trees. The merge used
+`[skip ci]`, so there is no separate merge-SHA run and none is claimed.
+The published [alpha.2](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases/tag/v0.1.0-alpha.2)
+contains a Windows x64 ZIP and SHA-256 sums from `530d7b9`; PRs #23–#25 are later,
+unreleased source changes. Neither run establishes native visual or physical
+product-path MIDI/SysEx acceptance.
+
+The [alpha feedback](../status/ALPHA_FEEDBACK_20261006.md#display-scaling-disposition)
+records the Product Owner's native 150% impression test and alpha-only deferral
+of native 200%. It does not establish a full B-4 closure or a native 200% pass.
+The original Stage-5 gate remains open pending formal visual disposition and
+physical product-path evidence. B-3 and B-5 remain **CLOSED**, B-4 remains
+**PARTIAL**, Stage 5 remains **HOLD/ACTIVE**, and Stage 6 has not begun.

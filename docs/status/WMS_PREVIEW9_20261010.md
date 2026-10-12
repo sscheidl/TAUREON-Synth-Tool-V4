@@ -1,5 +1,12 @@
 # Preview 9 compatibility — 2026-10-10
 
+**Historical evidence:** PR #19's Preview-9 migration is merged. PR #23 later
+updated current source to In-box Preview 10 (`0.99.88-preview.10`) and installed
+Tools API fallback; see [WMS_DEPENDENCIES.md](../reference/WMS_DEPENDENCIES.md).
+The route counts and deployment checks below remain the 2026-10-10 Preview-9
+snapshot and are not new Preview-10 or hardware evidence. Alpha.2 uses Preview 9;
+the Preview-10 change is not yet in a published release.
+
 The Product Owner authorized updating the production WMS client after confirming
 that Windows MIDI Services Developer Preview 9 is installed. This work starts
 from PR #18 head `4fc07116505c3e018c86b9a6bb1cb7eae551d4a8`; the fixes for Auto
