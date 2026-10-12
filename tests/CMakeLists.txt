@@ -1,3 +1,10 @@
+add_test(NAME wms_dependency_pin_configure
+    COMMAND "${CMAKE_COMMAND}"
+        "-DTAUREON_SOURCE_ROOT=${PROJECT_SOURCE_DIR}"
+        "-DTAUREON_TEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/wms-pin-regression"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WmsDependencyPinTests.cmake")
+set_tests_properties(wms_dependency_pin_configure PROPERTIES LABELS "unit;ci;wms")
+
 add_executable(stage2_core_tests unit/Stage2CoreTests.cpp)
 target_include_directories(stage2_core_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(stage2_core_tests PRIVATE taureon_midi_engine_testing)

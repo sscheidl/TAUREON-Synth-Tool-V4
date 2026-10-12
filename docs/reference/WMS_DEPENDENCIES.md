@@ -29,6 +29,11 @@ C++/WinRT remains the previously verified version, generating the projection wit
 Windows SDK contracts `10.0.26100.0`. Set `TAUREON_ENABLE_WMS_TRANSPORT=ON` to require
 this build.
 
+Reconfiguration migrates the former project-local `wms-preview10` default in
+the CMake cache to `wms-preview11`. Explicit custom dependency roots are retained.
+Every WMS-enabled configure checks the selected WINMD against the Preview-11
+hash above and rejects stale/modified metadata before generating the projection.
+
 ## Initialization and API lookup
 
 The worker initializes its MTA apartment, activates `MidiApi` through WinRT and calls

@@ -5,7 +5,7 @@
 
 **Dependency update (2026-10-12):** this branch replaces the earlier Preview-10
 pin with In-box Preview 11 (`0.99.92-preview.11`). Local WMS-enabled build,
-24/24 software tests, installed consumer linkage and read-only app-local/Tools
+25/25 software tests after cache-pin remediation, installed consumer linkage and read-only app-local/Tools
 API fallback checks passed. See [Preview-11 verification](WMS_PREVIEW11_20261012.md)
 for exact hashes, commands and the pre-reboot limitations. Stage 5 remains
 HOLD/ACTIVE; no physical MIDI/SysEx or native visual gate is closed. The older
