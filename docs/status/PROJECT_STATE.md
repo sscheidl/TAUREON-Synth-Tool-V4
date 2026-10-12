@@ -3,6 +3,16 @@
 **Last updated:** 2026-10-10 (status reconciliation by Claude Code at Product Owner request)
 **Maintained by:** ChatGPT Classic / Project Manager
 
+**Dependency update (2026-10-12):** this branch replaces the earlier Preview-10
+pin with In-box Preview 11 (`0.99.92-preview.11`). Local WMS-enabled build,
+24/24 software tests, installed consumer linkage and read-only app-local/Tools
+API fallback checks passed. See [Preview-11 verification](WMS_PREVIEW11_20261012.md)
+for exact hashes, commands and the pre-reboot limitations. Stage 5 remains
+HOLD/ACTIVE; no physical MIDI/SysEx or native visual gate is closed. The older
+repository/PR inventory below is superseded by the separate status reconciliation
+in [PR #26](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/26); it is not
+the current list of open PRs or SDK work to perform.
+
 **Current `main` (2026-10-06):** `bab37a544f8bd7802a9b427b29fb3ec001149fd5`, the merge
 of PR #16. Windows CI runs `37047126183` (`main` push) and `37048217459` (tag
 `v0.1.0-alpha.1`) both have this `head_sha`; in each, `software` passed 24/24 CTest

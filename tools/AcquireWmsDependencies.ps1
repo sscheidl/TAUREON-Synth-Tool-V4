@@ -8,16 +8,16 @@ Set-StrictMode -Version Latest
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($Destination)) {
-    $Destination = Join-Path $projectRoot 'build\dependencies\wms-preview10'
+    $Destination = Join-Path $projectRoot 'build\dependencies\wms-preview11'
 }
 
 $packages = @(
     @{
         Name = 'Windows.Devices.Midi2'
-        Version = '0.99.88-preview.10'
-        Uri = 'https://github.com/microsoft/MIDI/releases/download/inbox-preview-10/Windows.Devices.Midi2.0.99.88-preview.10.nupkg'
-        FileName = 'Windows.Devices.Midi2.0.99.88-preview.10.nupkg'
-        Sha256 = '6DAF121A3F76A4A1E0D46521C5072AC576477448C9332048383BB58960A4CE69'
+        Version = '0.99.92-preview.11'
+        Uri = 'https://github.com/microsoft/MIDI/releases/download/inbox-preview-11/Windows.Devices.Midi2.0.99.92-preview.11.nupkg'
+        FileName = 'Windows.Devices.Midi2.0.99.92-preview.11.nupkg'
+        Sha256 = '13AFC6E6DA2ADAC309AB8C174352F46F1C0EBE2D79E65475BD6274DEFB73DF74'
         ExtractDirectory = 'package'
         RequiredFile = 'ref\native\Windows.Devices.Midi2.winmd'
     },
@@ -60,7 +60,7 @@ foreach ($package in $packages) {
 
 $sdkWinmd = Join-Path $Destination 'package\ref\native\Windows.Devices.Midi2.winmd'
 $sdkWinmdHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $sdkWinmd).Hash
-if ($sdkWinmdHash -ne '497D9E7C2FB219388F748C585D7AAD537D3A6A576DE854BD16BFE1BC73F8D9A9') {
+if ($sdkWinmdHash -ne '49AB3BBE0954BF4F4D0D1AB933564974495762A11B9B02602F493C6C755C47BC') {
     throw "Unexpected WMS SDK WINMD hash: $sdkWinmdHash"
 }
 

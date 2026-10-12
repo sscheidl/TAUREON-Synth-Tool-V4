@@ -171,6 +171,24 @@ jobs:
         if: github.event_name == 'push'
         run: cmake --build build/hardware-test --config RelWithDebInfo --target taureon_app --parallel
 
+      - name: Build and test installed WMS consumer without native MIDI access
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: |
+          cmake --install build/hardware-test --config RelWithDebInfo `
+            --prefix "$PWD/build/engine-wms-install"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake -S tests/consumer -B build/consumer-wms -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_PREFIX_PATH="$PWD/build/engine-wms-install" `
+            -DTAUREON_CONSUMER_WITH_WMS=ON
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/consumer-wms --config RelWithDebInfo --parallel
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Only the fake engine and non-opening WinMM tests are registered.
+          # The explicit WMS --probe-api check remains local and opt-in.
+          ctest --test-dir build/consumer-wms -C RelWithDebInfo --output-on-failure
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Assemble and smoke-test portable hardware-test folder
         if: github.event_name == 'push'
         shell: pwsh
@@ -218,7 +236,7 @@ jobs:
           not a release. Real MIDI/SysEx behavior is not yet accepted until the
           Product Owner records the physical-hardware results.
 
-          WMS API target: Windows.Devices.Midi2 0.99.88-preview.10.
+          WMS API target: Windows.Devices.Midi2 0.99.92-preview.11.
           Requires Windows 11 25H2 or newer with Windows MIDI Services available.
           This public workflow artifact excludes Microsoft's preview API files.
           WMS uses the API installed with the Windows MIDI Services Tools, one

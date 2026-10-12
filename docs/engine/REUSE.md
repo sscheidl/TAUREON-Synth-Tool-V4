@@ -58,7 +58,7 @@ target_link_libraries(my_app PRIVATE TaureonMidiEngine::WmsTransport)
 `WinMM` is built by default on Windows and can be disabled with
 `TAUREON_BUILD_WINMM_TRANSPORT=OFF`. `WMS` is built only when the pinned SDK and
 C++/WinRT dependencies have been acquired and `TAUREON_ENABLE_WMS_TRANSPORT` is
-enabled. It now targets the [In-box Preview 10 API](../reference/WMS_DEPENDENCIES.md).
+enabled. It now targets the [In-box Preview 11 API](../reference/WMS_DEPENDENCIES.md).
 The Windows MIDI service must be available; at runtime the transport uses a
 Windows-provided API, permitted app-local API files beside the executable, or the
 API installed with the Windows MIDI Services Tools.
@@ -82,7 +82,7 @@ prove the installed dependency closure without claiming a runtime or hardware
 acceptance test:
 
 ```powershell
-# AcquireWmsDependencies.ps1 verifies the pinned Preview 10 package and WINMD hashes.
+# AcquireWmsDependencies.ps1 verifies the pinned Preview 11 package and WINMD hashes.
 .\tools\AcquireWmsDependencies.ps1
 cmake -S . -B build/engine-wms -G "Visual Studio 17 2022" -A x64 `
   -DTAUREON_BUILD_PRODUCT_APP=OFF -DBUILD_TESTING=ON `
@@ -100,6 +100,15 @@ foreach ($configuration in @('Debug', 'Release')) {
     --target taureon_wms_consumer
 }
 ```
+
+The WMS consumer also offers an explicit read-only API lookup check:
+`taureon_wms_consumer.exe --probe-api <expected API DLL path>`. It enumerates
+routes, verifies the actual loaded module against that file and reports only
+route counts. It does not open endpoints or send MIDI/SysEx and is not registered
+as an ordinary CTest. Run app-local and installed-Tools checks from separate
+processes/folders; keep the matching PRI beside any app-local DLL. A
+system-provided API takes precedence, so on such a PC the expected path must be
+the system copy rather than an app-local/Tools path.
 
 `TransferEngine` is one-shot: create a new instance for each transfer attempt.
 Its transport must remain alive until `wait()` and destruction complete. The
