@@ -60,8 +60,8 @@ target_link_libraries(my_app PRIVATE TaureonMidiEngine::WmsTransport)
 C++/WinRT dependencies have been acquired and `TAUREON_ENABLE_WMS_TRANSPORT` is
 enabled. It now targets the [In-box Preview 11 API](../reference/WMS_DEPENDENCIES.md).
 The Windows MIDI service must be available; at runtime the transport uses a
-Windows-provided API, permitted app-local API files beside the executable, or the
-API installed with the Windows MIDI Services Tools.
+Windows-provided API or permitted app-local DLL/PRI files beside the executable
+on Windows 11 25H2 or newer. The Tools installation directory is not searched.
 The static engine package does not install or redistribute those API files.
 
 Installed headers are under `include/taureon/`, for example
@@ -103,12 +103,14 @@ foreach ($configuration in @('Debug', 'Release')) {
 
 The WMS consumer also offers an explicit read-only API lookup check:
 `taureon_wms_consumer.exe --probe-api <expected API DLL path>`. It enumerates
-routes, verifies the actual loaded module against that file and reports only
-route counts. It does not open endpoints or send MIDI/SysEx and is not registered
-as an ordinary CTest. Run app-local and installed-Tools checks from separate
-processes/folders; keep the matching PRI beside any app-local DLL. A
+routes, verifies the actual loaded module against that file and reports route
+counts and `IsSystemProvided`. It does not open endpoints or send MIDI/SysEx and
+is not registered as an ordinary CTest. Run app-local and API-absent checks from
+separate processes/folders; keep the matching PRI beside any app-local DLL. A
 system-provided API takes precedence, so on such a PC the expected path must be
-the system copy rather than an app-local/Tools path.
+the system copy rather than an app-local path. `--expect-unavailable` verifies
+the API was not loaded and WMS returns `backend_unavailable`; CI uses this on
+Windows Server 2022, below the supported OS, even with a local DLL present.
 
 `TransferEngine` is one-shot: create a new instance for each transfer attempt.
 Its transport must remain alive until `wait()` and destruction complete. The

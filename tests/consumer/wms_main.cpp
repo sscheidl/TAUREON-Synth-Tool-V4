@@ -14,8 +14,17 @@ int wmain(int argc, wchar_t* argv[]) {
                    capabilities.supports_ump;
     if (!valid) return 1;
     if (argc == 1) return 0;
+    if (argc == 2 && std::wstring_view{argv[1]} == L"--expect-unavailable") {
+        const auto endpoints = transport.enumerate();
+        if (endpoints || endpoints.error().code != taureon::midi::MidiErrorCode::backend_unavailable ||
+            GetModuleHandleW(L"Windows.Devices.Midi2.dll") != nullptr ||
+            transport.diagnostics().wms_api_system_provided.has_value()) return 1;
+        std::cout << "WMS unavailable; API not loaded; " << endpoints.error().message << '\n';
+        if (endpoints.error().native_code) std::cout << "Native error: " << *endpoints.error().native_code << '\n';
+        return 0;
+    }
     if (argc != 3 || std::wstring_view{argv[1]} != L"--probe-api") {
-        std::cerr << "Expected --probe-api <expected API DLL path>\n";
+        std::cerr << "Expected --probe-api <expected API DLL path> or --expect-unavailable\n";
         return 2;
     }
 
@@ -49,5 +58,8 @@ int wmain(int argc, wchar_t* argv[]) {
     }
     std::cout << "Expected WMS API loaded; " << inputs << " RX / " << outputs
               << " TX routes; enumeration only, no endpoint opened\n";
+    const auto system_api = transport.diagnostics().wms_api_system_provided;
+    if (!system_api.has_value()) return 1;
+    std::cout << "IsSystemProvided: " << (*system_api ? "true" : "false") << '\n';
     return 0;
 }

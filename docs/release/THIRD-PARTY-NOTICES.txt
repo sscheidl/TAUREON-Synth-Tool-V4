@@ -20,3 +20,10 @@ https://learn.microsoft.com/en-us/cpp/windows/determining-which-dlls-to-redistri
 
 Microsoft's Windows MIDI Services API files (Windows.Devices.Midi2.dll/.pri)
 are not included. Their MIT license text is in licenses/ for reference.
+Preview 11 permits app-local redistribution subject to Microsoft's Developer
+Go-live Agreement. This API-free package does not exercise that permission.
+Preview DLL/PRI distribution is restricted to Windows 11 25H2 or newer and also
+requires preview disclosure, update/removal, support and customer notification
+commitments. Reusable-library redistribution requires separate Microsoft review.
+https://github.com/microsoft/MIDI/releases/tag/inbox-preview-11
+https://github.com/microsoft/MIDI/releases/tag/inbox-preview-10

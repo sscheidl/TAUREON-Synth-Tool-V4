@@ -162,14 +162,19 @@ jobs:
         run: |
           cmake -S . -B build/hardware-test -G "Visual Studio 17 2022" -A x64 -T v143 `
             -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR" `
-            -DBUILD_TESTING=OFF `
+            -DBUILD_TESTING=ON `
             -DTAUREON_BUILD_STAGE1_SPIKES=OFF `
             -DTAUREON_ENABLE_WMS_TRANSPORT=ON `
+            -DTAUREON_ENABLE_LOCAL_MIDI_INTEGRATION_TESTS=OFF `
             -DTAUREON_BUILD_REVISION="${{ github.sha }}"
 
       - name: Build internal hardware-test executable
         if: github.event_name == 'push'
-        run: cmake --build build/hardware-test --config RelWithDebInfo --target taureon_app --parallel
+        run: cmake --build build/hardware-test --config RelWithDebInfo --parallel
+
+      - name: Test WMS-enabled software without hardware actions
+        if: github.event_name == 'push'
+        run: ctest --test-dir build/hardware-test -C RelWithDebInfo -LE local-midi --output-on-failure
 
       - name: Build and test installed WMS consumer without native MIDI access
         if: github.event_name == 'push'
@@ -188,6 +193,14 @@ jobs:
           # The explicit WMS --probe-api check remains local and opt-in.
           ctest --test-dir build/consumer-wms -C RelWithDebInfo --output-on-failure
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Windows Server 2022 is below the preview's supported OS version.
+          # Even beside a local DLL, the production transport must decline to load it.
+          $consumerDirectory = Join-Path $PWD 'build/consumer-wms/RelWithDebInfo'
+          Copy-Item -Path 'build/dependencies/wms-preview11/package/runtimes/win-x64/native/Windows.Devices.Midi2.dll',
+                          'build/dependencies/wms-preview11/package/runtimes/win-x64/native/Windows.Devices.Midi2.pri' `
+            -Destination $consumerDirectory
+          & (Join-Path $consumerDirectory 'taureon_wms_consumer.exe') --expect-unavailable
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Assemble and smoke-test portable hardware-test folder
         if: github.event_name == 'push'
@@ -205,6 +218,19 @@ jobs:
           Copy-Item -LiteralPath $sourceExecutable -Destination $bundleExecutable
           Copy-Item -LiteralPath (Join-Path $PWD 'docs/licenses/Windows-MIDI-Services-MIT.txt') `
             -Destination $bundleDirectory
+          New-Item -ItemType Directory -Force -Path (Join-Path $bundleDirectory 'tools') | Out-Null
+          Copy-Item -LiteralPath (Join-Path $PWD 'tools/SetWmsAppLocalDeployment.ps1') `
+            -Destination (Join-Path $bundleDirectory 'tools')
+          # Verify the local pair before removing it from the public artifact.
+          foreach ($name in @('Windows.Devices.Midi2.dll', 'Windows.Devices.Midi2.pri')) {
+            $deployed = Join-Path (Split-Path $sourceExecutable) $name
+            $pinned = Join-Path $PWD "build/dependencies/wms-preview11/package/runtimes/win-x64/native/$name"
+            if ((Get-FileHash -LiteralPath $deployed).Hash -ne (Get-FileHash -LiteralPath $pinned).Hash) {
+              throw "App-local WMS deployment mismatch: $name"
+            }
+            Copy-Item -LiteralPath $deployed -Destination $bundleDirectory
+          }
+          & './tools/SetWmsAppLocalDeployment.ps1' -Destination $bundleDirectory -Mode SystemOnly
           Copy-Item -LiteralPath (Join-Path (Split-Path $sourceExecutable) "resources") `
             -Destination (Join-Path $bundleDirectory "resources") -Recurse
           $profiles = Get-ChildItem -LiteralPath (Join-Path $bundleDirectory "resources\device_profiles") -Filter *.profile.json -File
@@ -239,8 +265,10 @@ jobs:
           WMS API target: Windows.Devices.Midi2 0.99.92-preview.11.
           Requires Windows 11 25H2 or newer with Windows MIDI Services available.
           This public workflow artifact excludes Microsoft's preview API files.
-          WMS uses the API installed with the Windows MIDI Services Tools, one
-          provided by Windows, or permitted app-local API files under Microsoft's terms.
+          WMS uses an API provided by Windows or permitted app-local DLL/PRI files
+          under Microsoft's Go-live terms. The Tools installation path is not searched.
+          For portable updates use a new empty folder; see tools/SetWmsAppLocalDeployment.ps1
+          for explicit removal of old preview files from an existing TAUREON folder.
           See docs/reference/WMS_DEPENDENCIES.md in the source repository.
           The WinMM backend remains available independently.
           "@
@@ -255,6 +283,11 @@ jobs:
             }
             if (Test-Path -LiteralPath (Join-Path $bundleDirectory 'Windows.Devices.Midi2.pri')) {
               throw 'Preview WMS API resources must not be included in this public artifact'
+            }
+            foreach ($name in @('Windows.Devices.Midi2.winmd', 'Windows.Devices.Midi2.pdb', 'WMS-PREVIEW-NOTICE.txt')) {
+              if (Test-Path -LiteralPath (Join-Path $bundleDirectory $name)) {
+                throw "Stale preview file in public artifact: $name"
+              }
             }
             & $bundleExecutable --smoke-test
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -324,9 +357,11 @@ jobs:
           name="TAUREON-Synth-Tool-V4-${GITHUB_REF_NAME}-win64"
           folder="dist/${name}"
           test -f "${folder}/TAUREON-Synth-Tool-V4.exe"
-          # Public release: Microsoft's preview API files must not be redistributed.
+          # Public release remains gated until the Go-live obligations are accepted.
           test ! -e "${folder}/Windows.Devices.Midi2.dll"
           test ! -e "${folder}/Windows.Devices.Midi2.pri"
+          test ! -e "${folder}/Windows.Devices.Midi2.winmd"
+          test ! -e "${folder}/Windows.Devices.Midi2.pdb"
           rm -f "${folder}/INTERNAL-TEST-BUILD.txt" "${folder}/SHA256SUMS.txt"
           mkdir -p "${folder}/licenses"
           mv "${folder}/Windows-MIDI-Services-MIT.txt" "${folder}/licenses/"

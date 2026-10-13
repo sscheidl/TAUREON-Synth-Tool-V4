@@ -1,34 +1,50 @@
 # TAUREON V4 – Project State
 
-**Last updated:** 2026-10-10 (status reconciliation by Claude Code at Product Owner request)
+**Last updated:** 2026-10-13 (README/status update before the Product Owner-authorized PR-28 merge)
 **Maintained by:** ChatGPT Classic / Project Manager
 
-**Dependency update (2026-10-12):** this branch replaces the earlier Preview-10
+**Current implementation:** PR #27 is merged at main baseline
+`bb05a24e5c97ecf0cd1f48bdf6c2093fb56f9fc7`. The Product Owner authorized merging
+[PR #28](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/28) on 2026-10-13
+after updating README and status information (D-028). PR #28 replaces the PR-23 Tools-directory lookup with standard WinRT
+activation, hash-checked local deployment, supported-OS gating and explicit
+preview cleanup. Both local WMS ON/OFF software suites pass 26/26; read-only
+portable enumeration passes. See [app-local verification](WMS_APP_LOCAL_20261013.md).
+Public API redistribution remains gated; Stage 5 stays HOLD/ACTIVE with physical
+MIDI/SysEx and native visual acceptance outstanding. Exact PR-HEAD Actions evidence
+is recorded in the PR and verification report, separately from local software
+observations. Implementation commit `db0728d` passed push run `38460429599`
+(WMS OFF and ON 26/26 each) and PR run `38460545677` (26/26), with inspected logs
+and 36/36 downloaded portable-artifact file checksums. Later documentation-only
+HEAD checks are recorded in PR #28 before merge. No independent Claude Code review
+is claimed. The automatic Codex review completed with a P2 deployment-output
+rollback finding, corrected with staging/backups and focused failure regressions
+before merge. Merge acceptance does not close hardware/visual gates or accept
+the Go-live obligations for public preview-file distribution.
+
+**Dependency update (2026-10-12, merged PR #27):** replaces the earlier Preview-10
 pin with In-box Preview 11 (`0.99.92-preview.11`). Local WMS-enabled build,
 25/25 software tests after cache-pin remediation, installed consumer linkage and read-only app-local/Tools
 API fallback checks passed. See [Preview-11 verification](WMS_PREVIEW11_20261012.md)
 for exact hashes, commands and the pre-reboot limitations. Stage 5 remains
-HOLD/ACTIVE; no physical MIDI/SysEx or native visual gate is closed. The older
-repository/PR inventory below is superseded by the separate status reconciliation
-in [PR #26](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/26); it is not
-the current list of open PRs or SDK work to perform.
+HOLD/ACTIVE; no physical MIDI/SysEx or native visual gate is closed. Those historical
+Tools-fallback checks do not describe PR #28's activation path.
 
-**Current `main` (2026-10-06):** `bab37a544f8bd7802a9b427b29fb3ec001149fd5`, the merge
-of PR #16. Windows CI runs `37047126183` (`main` push) and `37048217459` (tag
-`v0.1.0-alpha.1`) both have this `head_sha`; in each, `software` passed 24/24 CTest
-and `engine-consumer` passed all its CTest runs (details in `STAGE_5_REPORT.md`). No issue
-is open.
+**Repository reconciliation (2026-10-13):** PRs #18–#25 and #27 are merged. They
+include port/Monitor recovery fixes, Preview-9 then Preview-10/11 dependency work,
+Auto WMS→WinMM fallback, SysEx UI/manual Protein labels, tagged-release packaging
+and read-only MIDI-engine diagnostics. The older instruction to merge #18 → #19 →
+#20 is obsolete. [PR #26](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/26)
+remains a separate open status-reconciliation PR; this task does not merge it.
+The earlier main SHA `bab37a5` and runs `37047126183`/`37048217459` remain historical
+first-alpha evidence, not the current main or Preview-11 validation.
 
-**Open stacked pull requests (2026-10-10), merge in this order:** PR #18 (alpha
-port-selection/Monitor fixes and the failed-connect recovery fix) → PR #19 (production
-WMS client moved from RC4 `Microsoft.Windows.Devices.Midi2` to `Windows.Devices.Midi2`
-`0.99.83-devpreview.9`; Preview-9 API files excluded from public CI artifacts) → PR #20
-(Monitor filters, SysEx UI, Auto WMS→WinMM fallback, manual Protein CC labels). All
-three heads have green Windows CI and no open review thread. Their evidence is software
-and read-only enumeration only; native GUI and physical MIDI/SysEx behavior remain with
-the Product Owner. The Product Owner plans to install In-box Preview 10
-(`0.99.88-preview.10`) next; that update is expected to need only a new dependency pin
-and re-verification, not an API migration.
+**Latest published alpha:** [`v0.1.0-alpha.2`](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases/tag/v0.1.0-alpha.2),
+published 2026-10-10 with the Preview-9 client and no Microsoft preview API files.
+PR #28 changes source/future CI builds only; it does not replace that release ZIP,
+bump the app version, create a tag or publish a new release. Current API-free
+builds need a Windows-provided WMS API or use WinMM; installing Tools alone no
+longer supplies TAUREON's API. Stage 5 stays HOLD/ACTIVE.
 
 **First public alpha (2026-10-02):** PR #16 set the application version to
 `0.1.0-alpha.1`. The Product Owner published the GitHub pre-release

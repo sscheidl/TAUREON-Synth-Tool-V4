@@ -9,23 +9,34 @@ All notable TAUREON V4 changes will be documented here.
 - The Diagnostics tab has a "Check MIDI engines" button. It lists WMS and WinMM
   routes through fresh transports without opening a port, shows each engine as
   available with route counts or with its error, and reports where the WMS API
-  was loaded from (beside the application, Windows MIDI Services Tools, Windows,
-  or another location; never a path). The result replaces the former fixed
+  was loaded from (beside the application, Windows, or another location; never
+  a path), with a defensive `IsSystemProvided` observation. The result replaces the former fixed
   "not observed" runtime text in the panel and the exported bundle. The check is
   refused while SysEx is being sent or received.
 
 ### Windows MIDI Services
 
 - The WMS dependency now targets In-box Preview 11 (`0.99.92-preview.11`),
-  whose API interfaces are locked. The package and WINMD SHA-256 pins and default
-  dependency directory are updated; installed-Tools/app-local fallback remains
-  in use and public artifacts continue to exclude the API DLL/PRI.
+  whose API interfaces are locked. The package, WINMD and x64 runtime SHA-256
+  pins verify reproducible acquisition and app-local deployment. Public artifacts
+  continue to exclude the API DLL/PRI pending Go-live distribution conditions.
 - Existing CMake caches migrate the former Preview-10 default to Preview 11.
   WMS-enabled configuration rejects stale or modified WINMD metadata in any
   selected dependency root, including explicit custom paths.
-- When no API sits beside the executable, WMS uses the API installed with the
-  Windows MIDI Services Tools, so release ZIPs work without redistributing
-  Microsoft's preview files. The activation error now names both options.
+- Removed the PR-23 Tools-directory `AddDllDirectory` workaround. Regular WinRT
+  activation uses the Windows API first, otherwise the app-local DLL with its
+  mandatory PRI. Installing Tools alone no longer supplies TAUREON's API.
+- WMS declines activation below Windows 11 25H2; Auto/WinMM fallback and saved
+  route identities are preserved. Read-only diagnostics observe `IsSystemProvided`
+  defensively without treating it as an exact API version.
+- Added explicit portable Preview/SystemOnly deployment with hash checks, preview
+  notice and narrow stale-file removal. The Preview update stages the complete
+  four-file set and rolls back earlier replacements on output failure, preserving
+  the previous deployment; recovery backups are retained if rollback itself fails.
+  Disabling preview deployment (or WMS) also
+  removes old API files on product rebuild. Portable updates must use a new folder
+  or run the cleanup helper; the current Microsoft agreement and public release
+  prerequisites are documented. No release is published by this change.
 
 ## [0.1.0-alpha.2] - 2026-10-10
 

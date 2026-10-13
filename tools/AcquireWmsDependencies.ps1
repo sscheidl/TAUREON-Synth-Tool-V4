@@ -65,4 +65,14 @@ if ($sdkWinmdHash -ne '49AB3BBE0954BF4F4D0D1AB933564974495762A11B9B02602F493C6C7
 }
 
 Write-Host "WMS SDK WINMD: verified $sdkWinmdHash"
+$runtimeHashes = @{
+    'Windows.Devices.Midi2.dll' = 'DB3544CAC751F174DA338FB43E754974A067432CE30ECE9845CFCF3B3DAA4CDC'
+    'Windows.Devices.Midi2.pri' = 'D04A030D84C77C6BE8C0F2018A6D70FCD142AB5C940644B74223523F975DA9FA'
+}
+foreach ($name in $runtimeHashes.Keys) {
+    $runtimePath = Join-Path $Destination "package\runtimes\win-x64\native\$name"
+    $runtimeHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $runtimePath).Hash
+    if ($runtimeHash -ne $runtimeHashes[$name]) { throw "Unexpected WMS runtime hash: $name" }
+    Write-Host "WMS x64 ${name}: verified $runtimeHash"
+}
 Write-Host "Dependencies ready at $Destination"
