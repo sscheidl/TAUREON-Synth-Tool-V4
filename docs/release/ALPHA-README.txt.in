@@ -7,11 +7,21 @@ target. No installer or automatic device configuration is provided.
 
 WinMM uses native Windows MIDI support. The Windows MIDI Services (WMS) backend
 needs Microsoft's preview API (Windows.Devices.Midi2), which this ZIP does not
-contain. It uses the API installed with the Windows MIDI Services Tools
-(https://github.com/microsoft/MIDI/releases) or one provided by Windows.
+contain pending Microsoft's Go-live distribution conditions. WMS requires
+Windows 11 25H2 or newer and a Windows-provided API or permitted app-local
+DLL/PRI files. The Windows MIDI Services Tools directory is not searched.
 Otherwise the Auto backend falls back to WinMM. Run
 "TAUREON-Synth-Tool-V4.exe --list-midi wms" (or winmm) in this folder to list
 routes or the initialization error without opening a MIDI port.
+
+For updates, close TAUREON and extract into a NEW EMPTY folder. Overlaying a ZIP
+does not remove obsolete preview DLLs. To reuse an existing TAUREON folder, run
+powershell -NoProfile -File tools\SetWmsAppLocalDeployment.ps1
+  -Destination "<TAUREON-folder>" -Mode SystemOnly
+as one command. It removes only named WMS preview files; user data is preserved.
+The cleanup helper requires no SDK or build tools in SystemOnly mode.
+Agreement and future deployment details:
+https://github.com/sscheidl/TAUREON-Synth-Tool-V4/blob/main/docs/reference/WMS_DEPENDENCIES.md
 
 Real product-path MIDI/SysEx transfer and device restore have not yet passed
 physical-hardware acceptance. Back up important synth data. Select exact RX/TX

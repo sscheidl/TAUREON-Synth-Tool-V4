@@ -10,7 +10,7 @@ TAUREON Synth Tool V4 is a native Windows desktop application for working with h
 
 The [Windows x64 alpha releases](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases) are experimental previews for interested users and contributors. Download the ZIP, extract the complete folder, and run `TAUREON-Synth-Tool-V4.exe`. Keep the DLLs, `resources`, and plugin folders next to the executable. No installer is provided.
 
-Windows 11 x64 is the primary target. The WinMM backend uses Windows' native MIDI support. The Windows MIDI Services (WMS) backend needs Microsoft's preview API (`Windows.Devices.Midi2`), which the ZIP does not contain. Builds after `0.1.0-alpha.2` use the API installed with the [Windows MIDI Services Tools](https://github.com/microsoft/MIDI/releases) automatically. For `0.1.0-alpha.2`, copy `Windows.Devices.Midi2.dll` and `Windows.Devices.Midi2.pri` from `%ProgramFiles%\Windows MIDI Services\Tools` into the TAUREON folder. Without the API, Auto falls back to WinMM. The release does not change drivers or Windows MIDI configuration. Select the exact receive and transmit routes yourself before connecting.
+Windows 11 x64 is the primary target. The WinMM backend uses Windows' native MIDI support. Current source targets Microsoft's Preview-11 WMS API (`Windows.Devices.Midi2`); WMS needs Windows 11 25H2 or newer and either the API supplied by Windows or permitted app-local DLL/PRI files. The Tools installation directory is no longer searched. Existing public alpha ZIPs omit the preview API. Without an available WMS API, Auto falls back to WinMM. The release does not change drivers or Windows MIDI configuration. Select the exact receive and transmit routes yourself before connecting.
 
 For read-only backend diagnosis, run `TAUREON-Synth-Tool-V4.exe --list-midi wms`
 or `--list-midi winmm` from a terminal in the portable folder (local builds use
@@ -19,11 +19,19 @@ opening a MIDI endpoint or sending data.
 
 Local development/test builds use the
 [In-box Preview 11 WMS API](docs/reference/WMS_DEPENDENCIES.md), with its DLL and
-resource file beside the executable. Public CI downloads and release ZIPs omit those
-files and use the installed Tools API or one supplied by Windows.
+resource file beside the executable. Public CI downloads and release ZIPs continue
+to omit those files pending the documented Go-live distribution conditions; they
+use the API supplied by Windows or fall back to WinMM.
 Developers acquire the pinned inputs with
 `tools/AcquireWmsDependencies.ps1`. The first alpha (`0.1.0-alpha.1`) used the older
 RC4 runtime.
+
+For portable updates, close TAUREON and extract into a **new empty folder**.
+Overlay extraction leaves obsolete DLLs behind. If reusing a folder, the explicit
+`tools/SetWmsAppLocalDeployment.ps1 -Destination '<TAUREON-folder>' -Mode SystemOnly`
+helper removes only the named WMS preview files and preserves user data. The
+[deployment guide](docs/reference/WMS_DEPENDENCIES.md) covers Preview preparation,
+Microsoft's current conditions and the future move to the Windows-delivered API.
 
 The alpha is **not yet validated for real product-path MIDI/SysEx transfer or device restore**. Stage 5 remains open pending native 150%/200% display checks and physical-device testing in the application. Back up important synth data and use receive/inspection features first. The Summit profile currently supports bounded identification and inspection, not semantic preset editing or validated restore.
 

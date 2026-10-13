@@ -3,6 +3,15 @@
 **Last updated:** 2026-10-10 (status reconciliation by Claude Code at Product Owner request)
 **Maintained by:** ChatGPT Classic / Project Manager
 
+**App-local follow-up (2026-10-13):** builds on merged PR #27's Preview-11 pin.
+This branch replaces the PR-23 Tools-directory lookup with standard WinRT
+activation, hash-checked local deployment, supported-OS gating and explicit
+preview cleanup. Both local WMS ON/OFF software suites pass 26/26; read-only
+portable enumeration passes. See [app-local verification](WMS_APP_LOCAL_20261013.md).
+Public API redistribution remains gated; Stage 5 stays HOLD/ACTIVE with physical
+MIDI/SysEx and native visual acceptance outstanding. Exact PR-HEAD Actions evidence
+is recorded in the PR, separately from these local software observations.
+
 **Dependency update (2026-10-12):** this branch replaces the earlier Preview-10
 pin with In-box Preview 11 (`0.99.92-preview.11`). Local WMS-enabled build,
 25/25 software tests after cache-pin remediation, installed consumer linkage and read-only app-local/Tools

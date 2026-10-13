@@ -32,6 +32,9 @@ struct MidiTransportDiagnostics {
     std::uint64_t queue_high_water_mark{};
     // WMS-only evidence; false means not observed or not applicable for this backend.
     bool worker_mta_apartment_observed{};
+    // WMS IsSystemProvided observation; unset when activation/query was unavailable.
+    // false means not confirmed system-provided, not an exact API version.
+    std::optional<bool> wms_api_system_provided;
 };
 
 using MidiMessageHandler = std::function<void(const NativeMidiMessage&)>;

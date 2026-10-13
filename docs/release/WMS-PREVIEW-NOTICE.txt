@@ -1,0 +1,23 @@
+Windows MIDI Services Preview API — TAUREON development/validation package
+
+This folder contains Microsoft's Windows.Devices.Midi2 0.99.92-preview.11
+DLL and PRI. They are preview components, usable only on Windows 11 25H2 or
+newer. They do not install drivers, tools, transports or a system API.
+Windows' own registered API takes precedence once supplied by Windows.
+Auto falls back to WinMM if WMS is unsupported, unavailable or has no routes.
+
+Public distribution requires the Product Owner's Go-live acceptance and a
+documented update/removal and customer notification plan. This notice alone
+does not satisfy those obligations. See docs/reference/WMS_DEPENDENCIES.md.
+Microsoft does not guarantee compatibility with the final in-box release.
+License: Windows-MIDI-Services-MIT.txt. Agreement and updates:
+https://github.com/microsoft/MIDI/releases/tag/inbox-preview-11
+https://github.com/microsoft/MIDI/releases/tag/inbox-preview-10
+
+For updates, close TAUREON and extract into a NEW empty folder. Preserve your
+own SysEx files separately. Do not overlay a portable ZIP: omitted DLLs are
+not removed by extraction. For migration of an existing folder, use the
+matching source revision's tools/SetWmsAppLocalDeployment.ps1 with
+-Destination <TAUREON-folder> -Mode SystemOnly to remove only the named WMS
+preview DLL/PRI, metadata, symbols and this notice. Then use a new build
+compiled against the Windows-delivered API. WinMM remains available.

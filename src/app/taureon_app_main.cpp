@@ -28,6 +28,11 @@ int main(int argc, char* argv[]) {
             auto transport = taureon::app::create_native_transport(backend_name == "wms" ?
                 taureon::midi::MidiBackend::windows_midi_services : taureon::midi::MidiBackend::winmm);
             const auto endpoints = transport->enumerate();
+            if (backend_name == "wms") {
+                const auto system_api = transport->diagnostics().wms_api_system_provided;
+                std::cout << "WMS API: " << (!system_api.has_value() ? "source not observed" :
+                    *system_api ? "provided by Windows" : "preview; not confirmed system-provided") << '\n';
+            }
             if (!endpoints) {
                 std::cerr << endpoints.error().message << '\n';
                 return 1;

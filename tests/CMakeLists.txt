@@ -4,6 +4,14 @@ add_test(NAME wms_dependency_pin_configure
         "-DTAUREON_TEST_ROOT=${CMAKE_CURRENT_BINARY_DIR}/wms-pin-regression"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/WmsDependencyPinTests.cmake")
 set_tests_properties(wms_dependency_pin_configure PROPERTIES LABELS "unit;ci;wms")
+if(WIN32)
+    find_program(taureon_powershell NAMES pwsh powershell REQUIRED)
+    add_test(NAME wms_portable_deployment
+        COMMAND "${taureon_powershell}" -NoProfile -File
+            "${CMAKE_CURRENT_SOURCE_DIR}/powershell/WmsDeploymentTests.ps1"
+            -TestRoot "${CMAKE_CURRENT_BINARY_DIR}/wms-deployment-regression")
+    set_tests_properties(wms_portable_deployment PROPERTIES LABELS "unit;ci;wms")
+endif()
 
 add_executable(stage2_core_tests unit/Stage2CoreTests.cpp)
 target_include_directories(stage2_core_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

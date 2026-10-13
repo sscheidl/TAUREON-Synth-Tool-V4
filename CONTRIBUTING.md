@@ -4,7 +4,7 @@ Thanks for helping improve the first public alpha. Bug reports, reproducible MID
 
 Open an issue before a large feature or architecture change. Include the Windows version, app release and build revision from Diagnostics, selected backend, expected behavior, actual behavior, and safe reproduction steps. Redact personal paths and device identifiers if necessary. Never ask another contributor to run a destructive device operation to reproduce a bug.
 
-The current supported build target is Windows 11 x64 with Visual Studio 2022 (v143), CMake 3.25+, C++20, and Qt 6.10.3 for MSVC 2022 x64. The pinned WMS build dependencies are acquired by `tools/AcquireStage1Dependencies.ps1`; this script downloads and verifies SDK packages but does not install or reconfigure the Windows runtime. For a build without WMS:
+The current supported build target is Windows 11 x64 with Visual Studio 2022 (v143), CMake 3.25+, C++20, and Qt 6.10.3 for MSVC 2022 x64. The pinned production WMS build dependencies are acquired by `tools/AcquireWmsDependencies.ps1`; this script downloads and verifies Preview-11 SDK/runtime packages but does not install or reconfigure Windows. `AcquireStage1Dependencies.ps1` is only for historical RC4 spikes. For a build without WMS:
 
 ```powershell
 cmake -S . -B build/contributor -G "Visual Studio 17 2022" -A x64 -T v143 `

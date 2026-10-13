@@ -50,14 +50,6 @@ std::string wms_api_location() {
         executable.resize(executable_length);
         if (api_directory == directory(executable)) return "beside the application";
     }
-    std::wstring tools(MAX_PATH, L'\0');
-    const auto expanded = ExpandEnvironmentStringsW(
-        L"%ProgramFiles%\\Windows MIDI Services\\Tools\\x", tools.data(),
-        static_cast<DWORD>(tools.size()));
-    if (expanded > 0 && expanded <= tools.size()) {
-        tools.resize(expanded - 1);
-        if (api_directory == directory(tools)) return "Windows MIDI Services Tools";
-    }
     std::wstring system(MAX_PATH, L'\0');
     const auto system_length = GetSystemDirectoryW(system.data(), static_cast<UINT>(system.size()));
     if (system_length > 0 && system_length < system.size()) {
@@ -609,6 +601,7 @@ std::future<midi::Result<BackendProbeReport>> ConnectionWorker::probe_backends()
             return;
         }
         BackendProbeReport report;
+        report.wms_api_location = "not loaded";
         for (const auto backend : {midi::MidiBackend::windows_midi_services, midi::MidiBackend::winmm}) {
             BackendProbe probe;
             probe.backend = backend;
@@ -617,6 +610,13 @@ std::future<midi::Result<BackendProbeReport>> ConnectionWorker::probe_backends()
                 const auto transport = factory_(backend);
                 if (!transport) throw std::runtime_error("transport factory returned no transport");
                 const auto endpoints = transport->enumerate();
+                if (backend == midi::MidiBackend::windows_midi_services) {
+                    const auto system_api = transport->diagnostics().wms_api_system_provided;
+                    report.wms_api_location = system_api.has_value()
+                        ? (*system_api ? "Windows (IsSystemProvided)"
+                                      : "preview API; " + wms_api_location())
+                        : wms_api_location();
+                }
                 if (endpoints) {
                     probe.available = true;
                     for (const auto& endpoint : endpoints.value()) {
@@ -634,7 +634,6 @@ std::future<midi::Result<BackendProbeReport>> ConnectionWorker::probe_backends()
             }
             report.backends.push_back(std::move(probe));
         }
-        report.wms_api_location = wms_api_location();
         promise->set_value(midi::Result<BackendProbeReport>::success(std::move(report)));
     });
     return future;

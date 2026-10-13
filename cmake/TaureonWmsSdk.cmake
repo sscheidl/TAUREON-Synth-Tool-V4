@@ -59,14 +59,39 @@ function(taureon_configure_wms_projection target)
         DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 endfunction()
 
-# Internal test builds may deploy the preview API beside the executable,
-# following Microsoft's native NuGet targets. This does not install/register
-# a system runtime. Public preview distribution has additional upstream terms.
+# Public redistribution is separately gated by the Go-live agreement. Turning
+# this off also removes stale preview files when rebuilding the same output tree.
+option(TAUREON_DEPLOY_WMS_PREVIEW_API
+    "Deploy app-local Preview 11 API for development (distribution requires Go-live terms)" ON)
+
+function(taureon_remove_wms_preview_runtime target)
+    add_custom_command(TARGET ${target} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E rm -f
+                "$<TARGET_FILE_DIR:${target}>/Windows.Devices.Midi2.dll"
+                "$<TARGET_FILE_DIR:${target}>/Windows.Devices.Midi2.pri"
+                "$<TARGET_FILE_DIR:${target}>/Windows.Devices.Midi2.winmd"
+                "$<TARGET_FILE_DIR:${target}>/Windows.Devices.Midi2.pdb"
+        VERBATIM)
+endfunction()
+
 function(taureon_deploy_wms_runtime target)
+    if(NOT TAUREON_DEPLOY_WMS_PREVIEW_API)
+        taureon_remove_wms_preview_runtime(${target})
+        return()
+    endif()
     set(runtime_root "${TAUREON_WMS_DEPENDENCY_ROOT}/package/runtimes/win-x64/native")
     foreach(runtime_file IN ITEMS Windows.Devices.Midi2.dll Windows.Devices.Midi2.pri)
         if(NOT EXISTS "${runtime_root}/${runtime_file}")
             message(FATAL_ERROR "Missing Windows MIDI Services API file: ${runtime_root}/${runtime_file}")
+        endif()
+        if(runtime_file STREQUAL "Windows.Devices.Midi2.dll")
+            set(expected_hash "db3544cac751f174da338fb43e754974a067432ce30ece9845cfcf3b3daa4cdc")
+        else()
+            set(expected_hash "d04a030d84c77c6be8c0f2018a6d70fcd142ab5c940644b74223523f975da9fa")
+        endif()
+        file(SHA256 "${runtime_root}/${runtime_file}" runtime_hash)
+        if(NOT runtime_hash STREQUAL expected_hash)
+            message(FATAL_ERROR "WMS Preview 11 runtime hash mismatch: ${runtime_file}")
         endif()
         add_custom_command(TARGET ${target} POST_BUILD
             COMMAND "${CMAKE_COMMAND}" -E copy_if_different
