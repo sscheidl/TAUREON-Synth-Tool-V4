@@ -39,3 +39,77 @@ if (-not $rejected -or (Get-Content -LiteralPath (Join-Path $folder $names[0])) 
 }
 & $scriptPath -Destination $folder -Mode SystemOnly
 Write-Host 'Portable preview removal, idempotence, payload preservation and failed-preflight checks passed'
+
+# Load the same transaction function used by Preview; synthetic files make output
+# failure coverage possible even on a hosted Windows version below the API floor.
+. $scriptPath -Destination $folder -Mode SystemOnly
+$sourceFolder = Join-Path $TestRoot 'transaction-sources'
+New-Item -ItemType Directory -Force -Path $sourceFolder | Out-Null
+$transactionNames = @('Windows-MIDI-Services-MIT.txt', 'Windows.Devices.Midi2.dll',
+    'WMS-PREVIEW-NOTICE.txt', 'Windows.Devices.Midi2.pri')
+$sources = @()
+foreach ($name in $transactionNames) {
+    $source = Join-Path $sourceFolder $name
+    Set-Content -LiteralPath $source -Value "new $name"
+    $sources += $source
+    Set-Content -LiteralPath (Join-Path $folder $name) -Value "old $name"
+}
+
+# A late locked PRI fails after three replacements: all originals must come back.
+$locked = [IO.File]::Open((Join-Path $folder 'Windows.Devices.Midi2.pri'),
+    [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+try {
+    $rejected = $false
+    try { Invoke-WmsPreviewTransaction -Directory $folder -Sources $sources }
+    catch {
+        if ($_.Exception.Message -notlike '*previous files restored*') { throw }
+        $rejected = $true
+    }
+    if (-not $rejected) { throw 'Locked output did not fail the transaction' }
+} finally { $locked.Dispose() }
+foreach ($name in $transactionNames) {
+    if ((Get-Content -LiteralPath (Join-Path $folder $name)) -ne "old $name") {
+        throw "Failed output transaction did not restore $name"
+    }
+}
+
+# Roll back a newly created file too; it must not remain after the late failure.
+Remove-Item -LiteralPath (Join-Path $folder 'Windows.Devices.Midi2.dll')
+$locked = [IO.File]::Open((Join-Path $folder 'Windows.Devices.Midi2.pri'),
+    [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+try {
+    $rejected = $false
+    try { Invoke-WmsPreviewTransaction -Directory $folder -Sources $sources }
+    catch { $rejected = $_.Exception.Message -like '*previous files restored*' }
+    if (-not $rejected) { throw 'New-file rollback did not report restoration' }
+} finally { $locked.Dispose() }
+if (Test-Path -LiteralPath (Join-Path $folder 'Windows.Devices.Midi2.dll')) {
+    throw 'Failed output transaction retained a newly created DLL'
+}
+foreach ($name in $transactionNames | Where-Object { $_ -ne 'Windows.Devices.Midi2.dll' }) {
+    if ((Get-Content -LiteralPath (Join-Path $folder $name)) -ne "old $name") {
+        throw "New-file rollback did not restore $name"
+    }
+}
+
+$readOnlyPath = Join-Path $folder 'Windows.Devices.Midi2.pri'
+[IO.File]::SetAttributes($readOnlyPath, [IO.FileAttributes]::ReadOnly)
+try {
+    $rejected = $false
+    try { Invoke-WmsPreviewTransaction -Directory $folder -Sources $sources }
+    catch { $rejected = $_.Exception.Message -like '*not a writable regular file*' }
+    if (-not $rejected -or (Test-Path -LiteralPath (Join-Path $folder 'Windows.Devices.Midi2.dll'))) {
+        throw 'Read-only output was not rejected before replacement'
+    }
+} finally { [IO.File]::SetAttributes($readOnlyPath, [IO.FileAttributes]::Normal) }
+
+Invoke-WmsPreviewTransaction -Directory $folder -Sources $sources
+foreach ($name in $transactionNames) {
+    if ((Get-Content -LiteralPath (Join-Path $folder $name)) -ne "new $name") { throw "Commit failed: $name" }
+}
+if (Get-ChildItem -LiteralPath $folder -Directory -Filter '.wms-deployment-*') {
+    throw 'Successful update or rollback retained a temporary transaction directory'
+}
+if ((Get-FileHash -LiteralPath $preserved).Hash -ne $before) { throw 'Transaction changed user payload' }
+& $scriptPath -Destination $folder -Mode SystemOnly
+Write-Host 'Late output failure restores original files, removes new files and preserves user data; commit passed'

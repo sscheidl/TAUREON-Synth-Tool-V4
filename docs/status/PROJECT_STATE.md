@@ -17,8 +17,9 @@ observations. Implementation commit `db0728d` passed push run `38460429599`
 (WMS OFF and ON 26/26 each) and PR run `38460545677` (26/26), with inspected logs
 and 36/36 downloaded portable-artifact file checksums. Later documentation-only
 HEAD checks are recorded in PR #28 before merge. No independent Claude Code review
-is claimed; the automatic Codex review was still running at this update with no
-findings posted. Merge acceptance does not close hardware/visual gates or accept
+is claimed. The automatic Codex review completed with a P2 deployment-output
+rollback finding, corrected with staging/backups and focused failure regressions
+before merge. Merge acceptance does not close hardware/visual gates or accept
 the Go-live obligations for public preview-file distribution.
 
 **Dependency update (2026-10-12, merged PR #27):** replaces the earlier Preview-10

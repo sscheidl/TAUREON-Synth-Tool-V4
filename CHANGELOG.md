@@ -30,7 +30,10 @@ All notable TAUREON V4 changes will be documented here.
   route identities are preserved. Read-only diagnostics observe `IsSystemProvided`
   defensively without treating it as an exact API version.
 - Added explicit portable Preview/SystemOnly deployment with hash checks, preview
-  notice and narrow stale-file removal. Disabling preview deployment (or WMS) also
+  notice and narrow stale-file removal. The Preview update stages the complete
+  four-file set and rolls back earlier replacements on output failure, preserving
+  the previous deployment; recovery backups are retained if rollback itself fails.
+  Disabling preview deployment (or WMS) also
   removes old API files on product rebuild. Portable updates must use a new folder
   or run the cleanup helper; the current Microsoft agreement and public release
   prerequisites are documented. No release is published by this change.

@@ -87,8 +87,17 @@ Windows job logs confirm:
 
 The pre-merge README/status update is documentation-only; its exact final HEAD
 Actions runs and log inspection are recorded in PR #28 before merge. Offscreen
-captures remain software previews only. The automatic Codex review was still
-running when these documents were updated; no completed review is claimed.
+captures remain software previews only.
+
+The automatic Codex review completed on `db0728d` with one P2 finding: an output
+copy failure could leave a mixed DLL/PRI/notice set. The follow-up stages all four
+files, atomically replaces each with an original backup, and rolls prior writes
+back on failure. Local regressions lock the final PRI after earlier replacements,
+verify byte-identical restoration, remove a newly created DLL, reject read-only
+output before replacement, and verify successful commit/temporary cleanup and
+user-payload preservation. If rollback itself fails, backups are kept and the
+failure/recovery path is reported explicitly. This is reviewed-finding remediation,
+not a claim of a completed independent Claude Code review.
 
 Not performed: actual Windows-provided 1.0 API activation/precedence (no such
 API on this local PC), native Windows 24H2/25H2 OS matrix, native 150%/200% GUI

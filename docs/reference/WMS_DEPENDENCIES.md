@@ -88,8 +88,14 @@ For an existing development/validation portable folder on supported Windows:
 .\tools\SetWmsAppLocalDeployment.ps1 -Destination '<TAUREON-folder>' -Mode Preview
 ```
 
-This verifies both runtime hashes before copying and adds the license/preview
-notice. Close TAUREON before replacing its files. It prepares local validation;
+This verifies both runtime hashes and stages the DLL, PRI, license and preview
+notice on the destination volume before replacing files. Each replacement is
+atomic; if a later write fails, earlier replacements are rolled back and newly
+created files are removed. Read-only targets are refused before replacement.
+If an external lock also prevents rollback, the script reports failure and
+retains original backups in the named `.wms-deployment-*` directory for recovery;
+keep TAUREON closed until restored. Close TAUREON before replacing its files.
+It prepares local validation;
 it is not authorization to publish a preview package. `-Mode SystemOnly` removes
 only the named preview DLL, PRI, WINMD, PDB and preview notice after preflighting
 the targets. User SysEx data and the executable remain. Linked/system directories

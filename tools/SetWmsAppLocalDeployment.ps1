@@ -8,6 +8,101 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+function Invoke-WmsPreviewTransaction {
+    param([string]$Directory, [string[]]$Sources)
+
+    $allowed = @('Windows.Devices.Midi2.dll', 'Windows.Devices.Midi2.pri',
+        'Windows-MIDI-Services-MIT.txt', 'WMS-PREVIEW-NOTICE.txt')
+    $names = @($Sources | ForEach-Object { [IO.Path]::GetFileName($_) })
+    if ($names.Count -ne 4 -or @($names | Select-Object -Unique).Count -ne 4 -or
+        @($names | Where-Object { $_ -notin $allowed }).Count -ne 0) {
+        throw 'A preview transaction requires exactly the DLL, PRI, license and notice'
+    }
+    $directoryPath = (Get-Item -LiteralPath $Directory).FullName
+    $temporaryPath = [IO.Path]::GetFullPath((Join-Path $directoryPath ('.wms-deployment-' + [Guid]::NewGuid().ToString('N'))))
+    if (-not $temporaryPath.StartsWith($directoryPath.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Transaction directory must remain inside the selected TAUREON folder'
+    }
+    New-Item -ItemType Directory -Path $temporaryPath | Out-Null
+    $changed = [Collections.Generic.List[object]]::new()
+    $retainRecovery = $false
+    try {
+        # Stage the complete set on the destination volume before replacing anything.
+        foreach ($source in $Sources) {
+            $name = [IO.Path]::GetFileName($source)
+            $target = Join-Path $directoryPath $name
+            if (Test-Path -LiteralPath $target) {
+                $item = Get-Item -LiteralPath $target
+                if ($item.PSIsContainer -or ($item.Attributes -band
+                    ([IO.FileAttributes]::ReparsePoint -bor [IO.FileAttributes]::ReadOnly))) {
+                    throw "Preview target is not a writable regular file: $name"
+                }
+            }
+            Copy-Item -LiteralPath $source -Destination (Join-Path $temporaryPath $name)
+        }
+        foreach ($name in $names) {
+            $target = Join-Path $directoryPath $name
+            $staged = Join-Path $temporaryPath $name
+            $backup = Join-Path $temporaryPath ($name + '.backup')
+            $existed = Test-Path -LiteralPath $target
+            $change = @{ Target = $target; Backup = $backup; Staged = $staged;
+                Existed = $existed; Created = $false }
+            $changed.Add($change)
+            if ($existed) {
+                # Same-volume replacement atomically retains the previous file.
+                [IO.File]::Replace($staged, $target, $backup)
+            } else {
+                [IO.File]::Move($staged, $target)
+                $change.Created = $true
+            }
+        }
+    } catch {
+        $failure = $_.Exception.Message
+        $rollbackErrors = [Collections.Generic.List[string]]::new()
+        for ($index = $changed.Count - 1; $index -ge 0; --$index) {
+            $change = $changed[$index]
+            try {
+                if ($change.Existed) {
+                    # A failed Replace may already have moved the original to its
+                    # backup. Restore it even when that operation did not return.
+                    if (Test-Path -LiteralPath $change.Backup -PathType Leaf) {
+                        if (Test-Path -LiteralPath $change.Target -PathType Leaf) {
+                            [IO.File]::Replace($change.Backup, $change.Target, $change.Staged)
+                        } else {
+                            [IO.File]::Move($change.Backup, $change.Target)
+                        }
+                    } elseif (-not (Test-Path -LiteralPath $change.Target -PathType Leaf)) {
+                        throw "Original file and backup missing: $($change.Target)"
+                    }
+                } elseif ($change.Created) {
+                    [IO.File]::Delete($change.Target)
+                }
+            } catch { $rollbackErrors.Add($_.Exception.Message) }
+        }
+        if ($rollbackErrors.Count -gt 0) {
+            $retainRecovery = $true
+            throw "Preview update and rollback failed. Keep TAUREON closed; original backups remain at $temporaryPath. Failure: $failure; rollback: $($rollbackErrors -join '; ')"
+        }
+        throw "Preview update failed; previous files restored. $failure"
+    } finally {
+        if (-not $retainRecovery) {
+            # Only our fixed staging/backup names; never recursively delete user data.
+            foreach ($name in $names) {
+                foreach ($suffix in @('', '.backup')) {
+                    $path = Join-Path $temporaryPath ($name + $suffix)
+                    if (Test-Path -LiteralPath $path -PathType Leaf) {
+                        try { Remove-Item -LiteralPath $path -Force -ErrorAction Stop }
+                        catch { Write-Warning "Deployment temporary file could not be removed: $path" }
+                    }
+                }
+            }
+            if ([IO.Directory]::GetFileSystemEntries($temporaryPath).Length -eq 0) {
+                [IO.Directory]::Delete($temporaryPath)
+            }
+        }
+    }
+}
+
 # An explicit existing TAUREON folder only; never follow links into system files.
 $folder = Get-Item -LiteralPath $Destination
 if (-not $folder.PSIsContainer) { throw 'Destination must be an existing TAUREON folder' }
@@ -70,9 +165,8 @@ $noticePath = Join-Path $projectRoot 'docs\release\WMS-PREVIEW-NOTICE.txt'
 foreach ($path in @($licensePath, $noticePath)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing deployment notice: $path" }
 }
-foreach ($name in $runtimeHashes.Keys) {
-    Copy-Item -LiteralPath (Join-Path $runtimeRoot $name) -Destination (Join-Path $destinationPath $name)
-}
-Copy-Item -LiteralPath $licensePath -Destination $destinationPath
-Copy-Item -LiteralPath $noticePath -Destination $destinationPath
+Invoke-WmsPreviewTransaction -Directory $destinationPath -Sources @(
+    $licensePath, $noticePath,
+    (Join-Path $runtimeRoot 'Windows.Devices.Midi2.pri'),
+    (Join-Path $runtimeRoot 'Windows.Devices.Midi2.dll'))
 Write-Host 'Verified Preview 11 DLL/PRI deployed; Go-live obligations still apply before distribution'
