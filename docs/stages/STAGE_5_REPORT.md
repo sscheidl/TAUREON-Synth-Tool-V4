@@ -6,8 +6,18 @@
 **Baseline revision:** `070cf6be1c4f562d7a3b8455616204e45b3f6d85`
 **Status:** HOLD/ACTIVE (see the 2026-10-06 reconciliation at the end of this report)
 
+**2026-10-13 WMS app-local follow-up (PR #28):** standard WinRT activation replaces
+the Tools-directory workaround; Preview-11 DLL/PRI hashes, supported-OS failure,
+portable cleanup and local read-only enumeration are verified. Local WMS ON/OFF
+software suites each pass 26/26; exact implementation-HEAD Windows Actions logs
+and portable-artifact checks are recorded in
+[WMS_APP_LOCAL_20261013.md](../status/WMS_APP_LOCAL_20261013.md).
+The Product Owner authorized merging after README/status updates (D-028), with
+final documentation-HEAD CI checked in the PR. Stage 5 remains HOLD/ACTIVE; this
+does not accept physical MIDI/SysEx, native 150%/200% GUI inspection or a release.
+
 **2026-10-12 WMS dependency follow-up:** In-box Preview 11 acquisition hashes,
-WMS-enabled compilation, 24/24 software tests and read-only API fallback results
+WMS-enabled compilation, 25/25 software tests after cache-pin remediation and historical read-only API fallback results
 are recorded in [WMS_PREVIEW11_20261012.md](../status/WMS_PREVIEW11_20261012.md).
 This adds software/enumeration evidence only; Stage 5 remains HOLD/ACTIVE.
 

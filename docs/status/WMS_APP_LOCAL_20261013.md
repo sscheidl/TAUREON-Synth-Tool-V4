@@ -65,8 +65,30 @@ The changed workflow runs the complete software suite with WMS OFF and ON,
 checks installed-consumer linkage, verifies the unsupported Windows Server 2022
 API failure without loading even a staged DLL, checks the deployed hashes and
 removes preview files before upload. Public artifact and release exclusions remain.
-The exact run, jobs and logs must pass at the PR HEAD; the PR description records
-that evidence once available. Offscreen captures are software previews only.
+At implementation HEAD `db0728d3ab7f8b0c2abfb17a66928cddd228caa6`, the inspected
+Windows job logs confirm:
+
+- [Push run 38460429599](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/38460429599):
+  WMS OFF Debug 26/26; WMS ON RelWithDebInfo 26/26; installed WMS consumer 2/2;
+  package/WINMD/DLL/PRI hash checks and unsupported-host rejection pass. The
+  portable smoke and preview-file removal pass before artifact upload.
+- [PR run 38460545677](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/38460545677):
+  whitespace and full Debug software suite pass, 26/26; no local-MIDI tests registered.
+- Both runs' engine jobs pass Debug and Release 11/11 each and separate installed
+  consumer tests 2/2 each. No test failed or was skipped; release jobs are skipped
+  because these are branch/PR runs rather than tags.
+- The [actual portable artifact](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/actions/runs/38460429599/artifacts/11846400009)
+  was downloaded: all 36 file hashes match; EXE, Qt/CRT, profiles and cleanup helper
+  are present; DLL/PRI/WINMD/PDB and the preview notice are absent. An ignored local
+  ZIP with the release README, notices/licenses and checksum manifest verifies the
+  release-format structure without creating a tag or publishing a release.
+- A modified-PRI fixture is rejected by both CMake and the portable helper without
+  replacing the deployed DLL.
+
+The pre-merge README/status update is documentation-only; its exact final HEAD
+Actions runs and log inspection are recorded in PR #28 before merge. Offscreen
+captures remain software previews only. The automatic Codex review was still
+running when these documents were updated; no completed review is claimed.
 
 Not performed: actual Windows-provided 1.0 API activation/precedence (no such
 API on this local PC), native Windows 24H2/25H2 OS matrix, native 150%/200% GUI
@@ -78,5 +100,7 @@ See [deployment and distribution conditions](../reference/WMS_DEPENDENCIES.md)
 for all six current Go-live obligations, Preview-10 redistribution exclusions and
 the reusable-library boundary. Public preview-file inclusion remains gated by
 Product Owner acceptance, an effective supported-OS delivery restriction and an
-update/removal, support and customer notification process. No merge, tag or public
-release is authorized by this implementation.
+update/removal, support and customer notification process. The Product Owner
+authorized PR #28's merge after README/status updates on 2026-10-13 (D-028).
+That authorization does not authorize a tag, public release or preview-file
+redistribution and does not close the remaining Stage-5 acceptance gates.

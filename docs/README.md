@@ -18,6 +18,8 @@ The documentation is deliberately split by responsibility. There is **no active 
 | What product/process decisions were made? | `status/DECISION_LOG.md` |
 | What exactly is in scope for the current stage? | `stages/STAGE_N_BRIEF.md` |
 | What evidence was produced by a completed stage? | `stages/STAGE_N_REPORT.md` |
+| How is the Preview-11 WMS API built, deployed and removed? | [WMS dependencies and Go-live conditions](reference/WMS_DEPENDENCIES.md) |
+| What verifies the Preview-11 app-local update? | [App-local software evidence](status/WMS_APP_LOCAL_20261013.md) + [PR #28](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/28) |
 | Why was an architecture choice made? | `architecture/adr/ADR-XXXX-*.md` |
 
 ## Authority and conflict rules

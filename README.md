@@ -10,7 +10,21 @@ TAUREON Synth Tool V4 is a native Windows desktop application for working with h
 
 The [Windows x64 alpha releases](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/releases) are experimental previews for interested users and contributors. Download the ZIP, extract the complete folder, and run `TAUREON-Synth-Tool-V4.exe`. Keep the DLLs, `resources`, and plugin folders next to the executable. No installer is provided.
 
-Windows 11 x64 is the primary target. The WinMM backend uses Windows' native MIDI support. Current source targets Microsoft's Preview-11 WMS API (`Windows.Devices.Midi2`); WMS needs Windows 11 25H2 or newer and either the API supplied by Windows or permitted app-local DLL/PRI files. The Tools installation directory is no longer searched. Existing public alpha ZIPs omit the preview API. Without an available WMS API, Auto falls back to WinMM. The release does not change drivers or Windows MIDI configuration. Select the exact receive and transmit routes yourself before connecting.
+The latest published release is **0.1.0-alpha.2** (2026-10-10). The source changes
+described below are for subsequent builds; merging them does not update an existing
+release ZIP or publish a new release. That alpha used the Preview-9 WMS API and
+omitted its API files.
+
+Windows 11 x64 is the primary target. WinMM uses Windows' native MIDI support.
+Current source targets **Windows MIDI Services Preview 11**
+(`Windows.Devices.Midi2 0.99.92-preview.11`). Its WMS backend requires Windows 11
+25H2 or newer and either the API supplied by Windows or the matching permitted
+app-local DLL **and PRI**. The Tools installation directory is no longer searched.
+Current public CI packages omit the preview API pending the Go-live conditions.
+On a PC without a Windows-provided API, an API-free package uses WinMM through
+Auto fallback. Select exact receive and transmit routes before connecting; Auto
+does not silently translate saved WMS routes into WinMM routes. The application
+does not change drivers or Windows MIDI configuration.
 
 For read-only backend diagnosis, run `TAUREON-Synth-Tool-V4.exe --list-midi wms`
 or `--list-midi winmm` from a terminal in the portable folder (local builds use
@@ -33,7 +47,7 @@ helper removes only the named WMS preview files and preserves user data. The
 [deployment guide](docs/reference/WMS_DEPENDENCIES.md) covers Preview preparation,
 Microsoft's current conditions and the future move to the Windows-delivered API.
 
-The alpha is **not yet validated for real product-path MIDI/SysEx transfer or device restore**. Stage 5 remains open pending native 150%/200% display checks and physical-device testing in the application. Back up important synth data and use receive/inspection features first. The Summit profile currently supports bounded identification and inspection, not semantic preset editing or validated restore.
+The alpha is **not yet validated for real product-path MIDI/SysEx transfer or device restore**. Stage 5 remains HOLD/ACTIVE pending native 150%/200% display checks and physical-device testing in the application. Back up important synth data and use receive/inspection features first. The Summit profile currently supports bounded identification and inspection, not semantic preset editing or validated restore.
 
 Developers are welcome to [contribute](CONTRIBUTING.md). The generic MIDI engine has an [experimental internal CMake package](docs/engine/REUSE.md); it is not a stable public SDK.
 
@@ -126,7 +140,16 @@ Dedicated synth editors may exist separately without turning the TAUREON core in
 
 ## Project status
 
-V4 starts as a new codebase and new repository.
+V4 is a native C++20/Qt 6 rebuild; Stages 0–4 are closed and Stage 5 remains
+HOLD/ACTIVE. The Preview-11 app-local update is delivered through
+[PR #28](https://github.com/sscheidl/TAUREON-Synth-Tool-V4/pull/28), building on
+the dependency pin in PR #27. Local WMS-enabled and disabled software suites pass
+26/26 each; exact-commit Windows CI logs, read-only activation/enumeration and
+portable package checks are recorded in the
+[verification report](docs/status/WMS_APP_LOCAL_20261013.md).
+These software results do not close the GUI or hardware acceptance gates.
+See the [current project state](docs/status/PROJECT_STATE.md) for the remaining
+work and [changelog](CHANGELOG.md) for unreleased changes.
 
 Confirmed local directory:
 

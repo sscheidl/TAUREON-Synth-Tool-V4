@@ -114,7 +114,7 @@ The current Preview-11 agreement has six obligations:
 | Update mechanism that removes preview files when Windows delivers the API and handles further previews | Build option and portable cleanup helper exist; Product Owner must own and document the release/update process. |
 | Make all possible efforts to follow further previews, at least through API lock | Preview 11 is locked and pinned; Product Owner must monitor Microsoft's updates and repeat validation when required. |
 | Tell customers the product uses preview APIs until they are removed | Preview notice and read-only diagnostics exist; a future public preview package needs matching release/README/customer notices. |
-| Do not ship the API below Windows 11 25H2 | Local deployment refuses older Windows and runtime declines activation there. A public delivery channel still needs an effective OS restriction: a freely downloadable portable ZIP plus a runtime check alone does not prevent delivery to older Windows. |
+| Do not ship the API below Windows 11 25H2 | The portable Preview helper refuses older hosts and runtime declines activation there. CMake can stage build inputs on an older CI host for software checks; public CI packages remove those files before upload. A public delivery channel still needs an effective OS restriction: a freely downloadable portable ZIP plus a runtime check alone does not prevent delivery to older Windows. |
 | Report encountered bugs to Microsoft and help debugging | Product Owner must accept and maintain that support obligation; no automatic external report is sent. |
 | Encourage customers to update to a new build against Windows' 1.0 API, unless automatic | Product Owner must define and use a customer notification/update channel. |
 
